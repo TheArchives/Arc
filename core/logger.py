@@ -62,7 +62,8 @@ class ColouredLogger(logging.Logger):
             "&5": Fore.MAGENTA + Back.RESET + Style.DIM,             # Magenta, dark
             "&6": Fore.YELLOW + Back.RESET + Style.DIM,              # Yellow, dark
             "&7": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, light
-            "&8": Fore.WHITE + Back.RESET + Style.NORMAL,             # Blue, light
+            "&8": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, dark
+            "&9": Fore.BLUE + Back.RESET + Style.NORMAL,             # Blue, light
             "&a": Fore.GREEN + Back.RESET + Style.NORMAL,            # Green, light
             "&b": Fore.CYAN + Back.RESET + Style.NORMAL,             # Cyan, light
             "&c": Fore.RED + Back.RESET + Style.NORMAL,              # Red, light
