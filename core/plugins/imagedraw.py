@@ -1,6 +1,18 @@
-import stringIO, urllib
+import StringIO, urllib
 
-from pil import Image
+try:
+    from pil import Image
+except ImportError:
+    try:
+        import Image
+    except ImportError:
+        print("PIL is not installed. Imagedraw is disabled.")
+        pil = False
+    else:
+        pil = True
+else:
+    pil = True
+
 from twisted.internet import reactor
 
 from core.constants import *
@@ -18,6 +30,9 @@ class ImagedrawPlugin(ProtocolPlugin):
     @config("rank", "admin")
     def commandRec_url(self, parts, fromloc, overriderank):
         "/rec_url URL - Builder\nRecords an url to later imagedraw it."
+        if not pil:
+            self.client.sendServerMessage("Imagedraw is disabled by the server owner.")
+            return
         if len(parts) == 1:
             self.client.sendServerMessage("Please specify an url (and '//' in the beginning to")
             self.client.sendServerMessage("extend an existing url)")
@@ -41,16 +56,19 @@ class ImagedrawPlugin(ProtocolPlugin):
     @config("rank", "admin")
     def commandImagedraw(self, parts, fromloc, overriderank):
         "/imagedraw [x y z x2 y2 z2] - Builder\nSets all blocks in this area to image."
+        if not pil:
+            self.client.sendServerMessage("Imagedraw is disabled by the server owner.")
+            return
         if len(parts) < 8 and len(parts) != 2 and len(parts) != 3:
             self.client.sendServerMessage("Please enter whether to flip? (rotation)")
             self.client.sendServerMessage("(and possibly two coord triples)")
         else:
-            if len(parts)==3:
+            if len(parts) == 3:
                 # Try getting the rotation
                 try:
                     rotation = int(parts[2])
                 except ValueError:
-                    self.client.sendServerMessage("Rotation must be a Number.")
+                    self.client.sendServerMessage("Rotation must be a number.")
                     return
             else:
                 rotation = 0
@@ -59,7 +77,7 @@ class ImagedrawPlugin(ProtocolPlugin):
             if flip == 'true' or flip == 'false':
                 pass
             else:
-                self.client.sendServerMessage("flip must be true or false")
+                self.client.sendServerMessage("Flip must be true or false.")
                 return
             # try to get url
             try:
