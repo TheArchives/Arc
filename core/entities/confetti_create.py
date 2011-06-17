@@ -1,0 +1,1 @@
+entitylist.append(["confetti",(x,y,z),6,6])

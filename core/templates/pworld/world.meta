@@ -1,0 +1,52 @@
+[spawn]
+y = 34
+x = 128
+z = 128
+h = 0
+
+[teleports]
+
+[commands]
+
+[autoshutdown]
+autoshutdown = True
+
+[ops]
+
+[userzones]
+
+[rankzones]
+
+[messages]
+
+[mines]
+
+[worldbans]
+
+[writers]
+
+[plus]
+
+[chat]
+global_chat = True
+
+[owner]
+owner = n/a
+
+[permissions]
+all_write = False
+private = False
+admin_blocks = True
+zoned = False
+
+[display]
+finite_water = False
+physics = False
+
+[entitylist]
+
+[size]
+y = 64
+x = 256
+z = 256
+
