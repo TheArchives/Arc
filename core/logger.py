@@ -1,10 +1,5 @@
 import logging, string, sys, time
 
-try:
-    from colorama import Fore, Back, Style
-except:
-    pass
-
 class ColouredLogger(logging.Logger):
     """
     This class is used to colour and log output.
@@ -52,42 +47,46 @@ class ColouredLogger(logging.Logger):
         "Constructor, set everything up"
         self.debugswitch = debug
         self.logfile = open("logs/console/console.log", "a")
-        self.cols = {
-            # Standard Minecraft colours
-            "&0": Fore.BLACK + Back.WHITE + Style.NORMAL,            # Black, inverse
-            "&1": Fore.BLUE + Back.RESET + Style.DIM,                # Blue, dark
-            "&2": Fore.GREEN + Back.RESET + Style.DIM,               # Green, dark
-            "&3": Fore.CYAN + Back.RESET + Style.DIM,                # Cyan, dark
-            "&4": Fore.RED + Back.RESET + Style.DIM,                 # Red, dark
-            "&5": Fore.MAGENTA + Back.RESET + Style.DIM,             # Magenta, dark
-            "&6": Fore.YELLOW + Back.RESET + Style.DIM,              # Yellow, dark
-            "&7": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, light
-            "&8": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, dark
-            "&9": Fore.BLUE + Back.RESET + Style.NORMAL,             # Blue, light
-            "&a": Fore.GREEN + Back.RESET + Style.NORMAL,            # Green, light
-            "&b": Fore.CYAN + Back.RESET + Style.NORMAL,             # Cyan, light
-            "&c": Fore.RED + Back.RESET + Style.NORMAL,              # Red, light
-            "&d": Fore.MAGENTA + Back.RESET + Style.NORMAL,          # Magenta, light
-            "&e": Fore.YELLOW + Back.RESET + Style.NORMAL,           # Yellow, light
-            "&f": Fore.WHITE + Back.RESET + Style.BRIGHT,            # White, normal
-            # Special colours for highlighting text in the console
-            "\x01" + "0": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. Inverse inverse black on black?
-            "\x01" + "1": Fore.BLUE + Back.WHITE + Style.DIM,        # Blue, dark, inverse
-            "\x01" + "2": Fore.GREEN + Back.WHITE + Style.DIM,       # Green, dark, inverse
-            "\x01" + "3": Fore.CYAN + Back.WHITE + Style.DIM,        # Cyan, dark, inverse
-            "\x01" + "4": Fore.RED + Back.WHITE + Style.DIM,         # Red, dark, inverse
-            "\x01" + "5": Fore.MAGENTA + Back.WHITE + Style.DIM,     # Magenta, dark, inverse
-            "\x01" + "6": Fore.YELLOW + Back.WHITE + Style.DIM,      # Yellow, dark, inverse
-            "\x01" + "7": Fore.WHITE + Back.WHITE + Style.NORMAL,    # Grey, light, inverse
-            "\x01" + "8": Fore.WHITE + Back.WHITE + Style.DIM,       # Grey, dark, inverse
-            "\x01" + "9": Fore.BLUE + Back.WHITE + Style.NORMAL,     # Blue, light, inverse
-            "\x01" + "a": Fore.GREEN + Back.WHITE + Style.NORMAL,    # Green, light, inverse
-            "\x01" + "b": Fore.CYAN + Back.WHITE + Style.NORMAL,     # Cyan, light, inverse
-            "\x01" + "c": Fore.RED + Back.WHITE + Style.NORMAL,      # Red, light, inverse
-            "\x01" + "d": Fore.MAGENTA + Back.WHITE + Style.NORMAL,  # Magenta, light, inverse
-            "\x01" + "e": Fore.YELLOW + Back.WHITE + Style.NORMAL,   # Yellow, light, inverse
-            "\x01" + "f": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. White on white?
-        }
+        try:
+            from colorama import Fore, Back, Style
+            self.cols = {
+                # Standard Minecraft colours
+                "&0": Fore.BLACK + Back.WHITE + Style.NORMAL,            # Black, inverse
+                "&1": Fore.BLUE + Back.RESET + Style.DIM,                # Blue, dark
+                "&2": Fore.GREEN + Back.RESET + Style.DIM,               # Green, dark
+                "&3": Fore.CYAN + Back.RESET + Style.DIM,                # Cyan, dark
+                "&4": Fore.RED + Back.RESET + Style.DIM,                 # Red, dark
+                "&5": Fore.MAGENTA + Back.RESET + Style.DIM,             # Magenta, dark
+                "&6": Fore.YELLOW + Back.RESET + Style.DIM,              # Yellow, dark
+                "&7": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, light
+                "&8": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, dark
+                "&9": Fore.BLUE + Back.RESET + Style.NORMAL,             # Blue, light
+                "&a": Fore.GREEN + Back.RESET + Style.NORMAL,            # Green, light
+                "&b": Fore.CYAN + Back.RESET + Style.NORMAL,             # Cyan, light
+                "&c": Fore.RED + Back.RESET + Style.NORMAL,              # Red, light
+                "&d": Fore.MAGENTA + Back.RESET + Style.NORMAL,          # Magenta, light
+                "&e": Fore.YELLOW + Back.RESET + Style.NORMAL,           # Yellow, light
+                "&f": Fore.WHITE + Back.RESET + Style.BRIGHT,            # White, normal
+                # Special colours for highlighting text in the console
+                "\x01" + "0": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. Inverse inverse black on black?
+                "\x01" + "1": Fore.BLUE + Back.WHITE + Style.DIM,        # Blue, dark, inverse
+                "\x01" + "2": Fore.GREEN + Back.WHITE + Style.DIM,       # Green, dark, inverse
+                "\x01" + "3": Fore.CYAN + Back.WHITE + Style.DIM,        # Cyan, dark, inverse
+                "\x01" + "4": Fore.RED + Back.WHITE + Style.DIM,         # Red, dark, inverse
+                "\x01" + "5": Fore.MAGENTA + Back.WHITE + Style.DIM,     # Magenta, dark, inverse
+                "\x01" + "6": Fore.YELLOW + Back.WHITE + Style.DIM,      # Yellow, dark, inverse
+                "\x01" + "7": Fore.WHITE + Back.WHITE + Style.NORMAL,    # Grey, light, inverse
+                "\x01" + "8": Fore.WHITE + Back.WHITE + Style.DIM,       # Grey, dark, inverse
+                "\x01" + "9": Fore.BLUE + Back.WHITE + Style.NORMAL,     # Blue, light, inverse
+                "\x01" + "a": Fore.GREEN + Back.WHITE + Style.NORMAL,    # Green, light, inverse
+                "\x01" + "b": Fore.CYAN + Back.WHITE + Style.NORMAL,     # Cyan, light, inverse
+                "\x01" + "c": Fore.RED + Back.WHITE + Style.NORMAL,      # Red, light, inverse
+                "\x01" + "d": Fore.MAGENTA + Back.WHITE + Style.NORMAL,  # Magenta, light, inverse
+                "\x01" + "e": Fore.YELLOW + Back.WHITE + Style.NORMAL,   # Yellow, light, inverse
+                "\x01" + "f": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. White on white?
+            }
+        except:
+            pass
 
     def stdout(self, data):
         "Output to stdout, parsing colours."

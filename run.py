@@ -20,7 +20,7 @@ try:
     logger.info("&fColorama &ainstalled&f - Console colours &cENABLED&f.")
 except ImportError:
     logger.warn("Colorama is not installed - console colours DISABLED.")
-except:
+except Exception as a:
     logger.warn("Unable to import colorama: %s" % a)
     logger.warn("Console colours DISABLED.")
 
