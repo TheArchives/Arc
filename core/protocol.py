@@ -1098,3 +1098,9 @@ class CoreServerProtocol(Protocol):
         if limit > -1:
             limit *= factor
         return limit
+
+    def loadRank(self):
+        file = open('config/data/titles.dat', 'r')
+        rank_dic = cPickle.load(file)
+        file.close()
+        return rank_dic
