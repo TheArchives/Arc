@@ -150,7 +150,7 @@ class ColouredLogger(logging.Logger):
     def debug(self, data):
         "DEBUG level output"
         if self.debugswitch:
-            time = time.strftime("%d %b (%H:%M:%S)")
-            status = " -  &9DEBUG  &f - "
-            done = "&f" + time + status + data
+            atime = time.strftime("%d %b (%H:%M:%S)")
+            status = " -   &9DEBUG &f - "
+            done = "&f" + atime + status + data
             self.stdout(done)

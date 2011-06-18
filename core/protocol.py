@@ -1,4 +1,4 @@
-import cPickle, datetime, hashlib, logging, os, traceback
+import cPickle, datetime, hashlib, logging, os, traceback, shutil
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
@@ -8,7 +8,6 @@ from core.constants import *
 from core.decorators import *
 from core.irc_client import ChatBotFactory
 from core.plugins import protocol_plugins
-from core.logger import ColouredLogger
 
 class CoreServerProtocol(Protocol):
     """
@@ -18,7 +17,6 @@ class CoreServerProtocol(Protocol):
 
     def connectionMade(self):
         "We've got a TCP connection, let's set ourselves up."
-        self.logger = ColouredLogger()
         # We use the buffer because TCP is a stream protocol :)
         self.buffer = ""
         self.loading_world = False
@@ -48,7 +46,7 @@ class CoreServerProtocol(Protocol):
         if self.factory.isIpBanned(ip):
             self.sendError("You are Banned for: %s" % self.factory.ipBanReason(ip))
             return
-        self.logger.debug("Assigned ID %i" % self.id)
+        self.factory.logger.debug("Assigned ID %i" % self.id)
         self.factory.joinWorld(self.factory.default_name, self)
         self.sent_first_welcome = False
         self.read_only = False
@@ -60,6 +58,7 @@ class CoreServerProtocol(Protocol):
         self.gone = 0
         self.frozen = False
         self.dataReader = ConfigParser()
+        self.data = {}
         self.resetIdleTimer()
         
     def loadData(self):
@@ -68,30 +67,53 @@ class CoreServerProtocol(Protocol):
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
             except Exception as a: # If we can't read it, say that
-                self.logger.error("Unable to read player data for %s!" % self.username)
-                self.logger.error("Error: %s" % a)
-                self.logger.warn("Settings will not be saved.")
-                # Do whatever we do to make data not work transparently
+                self.factory.logger.error("Unable to read player data for %s!" % self.username)
+                self.factory.logger.error("Error: %s" % a)
+                self.loadDataFallback()
                 return False # Return false to show it failed
             else:
-                self.logger.info("Parsing data/players/%s.ini" % self.username)
+                self.factory.logger.info("Parsing data/players/%s.ini" % self.username)
         else: # If we have no file, copy it from the template
-            self.logger.info("No player data file for %s found." % self.username)
-            self.logger.info("Creating data file data/players/%s.ini using templace data/players/DEFAULT_TEMPLATE.ini" % self.username)
-            os.copy("data/players/DEFAULT_TEMPLATE.ini", "data/players/%s.ini" % self.username)
+            self.factory.logger.info("No player data file for %s found." % self.username)
+            self.factory.logger.info("Creating data file data/players/%s.ini using templace data/players/DEFAULT_TEMPLATE.ini" % self.username)
+            shutil.copy("data/players/DEFAULT_TEMPLATE.ini", "data/players/%s.ini" % self.username)
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
             except Exception as a: # If we can't read it, say that
-                self.logger.error("Unable to read player data for %s!" % self.username)
-                self.logger.error("Error: %s" % a)
-                self.logger.warn("Settings will not be saved.")
-                # Do whatever we do to make data not work transparently
+                self.factory.logger.error("Unable to read player data for %s!" % self.username)
+                self.factory.logger.error("Error: %s" % a)
+                self.loadDataFallback()
             return False # Return false to show it failed
-        # Parse it
+        try:
+            sections = self.dataReader.options("sections")
+        except Exception as a:
+            self.factory.logger.error("Unable to read section header for /data/players/%s.ini!" % self.username)
+            self.factory.logger.error("Error: %s" % a)
+            self.loadDataFallback()
+            return False
+        try:
+            for element in sections:
+                data = self.dataReader.items(element) # This gives us name, value pairs for the secion
+                self.data[element] = {}
+                for part in data:
+                    name, value = part
+                    self.data[element][name] = value
+            self.factory.logger.debug(str(self.data)) # DEBUG!!
+        except Exception as a:
+            self.factory.logger.error("Unable to read player data for %s!" % self.username)
+            self.factory.logger.error("Error: %s" % a)
+            self.loadDataFallback()
+            return False
+        self.factory.logger.info("Parsed settings file for %s." % self.username)
+        return True
+    
+    def loadDataFallback(self):
+        "Called when loading data fails. Prevents data saving and loads the default data values."
+        self.factory.logger.warn("Settings will not be saved.")
     
     def saveData(self):
         "Saves the player's data file"
-        pass
+        pass # Derpishly, this does nothing yet. Derp derp.
 
     def registerCommand(self, command, func):
         "Registers func as the handler for the command named 'command'."
@@ -99,7 +121,7 @@ class CoreServerProtocol(Protocol):
         command = command.lower()
         # Warn if already registered
         if command in self.commands:
-            self.logger.warn("Command '%s' is already registered. Overriding." % command)
+            self.factory.logger.warn("Command '%s' is already registered. Overriding." % command)
         # Register
         self.commands[command] = func
 
@@ -111,7 +133,7 @@ class CoreServerProtocol(Protocol):
             if self.commands[command] == func:
                 del self.commands[command]
         except KeyError:
-            self.logger.warn("Command '%s' is not registered to %s." % (command, func))
+            self.factory.logger.warn("Command '%s' is not registered to %s." % (command, func))
 
     def registerHook(self, hook, func):
         "Registers func as something to be run for hook 'hook'."
@@ -124,7 +146,7 @@ class CoreServerProtocol(Protocol):
         try:
             self.hooks[hook].remove(func)
         except (KeyError, ValueError):
-            self.logger.warn("Hook '%s' is not registered to %s." % (command, func))
+            self.factory.logger.warn("Hook '%s' is not registered to %s." % (command, func))
 
     def unloadPlugin(self, plugin_class):
         "Unloads the given plugin class."
@@ -205,9 +227,9 @@ class CoreServerProtocol(Protocol):
         self.factory.releaseId(self.id)
         self.factory.queue.put((self, TASK_PLAYERLEAVE, (self.id,)))
         if self.username:
-            self.logger.info("Disconnected '%s'" % (self.username))
+            self.factory.logger.info("Disconnected '%s'" % (self.username))
             self.runHook("playerquit", self.username)
-            self.logger.debug("(reason: %s)" % (reason))
+            self.factory.logger.debug("(reason: %s)" % (reason))
         # Kill all plugins
         self.stopIdleTimer()
         del self.plugins
@@ -223,7 +245,7 @@ class CoreServerProtocol(Protocol):
         self.transport.write(chr(mtype) + fmt.encode(*args))
 
     def sendError(self, error):
-        self.logger.info("Sending error: %s" % error)
+        self.factory.logger.info("Sending error: %s" % error)
         self.sendPacked(TYPE_ERROR, error)
         reactor.callLater(0.2, self.transport.loseConnection)
 
@@ -294,18 +316,18 @@ class CoreServerProtocol(Protocol):
                 # Get the client's details
                 protocol, self.username, mppass, utype = parts
                 if self.identified == True:
-                    self.logger.info("Kicked '%s'; already logged in to server" % (self.username))
+                    self.factory.logger.info("Kicked '%s'; already logged in to server" % (self.username))
                     self.sendError("You already logged in! Foolish bot owners.")
                 # Check their password
                 correct_pass = hashlib.md5(self.factory.salt + self.username).hexdigest()[-32:].strip("0")
                 mppass = mppass.strip("0")
                 if not self.transport.getHost().host.split(".")[0:2] == self.transport.getPeer().host.split(".")[0:2]:
                     if mppass != correct_pass:
-                        self.logger.info("Kicked '%s'; invalid password (%s, %s)" % (self.username, mppass, correct_pass))
+                        self.factory.logger.info("Kicked '%s'; invalid password (%s, %s)" % (self.username, mppass, correct_pass))
                         self.sendError("Incorrect authentication, please try again.")
                         return
                 self.logger = logging.getLogger(self.username)
-                self.logger.info("Connected, as '%s'" % self.username)
+                self.factory.logger.info("Connected, as '%s'" % self.username)
                 self.identified = True
                 # Are they banned?
                 if self.factory.isBanned(self.username):
@@ -340,21 +362,22 @@ class CoreServerProtocol(Protocol):
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
                 self.resetIdleTimer()
+                self.loadData() # Load player data
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if block == 255:
                     block = 0
                 if block > 49:
-                    self.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
+                    self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
                 if 6 < block < 12:
                     if not block == 9 and not block == 11:
-                        self.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
+                        self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
                         self.sendError("Invalid blocks are not allowed!")
                         return
                 if self.identified == False:
-                    self.logger.info("Kicked '%s'; did not send a login before building" % (self.transport.getPeer().host))
+                    self.factory.logger.info("Kicked '%s'; did not send a login before building" % (self.transport.getPeer().host))
                     self.sendError("Provide an authentication before building.")
                     return
                 try:
@@ -449,7 +472,7 @@ class CoreServerProtocol(Protocol):
                 goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|", "~"]
                 for c in message.lower():
                     if not c in goodchars:
-                        self.logger.info("Kicked '%s'; Tried to use invalid characters; Message: '%s'" % (self.transport.getPeer().host, message))
+                        self.factory.logger.info("Kicked '%s'; Tried to use invalid characters; Message: '%s'" % (self.transport.getPeer().host, message))
                         self.sendError("Invalid characters are not allowed!")
                         return
                 message = message.replace("%0", "&0")
@@ -507,7 +530,7 @@ class CoreServerProtocol(Protocol):
                     if moddedmsg[len(moddedmsg)-2] == "&":
                         message = message.replace("&", "*")
                 if self.identified == False:
-                    self.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (self.transport.getPeer().host, message))
+                    self.factory.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (self.transport.getPeer().host, message))
                     self.sendError("Provide an authentication before chatting.")
                     return
                 if message.startswith("/"):
@@ -558,9 +581,9 @@ class CoreServerProtocol(Protocol):
                     # Using custom message?
                     if hasattr(func, "config"):
                         if func.config["custom_cmdlog_msg"]:
-                            self.logger.info("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
+                            self.factory.logger.info("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
                     else:
-                        self.logger.info("%s just used: %s" % (self.username, " ".join(parts)))
+                        self.factory.logger.info("%s just used: %s" % (self.username, " ".join(parts)))
                     # Log it in IRC, if enabled.
                     if self.factory.irc_relay:
                         if self.factory.irc_cmdlogs:
@@ -576,7 +599,7 @@ class CoreServerProtocol(Protocol):
                     except Exception, e:
                         self.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
                         self.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
-                        self.logger.error(traceback.format_exc())
+                        self.factory.logger.error(traceback.format_exc())
                 elif message.startswith("@"):
                     # It's a whisper
                     try:
@@ -588,7 +611,7 @@ class CoreServerProtocol(Protocol):
                         if username in self.factory.usernames:
                             self.factory.usernames[username].sendWhisper(self.username, text)
                             self.sendWhisper(self.username, text)
-                            self.logger.info("@"+self.username+" (from "+self.username+"): "+text)
+                            self.factory.logger.info("@"+self.username+" (from "+self.username+"): "+text)
                             self.whisperlog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] @"+self.username+" (from "+self.usertitlename+"): "+text+"\n")
                             self.whisperlog.flush()
                         else:
@@ -604,7 +627,7 @@ class CoreServerProtocol(Protocol):
                             self.sendServerMessage("Please include a message to send.")
                         else:
                             self.sendWorldMessage ("!"+self.userColour()+self.usertitlename+":"+COLOUR_WHITE+" "+text)
-                            self.logger.info("!"+self.usertitlename+" in "+str(self.world.id)+": "+text)
+                            self.factory.logger.info("!"+self.usertitlename+" in "+str(self.world.id)+": "+text)
                             self.wclog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] !"+self.usertitlename+" in "+str(self.world.id)+": "+text+"\n")
                             self.wclog.flush()
                             if self.factory.irc_relay:
@@ -638,7 +661,7 @@ class CoreServerProtocol(Protocol):
                     self.sendPacked(255, self.packString("Sorry, but this server only works for Classic."))
                     self.transport.loseConnection()
                 else:
-                    self.logger.warn("Unhandleable type %s" % type)
+                    self.factory.logger.warn("Unhandleable type %s" % type)
 
     def userColour(self):
         if self.factory.colors:
@@ -713,7 +736,7 @@ class CoreServerProtocol(Protocol):
             else:
                 self.world[x, y, z].addCallback(real_send)
         except AssertionError:
-            self.logger.warn("Block out of range: %s %s %s" % (x, y, z))
+            self.factory.logger.warn("Block out of range: %s %s %s" % (x, y, z))
 
     def sendPlayerPos(self, id, x, y, z, h, p):
         self.sendPacked(TYPE_PLAYERPOS, id, x, y, z, h, p)
@@ -862,13 +885,13 @@ class CoreServerProtocol(Protocol):
         self.zipped_level, self.zipped_size = gzip_handle, zipped_size
         # Preload our first chunk, send a level stream header, and go!
         self.chunk = self.zipped_level.read(1024)
-        self.logger.debug("Sending level...")
+        self.factory.logger.debug("Sending level...")
         self.sendPacked(TYPE_PRECHUNK)
         reactor.callLater(0.001, self.sendLevelChunk)
 
     def sendLevelChunk(self):
         if not hasattr(self, 'chunk'):
-            self.logger.error("Cannot send chunk, there isn't one! %r %r" % (self, self.__dict__))
+            self.factory.logger.error("Cannot send chunk, there isn't one! %r %r" % (self, self.__dict__))
             return
         if self.chunk:
             self.sendPacked(TYPE_CHUNK, len(self.chunk), self.chunk, chr(int(100*(self.zipped_level.tell()/float(self.zipped_size)))))
@@ -882,7 +905,7 @@ class CoreServerProtocol(Protocol):
             self.endSendLevel()
 
     def endSendLevel(self):
-        self.logger.debug("Sent level data.")
+        self.factory.logger.debug("Sent level data.")
         self.sendPacked(TYPE_LEVELSIZE, self.world.x, self.world.y, self.world.z)
         sx, sy, sz, sh = self.world.spawn
         self.p = 0
