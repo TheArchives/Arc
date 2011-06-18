@@ -30,9 +30,7 @@ class InternetPlugin(ProtocolPlugin):
     tuser = ""
     tpass = ""
     twlog = open("logs/twitter.log", "a")
-
-    def __init__(self):
-        makefile("logs/twitter.log")
+    makefile("logs/twitter.log")
 
     @config("custom_cmdlog_msg", "just logged into Twitter.")
     @config("category", "info")
