@@ -12,7 +12,7 @@ from core.logger import ColouredLogger
 from core.server import CoreFactory
 
 debug=(True if "--debug" in sys.argv else False)
-logger = ColouredLogger(false)
+logger = ColouredLogger(debug)
 
 try:
     from colorama import init
