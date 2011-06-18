@@ -1,4 +1,4 @@
 @ECHO off
-TITLE blockBox
-run.py --run
+TITLE Server
+C:\Python26\run.py --run
 PAUSE
