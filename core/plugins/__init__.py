@@ -17,7 +17,7 @@ class PluginMetaclass(type):
     def __new__(cls, name, bases, dct):
         # Supercall
         new_cls = type.__new__(cls, name, bases, dct)
-        debug=(True if "--debug" in sys.argv else False)
+        debug = (True if "--debug" in sys.argv else False)
         self.logger = ColouredLogger(debug)
         # Register!
         if bases != (object,):
@@ -31,23 +31,25 @@ class PluginMetaclass(type):
                 self.logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
         return new_cls
 
-class ServerPlugin(object): # Can't have default values here!
+class ServerPlugin(object):
     """
     Parent object all server plugins inherit from.
     """
+
+    __metaclass__ = PluginMetaclass
 
     def __init__(self, factory):
     # Store the factory
     # self.factory = factory
         pass
 
-class ProtocolPlugin(object): # Can't have default values here!
+class ProtocolPlugin(object):
     """
     Parent object all plugins inherit from.
     """
 
-    metaclass=PluginMetaclass
-    
+    __metaclass__ = PluginMetaclass
+
     def __init__(self, client):
         self.logger = client.logger
         # Store the client
@@ -69,6 +71,7 @@ class ProtocolPlugin(object): # Can't have default values here!
                     # Nope, can't find the method for that hook. Return error
                     self.logger.error("Cannot find hook code for %s." % fname)
         # Call clean setup method
+
         self.gotClient()
 
     def unregister(self):
