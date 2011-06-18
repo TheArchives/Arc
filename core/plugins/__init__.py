@@ -103,11 +103,15 @@ def load_plugins(plugins):
 def unload_plugin(plugin_name):
     "Given a plugin name, reloads and re-imports its code."
     # Unload all its classes from our lists
+    debug=(True if "--debug" in sys.argv else False)
+    logger = ColouredLogger(debug)
     for plugin in plugins_by_module_name(plugin_name):
         if plugin in protocol_plugins:
             protocol_plugins.remove(plugin)
+            logger.debug("Unloaded protocol plugin: %s" % plugin)
         if plugin in server_plugins:
             server_plugins.remove(plugin)
+            logger.debug("Unloaded server plugin: %s" % plugin)
 
 def load_plugin(plugin_name):
     # Reload the module, in case it was imported before
