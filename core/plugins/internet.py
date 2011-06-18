@@ -350,7 +350,7 @@ class InternetPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandGoogle(self, parts, fromloc, overriderank):
         "/google keyword - Guest\nGoogles the keyword."
-        if parts < 1:
+        if len(parts) < 1:
             self.client.sendServerMessage("Please enter a string to google.")
         d = defer.maybeDeferred(checkGoogle, parts[1:])
         def handleResults(result):
