@@ -1,15 +1,8 @@
 #!/usr/bin/python
 
-import datetime, logging, sys
+import sys
 
-from twisted.internet import reactor
-from twisted.internet.error import CannotListenError
-
-from core.controller import ControllerFactory
-from core.constants import *
-from core.globals import *
 from core.logger import ColouredLogger
-from core.server import CoreFactory
 
 debug=(True if "--debug" in sys.argv else False)
 logger = ColouredLogger(debug)
@@ -25,6 +18,16 @@ except ImportError:
 except Exception as a:
     logger.warn("Unable to import colorama: %s" % a)
     logger.warn("Console colours DISABLED.")
+
+import datetime, logging
+
+from twisted.internet import reactor
+from twisted.internet.error import CannotListenError
+
+from core.controller import ControllerFactory
+from core.constants import *
+from core.globals import *
+from core.server import CoreFactory
 
 makefile("logs/")
 makefile("logs/console/")
