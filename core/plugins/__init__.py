@@ -1,9 +1,4 @@
-import traceback, sys
-
-from core.logger import ColouredLogger
-
-debug=(True if "--debug" in sys.argv else False)
-ColouredLogger(debug).debug("Imported plugins/ folder.")
+import logging, traceback
 
 protocol_plugins = []
 server_plugins = []
@@ -17,8 +12,7 @@ class PluginMetaclass(type):
     def __new__(cls, name, bases, dct):
         # Supercall
         new_cls = type.__new__(cls, name, bases, dct)
-        debug = (True if "--debug" in sys.argv else False)
-        logger = ColouredLogger(debug)
+        logger = logging.getLogger("Plugins")
         # Register!
         if bases != (object,):
             if ProtocolPlugin in bases:
@@ -28,14 +22,13 @@ class PluginMetaclass(type):
                 logger.debug("Loaded server plugin: %s" % name)
                 server_plugins.append(new_cls)
             else:
-                self.logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
+                logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
         return new_cls
 
 class ServerPlugin(object):
     """
-    Parent object all server plugins inherit from.
+    Parent object all plugins inherit from.
     """
-
     __metaclass__ = PluginMetaclass
 
     def __init__(self, factory):
@@ -47,12 +40,9 @@ class ProtocolPlugin(object):
     """
     Parent object all plugins inherit from.
     """
-
     __metaclass__ = PluginMetaclass
 
     def __init__(self, client):
-        debug = (True if "--debug" in sys.argv else False)
-        self.logger = ColouredLogger(debug)
         # Store the client
         self.client = client
         # Register our commands
@@ -62,7 +52,7 @@ class ProtocolPlugin(object):
                     self.client.registerCommand(name, getattr(self, fname))
                 except AttributeError:
                     # Nope, can't find the method for that command. Return error
-                    self.logger.error("Cannot find command code for %s (command name is %s)." % (fname, name))
+                    logging.getLogger("Plugins").error("Cannot find command code for %s (command name is %s)." % (fname, name))
         # Register our hooks
         if hasattr(self, "hooks"):
             for name, fname in self.hooks.items():
@@ -70,9 +60,8 @@ class ProtocolPlugin(object):
                     self.client.registerHook(name, getattr(self, fname))
                 except AttributeError:
                     # Nope, can't find the method for that hook. Return error
-                    self.logger.error("Cannot find hook code for %s." % fname)
+                    logging.getLogger("Plugins").error("Cannot find hook code for %s." % fname)
         # Call clean setup method
-
         self.gotClient()
 
     def unregister(self):
@@ -91,14 +80,12 @@ class ProtocolPlugin(object):
 
 def load_plugins(plugins):
     "Given a list of plugin names, imports them so they register."
-    debug=(True if "--debug" in sys.argv else False)
-    logger = ColouredLogger(debug)
     for module_name in plugins:
         try:
             __import__("core.plugins.%s" % module_name)
         except ImportError:
-            logger.error(traceback.format_exc())
-            logger.error("Cannot load plugin %s." % module_name)
+            logging.getLogger("Plugins").error(traceback.format_exc())
+            logging.getLogger("Plugins").error("Cannot load plugin %s." % module_name)
 
 def unload_plugin(plugin_name):
     "Given a plugin name, reloads and re-imports its code."
@@ -111,23 +98,15 @@ def unload_plugin(plugin_name):
 
 def load_plugin(plugin_name):
     # Reload the module, in case it was imported before
-    try:
-        reload(__import__("core.plugins.%s" % plugin_name, {}, {}, ["*"]))
-    except ImportError:
-        logger = ColouredLogger()
-        logger.warn("No such plugin: %s" % plugin_name)
+    reload(__import__("core.plugins.%s" % plugin_name, {}, {}, ["*"]))
+    load_plugins([plugin_name])
 
 def plugins_by_module_name(module_name):
     "Given a module name, returns the plugin classes in it."
-    debug=(True if "--debug" in sys.argv else False)
-    logger = ColouredLogger(debug)
     try:
         module = __import__("core.plugins.%s" % module_name, {}, {}, ["*"])
     except ImportError:
-        logger.warn("Unable to load plugin: %s" % module_name)
-    except Exception as a:
-        logger.warn("Unable to load plugin: %s" % module_name)
-        logger.error("%s" % a)
+        raise ValueError("Cannot load plugin %s." % module_name)
     else:
         for name, val in module.__dict__.items():
             if isinstance(val, type):
