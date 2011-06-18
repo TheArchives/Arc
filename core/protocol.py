@@ -74,7 +74,7 @@ class CoreServerProtocol(Protocol):
                 self.factory.logger.debug("Parsing data/players/%s.ini" % self.username)
         else: # If we have no file, copy it from the template
             self.factory.logger.debug("No player data file for %s found." % self.username)
-            self.factory.logger.info("Creating data file data/players/%s.ini using templace data/DEFAULT_TEMPLATE_PLAYERS.ini" % self.username)
+            self.factory.logger.info("Creating data file data/players/%s.ini using template data/DEFAULT_TEMPLATE_PLAYER.ini" % self.username)
             shutil.copy("data/DEFAULT_TEMPLATE_PLAYER.ini", "data/players/%s.ini" % self.username)
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
