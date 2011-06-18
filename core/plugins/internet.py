@@ -24,7 +24,6 @@ class InternetPlugin(ProtocolPlugin):
         "tweet": "commandTweet",
         "rec_url": "commandRec_url",
         "imagedraw": "commandImagedraw",
-        "google": "commandGoogle",
     }
 
     tuser = ""
@@ -346,18 +345,3 @@ class InternetPlugin(ProtocolPlugin):
                             self.client.total = 0
                         pass
                 do_step()
-
-    @config("category", "info")
-    def commandGoogle(self, parts, fromloc, overriderank):
-        "/google keyword - Guest\nGoogles the keyword."
-        if len(parts) < 1:
-            self.client.sendServerMessage("Please enter a string to google.")
-        d = defer.maybeDeferred(checkGoogle, parts[1:])
-        def handleResults(result):
-            if self.client.factory.usebitly:
-                c = bitly_api.Connection(self.client.factory.bitly_username, self.client.factory.bitly_apikey)
-                c.shorten(result)
-                self.client.sendServerMessage("Google result: %s" % c)
-            else:
-                self.client.sendSplitServerMessage("Google result: %s" % result)
-        d.addCallback(checkGoogle)

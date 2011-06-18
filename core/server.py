@@ -707,12 +707,7 @@ class CoreFactory(Factory):
                             self.irc_relay.sendServerMessage(message)
                     elif task == TASK_ADMINMESSAGE:
                         # Give all people the message
-                        try:
-                            id, text = data
-                        except Exception as a:
-                            self.logger.warn("Unable to send admin message %s" % data)
-                            self.logger.warn("Error: %s" % a)
-                        message = self.messagestrip(text)
+                        message = self.messagestrip(data)
                         for client in self.clients.values():
                             client.sendNormalMessage(COLOUR_YELLOW + message)
                         if self.irc_relay and world:
