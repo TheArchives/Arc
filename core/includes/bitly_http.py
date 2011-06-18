@@ -7,15 +7,13 @@ b) pycurl
 c) urllib2
 
 """
-
 try:
     import pycurl
     PYCURL = True
 except ImportError:
     PYCURL = False
     
-import urllib2
-import cStringIO
+import cStringIO, urllib2
 
 class DontRedirect(urllib2.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
