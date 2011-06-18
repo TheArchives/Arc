@@ -2,11 +2,13 @@ import cPickle, datetime, hashlib, logging, os, traceback
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
+from ConfigParser import RawConfigParser as ConfigParser
 
 from core.constants import *
 from core.decorators import *
 from core.irc_client import ChatBotFactory
 from core.plugins import protocol_plugins
+from core.logger import ColouredLogger
 
 class CoreServerProtocol(Protocol):
     """
@@ -16,7 +18,7 @@ class CoreServerProtocol(Protocol):
 
     def connectionMade(self):
         "We've got a TCP connection, let's set ourselves up."
-        self.logger = logging.getLogger("Client")
+        self.logger = ColouredLogger()
         # We use the buffer because TCP is a stream protocol :)
         self.buffer = ""
         self.loading_world = False
@@ -57,7 +59,39 @@ class CoreServerProtocol(Protocol):
         self.last_block_position = (-1, -1, -1)
         self.gone = 0
         self.frozen = False
+        self.dataReader = ConfigParser()
         self.resetIdleTimer()
+        
+    def loadData(self):
+        "Loads the player's data file"
+        if os.path.isfile("data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
+            try:
+                self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
+            except Exception as a: # If we can't read it, say that
+                self.logger.error("Unable to read player data for %s!" % self.username)
+                self.logger.error("Error: %s" % a)
+                self.logger.warn("Settings will not be saved.")
+                # Do whatever we do to make data not work transparently
+                return False # Return false to show it failed
+            else:
+                self.logger.info("Parsing data/players/%s.ini" % self.username)
+        else: # If we have no file, copy it from the template
+            self.logger.info("No player data file for %s found." % self.username)
+            self.logger.info("Creating data file data/players/%s.ini using templace data/players/DEFAULT_TEMPLATE.ini" % self.username)
+            os.copy("data/players/DEFAULT_TEMPLATE.ini", "data/players/%s.ini" % self.username)
+            try:
+                self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
+            except Exception as a: # If we can't read it, say that
+                self.logger.error("Unable to read player data for %s!" % self.username)
+                self.logger.error("Error: %s" % a)
+                self.logger.warn("Settings will not be saved.")
+                # Do whatever we do to make data not work transparently
+            return False # Return false to show it failed
+        # Parse it
+    
+    def saveData(self):
+        "Saves the player's data file"
+        pass
 
     def registerCommand(self, command, func):
         "Registers func as the handler for the command named 'command'."
