@@ -181,6 +181,10 @@ class CoreFactory(Factory):
                 self.blblimit["admin"] = self.ploptions_config.getint("blb", "admin")
                 self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
                 self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
+            self.usebitly = self.ploptions_config.getboolean("internet", "use_bitly")
+            if self.usebitly:
+                self.bitly_username = self.ploptions_config.getboolean("internet", "bitly_username")
+                self.bitly_apikey = self.ploptions_config.getboolean("internet", "bitly_password")
         except Exception as e:
             self.logger.error("Error parsing ploptions.conf (%s)" % e)
             sys.exit(1)

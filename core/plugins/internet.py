@@ -349,7 +349,6 @@ class InternetPlugin(ProtocolPlugin):
                         pass
                 do_step()
 
-    @config("disabled", True)
     @config("category", "info")
     def commandGoogle(self, parts, fromloc, overriderank):
         "/google keyword - Guest\nGoogles the keyword."
@@ -357,5 +356,10 @@ class InternetPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please enter a string to google.")
         d = defer.maybeDeferred(checkGoogle, parts[1:])
         def handleResults(result):
-            c = bitly_api.Connection(self.client.factory.bitly_username, self.client.factory.bitly_password)
+            if self.client.factory.usebitly:
+                c = bitly_api.Connection(self.client.factory.bitly_username, self.client.factory.bitly_password)
+                c.shorten(result)
+                self.client.sendServerMessage("Google result: %s" % c)
+            else:
+                self.client.sendSplitServerMessage("Google result: %s" % result)
         d.addCallback(checkGoogle)

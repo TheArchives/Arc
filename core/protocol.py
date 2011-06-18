@@ -25,7 +25,6 @@ class CoreServerProtocol(Protocol):
         self.commands = {}
         self.hooks = {}
         self.plugins = [plugin(self) for plugin in protocol_plugins]
-        self.ClientVars = dict()
         # Set identification variable to false
         self.identified = False
         # Get an ID for ourselves
@@ -60,7 +59,7 @@ class CoreServerProtocol(Protocol):
         self.dataReader = ConfigParser()
         self.data = {}
         self.resetIdleTimer()
-        
+
     def loadData(self):
         "Loads the player's data file"
         if os.path.isfile("data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
@@ -106,11 +105,11 @@ class CoreServerProtocol(Protocol):
             return False
         self.factory.logger.info("Parsed settings file for %s." % self.username)
         return True
-    
+
     def loadDataFallback(self):
         "Called when loading data fails. Prevents data saving and loads the default data values."
         self.factory.logger.warn("Settings will not be saved.")
-    
+
     def saveData(self):
         "Saves the player's data file"
         pass # Derpishly, this does nothing yet. Derp derp.
