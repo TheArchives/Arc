@@ -357,7 +357,7 @@ class InternetPlugin(ProtocolPlugin):
         d = defer.maybeDeferred(checkGoogle, parts[1:])
         def handleResults(result):
             if self.client.factory.usebitly:
-                c = bitly_api.Connection(self.client.factory.bitly_username, self.client.factory.bitly_password)
+                c = bitly_api.Connection(self.client.factory.bitly_username, self.client.factory.bitly_apikey)
                 c.shorten(result)
                 self.client.sendServerMessage("Google result: %s" % c)
             else:

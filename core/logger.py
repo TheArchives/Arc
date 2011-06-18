@@ -120,14 +120,14 @@ class ColouredLogger(logging.Logger):
     def info(self, data):
         "INFO level output"
         atime = time.strftime("%d %b (%H:%M:%S)")
-        status = " -   &2INFO&f   - "
+        status = " - &2INFO&f - "
         done = "&f" + atime + status + data
         self.stdout(done)
 
     def warn(self, data):
         "WARN level output"
         atime = time.strftime("%d %b (%H:%M:%S)")
-        status = " -   &eWARN&f   - "
+        status = " - &eWARN&f - "
         done = "&f" + atime + status + data
         self.stderr(done)
 
@@ -136,7 +136,7 @@ class ColouredLogger(logging.Logger):
     def error(self, data):
         "ERROR level output"
         atime = time.strftime("%d %b (%H:%M:%S)")
-        status = " -   &cERROR&f  - "
+        status = " - &cERROR&f - "
         done = "&f" + atime + status + data
         self.stdout(done)
 
@@ -151,6 +151,6 @@ class ColouredLogger(logging.Logger):
         "DEBUG level output"
         if self.debugswitch:
             atime = time.strftime("%d %b (%H:%M:%S)")
-            status = " -   &9DEBUG &f - "
+            status = " - &9DEBUG &f - "
             done = "&f" + atime + status + data
             self.stdout(done)
