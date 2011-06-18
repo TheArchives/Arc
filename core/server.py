@@ -22,7 +22,7 @@ class CoreFactory(Factory):
     protocol = CoreServerProtocol
 
     def __init__(self, debug=False):
-        self.logger = ColouredLogger(debug=debug)
+        self.logger = ColouredLogger(debug=True)
         # Initialise internal datastructures
         self.worlds = {}
         self.owners = set()
