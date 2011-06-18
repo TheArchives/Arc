@@ -3,7 +3,7 @@ import traceback, sys
 from core.logger import ColouredLogger
 
 debug=(True if "--debug" in sys.argv else False)
-ColouredLogger(debug).debug("Imported plugins.")
+ColouredLogger(debug).debug("Imported plugins/ folder.")
 
 protocol_plugins = []
 server_plugins = []
