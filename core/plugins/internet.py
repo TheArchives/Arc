@@ -6,7 +6,7 @@ except ImportError:
     print ("Failed to load PIL, imagedraw is now disabled")
     noimagedraw = True
 
-from twisted.internet import defer, reactor, thread
+from twisted.internet import defer, reactor
 from twisted.web.google import *
 from core.includes import bitly_api
 
