@@ -116,8 +116,6 @@ def load_plugin(plugin_name):
     except ImportError:
         logger = ColouredLogger()
         logger.warn("No such plugin: %s" % plugin_name)
-    else:
-        load_plugins([plugin_name])
 
 def plugins_by_module_name(module_name):
     "Given a module name, returns the plugin classes in it."
