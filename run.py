@@ -56,7 +56,7 @@ logger = logging.getLogger("iCraft")
 '''
 logger.info("Now starting up iCraft+ 1G version %s..." % VERSION)
 
-factory = CoreFactory()
+factory = CoreFactory(debug=(True if "--debug" in sys.argv else False))
 try:
     factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
     reactor.listenTCP(30000, factory)

@@ -21,8 +21,8 @@ class CoreFactory(Factory):
     """
     protocol = CoreServerProtocol
 
-    def __init__(self):
-        self.logger = ColouredLogger(level=(("--debug" in sys.argv) and logging.DEBUG or logging.INFO))
+    def __init__(self, debug=False):
+        self.logger = ColouredLogger(debug=debug))
         # Initialise internal datastructures
         self.worlds = {}
         self.owners = set()
