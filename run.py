@@ -24,7 +24,6 @@ except Exception as a:
     logger.warn("Unable to import colorama: %s" % a)
     logger.warn("Console colours DISABLED.")
 
-
 makefile("logs/")
 makefile("logs/console/")
 makefile("logs/console/console.log")

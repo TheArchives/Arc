@@ -1,4 +1,4 @@
-import datetime, gc, os, random, re, shutil, sys, time, traceback
+import datetime, gc, logging, os, random, re, shutil, sys, time, traceback
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
@@ -20,70 +20,9 @@ class CoreFactory(Factory):
     Factory that deals with the general world actions and cross-user comms.
     """
     protocol = CoreServerProtocol
-    
-    def reloadIrcBot(self):
-        if (self.irc_relay):
-            try:
-                self.irc_relay.quit("Reloading the IRC Bot...")
-                global ChatBotFactory
-                del ChatBotFactory
-                from core.irc_client import ChatBotFactory
-                if self.ircbot and self.use_irc:
-                    self.irc_nick = self.irc_config.get("irc", "nick")
-                    self.irc_pass = self.irc_config.get("irc", "password")
-                    self.irc_channel = self.irc_config.get("irc", "channel")
-                    self.irc_cmdlogs = self.irc_config.getboolean("irc", "cmdlogs")
-                    self.ircbot = self.irc_config.getboolean("irc", "ircbot")
-                    self.staffchat = self.irc_config.getboolean("irc", "staffchat")
-                    self.irc_relay = ChatBotFactory(self)
-                    if self.ircbot and not (self.irc_channel == "#icraft" or self.irc_channel == "#channel") and not self.irc_nick == "botname":
-                        reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
-                    else:
-                        self.logger.error("IRC Bot failed to connect, you could modify, rename or remove irc.conf")
-                        self.logger.error("You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
-                    return True
-            except:
-                return False
-        return False
-
-    def reloadConfig(self):
-        try:
-            # TODO: Figure out which of these would work dynamically, otherwise delete them from this area.
-            self.duplicate_logins = self.options_config.getboolean("options", "duplicate_logins")
-            self.info_url = self.options_config.get("options", "info_url")
-            self.away_kick = self.options_config.getboolean("options", "away_kick")
-            self.away_time = self.options_config.getint("options", "away_time")
-            self.colors = self.options_config.getboolean("options", "colors")
-            self.physics_limit = self.options_config.getint("worlds", "physics_limit")
-            self.default_backup = self.options_config.get("worlds", "default_backup")
-            self.asd_delay = self.options_config.getint("worlds", "asd_delay")
-            self.gchat = self.options_config.getboolean("worlds", "gchat")
-            self.grief_blocks = self.ploptions_config.getint("antigrief", "blocks")
-            self.grief_time = self.ploptions_config.getint("antigrief", "time")
-            self.backup_freq = self.ploptions_config.getint("backups", "backup_freq")
-            self.backup_default = self.ploptions_config.getboolean("backups", "backup_default")
-            self.backup_max = self.ploptions_config.getint("backups", "backup_max")
-            self.backup_auto = self.ploptions_config.getboolean("backups", "backup_auto")
-            self.enable_archives = self.ploptions_config.getboolean("archiver", "enable_archiver")
-            self.currency = self.ploptions_config.get("bank", "currency")
-            self.useblblimit = self.ploptions_config.getboolean("blb", "use_blb_limiter")
-            if self.useblblimit:
-                self.blblimit = {}
-                self.blblimit["player"] = self.ploptions_config.getint("blb", "player")
-                self.blblimit["builder"] = self.ploptions_config.getint("blb", "builder")
-                self.blblimit["op"] = self.ploptions_config.getint("blb", "op")
-                self.blblimit["worldowner"] = self.ploptions_config.getint("blb", "worldowner")
-                self.blblimit["helper"] = self.ploptions_config.getint("blb", "helper")
-                self.blblimit["mod"] = self.ploptions_config.getint("blb", "mod")
-                self.blblimit["admin"] = self.ploptions_config.getint("blb", "admin")
-                self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
-                self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
-            if self.backup_auto:
-                reactor.callLater(float(self.backup_freq * 60),self.AutoBackup)
-        except:
-            return False
 
     def __init__(self):
+        self.logger = ColouredLogger(level=(("--debug" in sys.argv) and logging.DEBUG or logging.INFO))
         # Initialise internal datastructures
         self.worlds = {}
         self.owners = set()
@@ -96,7 +35,6 @@ class CoreFactory(Factory):
         self.banned = {}
         self.ipbanned = {}
         self.lastseen = {}
-        self.logger = ColouredLogger()
         self.specs = ConfigParser()
         self.last_heartbeat = time.time()
         self.config = ConfigParser()
@@ -322,7 +260,7 @@ class CoreFactory(Factory):
         if config.has_section("silenced"):
             for name in config.options("silenced"):
                 self.silenced.add(name)
-        # Read in the spectators 
+        # Read in the spectators
         if specs.has_section("spectators"):
             for name in specs.options("spectators"):
                 self.spectators.add(name)
@@ -931,8 +869,8 @@ class CoreFactory(Factory):
         for x in self.filter:
             rep = re.compile(x[0], re.IGNORECASE)
             message = rep.sub(x[1], message)
-        return message   
-    
+        return message
+
     def loadArchives(self):
         self.archives = {}
         for name in os.listdir("core/archives/"):
@@ -951,3 +889,65 @@ class CoreFactory(Factory):
                         self.archives[name][when] = "%s/%s" % (name, subfilename)
         self.logger.info("Loaded %s discrete archives." % len(self.archives))
         reactor.callLater(300, self.loadArchives)
+
+    def reloadIrcBot(self):
+        if (self.irc_relay):
+            try:
+                self.irc_relay.quit("Reloading the IRC Bot...")
+                global ChatBotFactory
+                del ChatBotFactory
+                from core.irc_client import ChatBotFactory
+                if self.ircbot and self.use_irc:
+                    self.irc_nick = self.irc_config.get("irc", "nick")
+                    self.irc_pass = self.irc_config.get("irc", "password")
+                    self.irc_channel = self.irc_config.get("irc", "channel")
+                    self.irc_cmdlogs = self.irc_config.getboolean("irc", "cmdlogs")
+                    self.ircbot = self.irc_config.getboolean("irc", "ircbot")
+                    self.staffchat = self.irc_config.getboolean("irc", "staffchat")
+                    self.irc_relay = ChatBotFactory(self)
+                    if self.ircbot and not (self.irc_channel == "#icraft" or self.irc_channel == "#channel") and not self.irc_nick == "botname":
+                        reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
+                    else:
+                        self.logger.error("IRC Bot failed to connect, you could modify, rename or remove irc.conf")
+                        self.logger.error("You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
+                    return True
+            except:
+                return False
+        return False
+
+    def reloadConfig(self):
+        try:
+            # TODO: Figure out which of these would work dynamically, otherwise delete them from this area.
+            self.duplicate_logins = self.options_config.getboolean("options", "duplicate_logins")
+            self.info_url = self.options_config.get("options", "info_url")
+            self.away_kick = self.options_config.getboolean("options", "away_kick")
+            self.away_time = self.options_config.getint("options", "away_time")
+            self.colors = self.options_config.getboolean("options", "colors")
+            self.physics_limit = self.options_config.getint("worlds", "physics_limit")
+            self.default_backup = self.options_config.get("worlds", "default_backup")
+            self.asd_delay = self.options_config.getint("worlds", "asd_delay")
+            self.gchat = self.options_config.getboolean("worlds", "gchat")
+            self.grief_blocks = self.ploptions_config.getint("antigrief", "blocks")
+            self.grief_time = self.ploptions_config.getint("antigrief", "time")
+            self.backup_freq = self.ploptions_config.getint("backups", "backup_freq")
+            self.backup_default = self.ploptions_config.getboolean("backups", "backup_default")
+            self.backup_max = self.ploptions_config.getint("backups", "backup_max")
+            self.backup_auto = self.ploptions_config.getboolean("backups", "backup_auto")
+            self.enable_archives = self.ploptions_config.getboolean("archiver", "enable_archiver")
+            self.currency = self.ploptions_config.get("bank", "currency")
+            self.useblblimit = self.ploptions_config.getboolean("blb", "use_blb_limiter")
+            if self.useblblimit:
+                self.blblimit = {}
+                self.blblimit["player"] = self.ploptions_config.getint("blb", "player")
+                self.blblimit["builder"] = self.ploptions_config.getint("blb", "builder")
+                self.blblimit["op"] = self.ploptions_config.getint("blb", "op")
+                self.blblimit["worldowner"] = self.ploptions_config.getint("blb", "worldowner")
+                self.blblimit["helper"] = self.ploptions_config.getint("blb", "helper")
+                self.blblimit["mod"] = self.ploptions_config.getint("blb", "mod")
+                self.blblimit["admin"] = self.ploptions_config.getint("blb", "admin")
+                self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
+                self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
+            if self.backup_auto:
+                reactor.callLater(float(self.backup_freq * 60),self.AutoBackup)
+        except:
+            return False
