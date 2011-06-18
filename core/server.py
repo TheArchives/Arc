@@ -174,7 +174,9 @@ class CoreFactory(Factory):
             print ("Error parsing plugins.conf: %s" % e)
             sys.exit(1)
         self.logger.info("Loading plugins...")
-        load_plugins(plugins)
+        for element in plugins:
+            load_plugin(element)
+        #load_plugins(plugins)
         # Open the chat log, ready for appending
         self.chatlog = open("logs/server.log", "a")
         self.chatlog = open("logs/chat.log", "a")

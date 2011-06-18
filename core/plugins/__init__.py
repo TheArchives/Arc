@@ -18,14 +18,14 @@ class PluginMetaclass(type):
         # Supercall
         new_cls = type.__new__(cls, name, bases, dct)
         debug = (True if "--debug" in sys.argv else False)
-        self.logger = ColouredLogger(debug)
+        logger = ColouredLogger(debug)
         # Register!
         if bases != (object,):
             if ProtocolPlugin in bases:
-                self.logger.debug("Loaded protocol plugin: %s" % name)
+                logger.debug("Loaded protocol plugin: %s" % name)
                 protocol_plugins.append(new_cls)
             elif ServerPlugin in bases:
-                self.logger.debug("Loaded server plugin: %s" % name)
+                logger.debug("Loaded server plugin: %s" % name)
                 server_plugins.append(new_cls)
             else:
                 self.logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
@@ -51,7 +51,8 @@ class ProtocolPlugin(object):
     __metaclass__ = PluginMetaclass
 
     def __init__(self, client):
-        self.logger = client.logger
+        debug = (True if "--debug" in sys.argv else False)
+        self.logger = ColouredLogger(debug)
         # Store the client
         self.client = client
         # Register our commands
@@ -130,7 +131,6 @@ def plugins_by_module_name(module_name):
         logger.warn("Unable to load plugin: %s" % module_name)
         logger.error("%s" % a)
     else:
-        logger.debug("Loaded plugin: %s" % module_name)
         for name, val in module.__dict__.items():
             if isinstance(val, type):
                 if issubclass(val, ProtocolPlugin) and val is not ProtocolPlugin:
