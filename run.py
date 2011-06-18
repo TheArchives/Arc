@@ -17,6 +17,7 @@ try:
     from colorama import init
     init()
     logger.stdout("&f")
+    logger.debug("&fIf you see this, debug mode is &eon&f!")
     logger.info("&fColorama &ainstalled&f - Console colours &cENABLED&f.")
 except ImportError:
     logger.warn("Colorama is not installed - console colours DISABLED.")
