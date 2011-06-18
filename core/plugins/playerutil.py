@@ -9,18 +9,6 @@ from core.timer import ResettableTimer
 class PlayerUtilPlugin(ProtocolPlugin):
 
     commands = {
-        "say": "commandSay",
-        "msg": "commandSay",
-        "me": "commandMe",
-        "away": "commandAway",
-        "afk": "commandAway",
-        "brb": "commandAway",
-        "back": "commandBack",
-        "slap": "commandSlap",
-        "kill": "commandKill",
-        "smack": "commandSmack",
-        "roll": "commandRoll",
-
         "rank": "commandRank",
         "setrank": "commandRank",
         "derank": "commandDeRank",
@@ -49,12 +37,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "bring": "commandFetch",
         "invite": "commandInvite",
 
-        "rainbow": "commandRainbow",
-        "fabulous": "commandRainbow",
-        "fab": "commandRainbow",
-        "mefab": "commandMeRainbow",
-        "merainbow": "commandMeRainbow",
-
         "fly": "commandFly",
 
         "coord": "commandCoord",
@@ -69,9 +51,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "locate": "commandLocate",
         "find": "commandLocate",
         "lastseen": "commandLastseen",
-
-        "count": "commandCount",
-        "countdown": "commandCount",
 
         "mute": "commandMute",
         "unmute": "commandUnmute",
@@ -208,130 +187,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
             self.client.sendPlainWorldMessage("&7GET READY: &e1")
         elif not int(self.num)-int(count) == 0:
             self.client.sendPlainWorldMessage("&7COUNTDOWN: &c%s" %(int(self.num)-int(count)))
-
-    @config("category", "player")
-    def commandBack(self, parts, fromloc, overriderank):
-        "/back - Guest\nPrints out message of you coming back."
-        if fromloc == "user":
-            if len(parts) != 1:
-                self.client.sendServerMessage("This command doesn't need arguments")
-            else:
-                if self.client.isSilenced():
-                    self.client.sendServerMessage("Cat got your tongue?")
-                else:
-                    self.client.factory.queue.put((self.client, TASK_AWAYMESSAGE, self.client.username + " is now: Back."))
-                self.client.gone = 0
-                self.client.resetIdleTimer()
-
-    @config("category", "player")
-    def commandAway(self, parts, fromloc, overriderank):
-        "/away reason - Guest\nAliases: afk, brb\nPrints out message of you going away."
-        if fromloc == "user":
-            if len(parts) == 1:
-                if self.client.isSilenced():
-                    self.client.sendServerMessage("Cat got your tongue?")
-                else:
-                    self.client.factory.queue.put((self.client, TASK_AWAYMESSAGE, self.client.username + " has gone: Away."))
-            else:
-                if self.client.isSilenced():
-                    self.client.sendServerMessage("Cat got your tongue?")
-                else:
-                    self.client.factory.queue.put((self.client, TASK_AWAYMESSAGE, self.client.username + " has gone: Away "+(" ".join(parts[1:]))))
-            self.client.gone = 1
-            self.client.resetIdleTimer()
-
-    @config("category", "player")
-    def commandMe(self, parts, fromloc, overriderank):
-        "/me action - Guest\nPrints 'username action'"
-        if fromloc == "user":
-            if len(parts) == 1:
-                self.client.sendServerMessage("Please type an action.")
-            else:
-                if self.client.isSilenced():
-                    self.client.sendServerMessage("Cat got your tongue?")
-                else:
-                    self.client.factory.queue.put((self.client, TASK_ACTION, (self.client.id, self.client.userColour(), self.client.username, " ".join(parts[1:]))))
-
-    @config("rank", "mod")
-    def commandSay(self, parts, fromloc, overriderank):
-        "/say message - Mod\nAliases: msg\nPrints out message in the server color."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Please type a message.")
-        else:
-            self.client.factory.queue.put((self.client, TASK_SERVERMESSAGE, ("02[MSG] "+(" ".join(parts[1:])))))
-
-    @config("category", "player")
-    def commandSlap(self, parts, fromloc, overriderank):
-        "/slap username [with object] - Guest\nSlap username [with object]."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Enter the name for the slappee")
-        else:
-            stage = 0
-            name = ''
-            object = ''
-        for i in range(1, len(parts)):
-            if parts[i] == "with":
-                stage = 1
-                continue
-            if stage == 0 :
-                name += parts[i]
-                if (i+1 != len(parts) ) :
-                    if ( parts[i+1] != "with" ) : name += " "
-            else:
-                object += parts[i]
-                if ( i != len(parts) - 1 ) : object += " "
-        else:
-            if stage == 1:
-                self.client.sendWorldMessage("* "+COLOUR_PURPLE+"%s slapped %s with %s!" % (self.client.username, name, object))
-                if self.client.factory.irc_relay:
-                    self.client.factory.irc_relay.sendServerMessage("%s slapped %s with %s!" % (self.client.username, name, object))
-            else:
-                self.client.sendWorldMessage("* "+COLOUR_PURPLE+"%s slapped %s with a giant smelly trout!" % (self.client.username, name))
-                if self.client.factory.irc_relay:
-                    self.client.factory.irc_relay.sendServerMessage("* %s slapped %s with a giant smelly trout!" % (self.client.username, name))
-
-    @config("rank", "mod")
-    @username_command
-    def commandKill(self, user, fromloc, overriderank, params=[]):
-        "/kill username [reason] - Mod\nKills the user for reason (optional)"
-        killer = self.client.username
-        if user.isMod():
-            self.client.sendServerMessgae("You can't kill staff!")
-        else:
-            user.teleportTo(user.world.spawn[0], user.world.spawn[1], user.world.spawn[2], user.world.spawn[3])
-            user.sendServerMessage("You have been killed by %s." % self.client.username)
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been killed by %s." % (user.username, killer)))
-            if params:
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
-
-    @config("rank", "mod")
-    @only_username_command
-    def commandSmack(self, username, fromloc, overriderank, params=[]):
-        "/smack username [reason] - Mod\Smacks the user for reason (optional)"
-        smacker = self.client.username
-        if user.isMod():
-            self.client.sendServerMessgae("You can't smack staff!")
-        else:
-            if user.world == "default":
-                user.teleportTo(self.factory.worlds["default"].spawn[0], self.factory.worlds["default"].spawn[1], self.factory.worlds["default"].spawn[2])
-            else:
-                user.changeToWorld("default")
-            user.sendServerMessage("You have been smacked by %s." % self.client.username)
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been smacked by %s." % (user.username, smacker)))
-            if params:
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
-
-    def commandRoll(self, parts, fromloc, overriderank):
-        "/roll max - Guest\nRolls a random number from 1 to max. Announces to world."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Please enter a number as the maximum roll.")
-        else:
-            try:
-                roll = int(cmath.floor((random.random()*(int(parts[1]) - 1) + 1)))
-            except ValueError:
-                self.client.sendServerMessage("Please enter an integer as the maximum roll.")
-            else:
-                self.client.sendWorldMessage("%s rolled a %s" % (self.client.username, roll))
 
     @config("category", "player")
     @config("rank", "mod")
@@ -637,28 +492,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("On %s ago" % desc)
                 if user in bank:
                     self.client.sendServerMessage("Balance: M%s" % bank[user])
-
-    @config("rank", "op")
-    def commandCount(self, parts, fromloc, overriderank):
-        "/count [number] - Op\nAliases: countdown\nCounts down from 3 or from number given (up to 15)"
-        if self.num != 0:
-            self.client.sendServerMessage("You can only have one count at a time!")
-            return
-        if len(parts) > 1:
-            try:
-                self.num = int(parts[1])
-            except ValueError:
-                self.client.sendServerMessage("Number must be an integer!")
-                return
-        else:
-            self.num = 3
-        if self.num > 15:
-            self.client.sendServerMessage("You can't count from higher than 15!")
-            self.num = 0
-            return
-        counttimer = ResettableTimer(self.num, 1, self.sendgo, self.sendcount)
-        self.client.sendPlainWorldMessage("&7COUNTDOWN: &c%s" %self.num)
-        counttimer.start()
 
     @config("category", "player")
     @only_username_command
