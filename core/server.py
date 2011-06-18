@@ -662,7 +662,7 @@ class CoreFactory(Factory):
                         for client in self.clients.values():
                             client.sendMessage(*data)
                         id, colour, username, text = data
-                        self.logger.info("%s: %s" % (username, text))
+                        self.logger.info("%s%s&f: %s" % (colour, username, text))
                         self.chatlog.write("[%s] %s: %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), colour+username, text))
                         self.chatlog.flush()
                         if self.irc_relay and world:
@@ -686,7 +686,7 @@ class CoreFactory(Factory):
                         for client in self.clients.values():
                             client.sendAction(*data)
                         id, colour, username, text = data
-                        self.logger.info("* %s %s" % (username, text))
+                        self.logger.info("&d* %s %s" % (username, text))
                         self.chatlog.write("[%s] * %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), colour+username, text))
                         self.chatlog.flush()
                         if self.irc_relay and world:
@@ -695,26 +695,22 @@ class CoreFactory(Factory):
                     elif task is TASK_PLAYERCONNECT:
                         for client in self.usernames:
                             self.usernames[client].sendNewPlayer(*data)
-                            if self.username.lower() in INFO_VIPLIST and not self.isMod():
-                                self.usernames[client].sendNormalMessage(COLOUR_DARKRED+"iCraft Developer spotted;")
-                            self.usernames[client].sendServerMessage("%s has come online." % source_client.username)
+                            self.usernames[client].sendNormalMessage("%s%s&e has come online." % (source_client.userColour(), source_client.username))
                         if self.irc_relay and world:
-                            if self.username.lower() in INFO_VIPLIST and not self.isMod():
-                                self.irc_relay.sendServerMessage("04iCraft Developer spotted;")
                             self.irc_relay.sendServerMessage("07%s has come online." % source_client.username)
                     # Someone joined a world!
                     elif task is TASK_NEWPLAYER:
                         for client in world.clients:
                             if client != source_client:
                                 client.sendNewPlayer(*data)
-                            client.sendServerMessage("%s has joined the world." % source_client.username)
+                            client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
                     # Someone left!
                     elif task is TASK_PLAYERLEAVE:
                         # Only run it for clients who weren't the source.
                         for client in self.clients.values():
                             client.sendPlayerLeave(*data)
                             if not source_client.username is None:
-                                client.sendServerMessage("%s has gone offline." % source_client.username)
+                                client.sendNormalMessage("%s%s&e has gone offline." % (source_client.userColour(), source_client.username))
                             else:
                                 source_client.logger.warn("Pinged the server.")
                         if not source_client.username is None:
@@ -725,10 +721,10 @@ class CoreFactory(Factory):
                         # Only run it for clients who weren't the source.
                         for client in data[1].clients:
                             client.sendPlayerLeave(data[0])
-                            client.sendServerMessage("%s joined '%s'" % (source_client.username, world.id))
+                            client.sendNormalMessage("%s%s&e joined '%s'" % (source_client.userColour(), source_client.username, world.id))
                         if self.irc_relay and world:
                             self.irc_relay.sendServerMessage("07%s joined '%s'" % (source_client.username, world.id))
-                        self.logger.info("%s has now joined '%s'" % (source_client.username, world.id))
+                        self.logger.info("%s%s&f has now joined '%s'" % (source_client.userColour(), source_client.username, world.id))
                     elif task == TASK_STAFFMESSAGE:
                         # Give all staff the message :D
                         id, colour, username, text, IRC = data
@@ -738,7 +734,7 @@ class CoreFactory(Factory):
                                 client.sendMessage(100, COLOUR_YELLOW+"#"+colour, username, message, False, False)
                         if self.staffchat and self.irc_relay and len(data)>3:
                             self.irc_relay.sendServerMessage("#"+username+": "+text,True,username,IRC)
-                        self.logger.info("#"+username+": "+text)
+                        self.logger.info("#"+colour+username+"&f: "+text)
                         self.adlog = open("logs/server.log", "a")
                         self.adlog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] #"+username+": "+text+"\n")
                         self.adlog.flush()
@@ -775,7 +771,7 @@ class CoreFactory(Factory):
                         try:
                             id, text = data
                         except Exception as a:
-                            self.logger.warn("Unable to send server message %s" % data)
+                            self.logger.warn("Unable to send admin message %s" % data)
                             self.logger.warn("Error: %s" % a)
                         message = self.messagestrip(text)
                         for client in self.clients.values():

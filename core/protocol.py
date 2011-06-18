@@ -31,7 +31,7 @@ class CoreServerProtocol(Protocol):
         try:
             self.id = self.factory.claimId(self)
         except ServerFull:
-            self.sendError("This server is full from all of the users.")
+            self.sendError("The server is full.")
             return
         # Open the Whisper Log, Adminchat log and WorldChat Log
         self.whisperlog = open("logs/server.log", "a")
@@ -43,7 +43,7 @@ class CoreServerProtocol(Protocol):
         # Check for IP bans
         ip = self.transport.getPeer().host
         if self.factory.isIpBanned(ip):
-            self.sendError("You are Banned for: %s" % self.factory.ipBanReason(ip))
+            self.sendError("You are banned: %s" % self.factory.ipBanReason(ip))
             return
         self.factory.logger.debug("Assigned ID %i" % self.id)
         self.factory.joinWorld(self.factory.default_name, self)
@@ -71,9 +71,9 @@ class CoreServerProtocol(Protocol):
                 self.loadDataFallback()
                 return False # Return false to show it failed
             else:
-                self.factory.logger.info("Parsing data/players/%s.ini" % self.username)
+                self.factory.logger.debug("Parsing data/players/%s.ini" % self.username)
         else: # If we have no file, copy it from the template
-            self.factory.logger.info("No player data file for %s found." % self.username)
+            self.factory.logger.debug("No player data file for %s found." % self.username)
             self.factory.logger.info("Creating data file data/players/%s.ini using templace data/players/DEFAULT_TEMPLATE.ini" % self.username)
             shutil.copy("data/players/DEFAULT_TEMPLATE.ini", "data/players/%s.ini" % self.username)
             try:
@@ -103,7 +103,7 @@ class CoreServerProtocol(Protocol):
             self.factory.logger.error("Error: %s" % a)
             self.loadDataFallback()
             return False
-        self.factory.logger.info("Parsed settings file for %s." % self.username)
+        self.factory.logger.info("Parsed data file for %s." % self.username)
         return True
 
     def loadDataFallback(self):
@@ -121,6 +121,7 @@ class CoreServerProtocol(Protocol):
         # Warn if already registered
         if command in self.commands:
             self.factory.logger.warn("Command '%s' is already registered. Overriding." % command)
+            self.factory.logger.info("This means that the plugin containing %s has been loaded twice." % command)
         # Register
         self.commands[command] = func
 
@@ -292,6 +293,7 @@ class CoreServerProtocol(Protocol):
             return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or self.isWorldOwner() or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
 
     def dataReceived(self, data):
+        "Called when data is received over the socket."
         # First, add the data we got onto our internal buffer
         self.buffer += data
         # While there's still data there...
@@ -330,7 +332,7 @@ class CoreServerProtocol(Protocol):
                 self.identified = True
                 # Are they banned?
                 if self.factory.isBanned(self.username):
-                    self.sendError("You are Banned for: %s" % self.factory.banReason(self.username))
+                    self.sendError("You are banned: %s" % self.factory.banReason(self.username))
                     return
                 # OK, see if there's anyone else with that username
                 if not self.factory.duplicate_logins and self.username.lower() in self.factory.usernames:
@@ -352,11 +354,10 @@ class CoreServerProtocol(Protocol):
                 # Then... stuff
                 for client in self.factory.usernames.values():
                     if self.username.lower() in INFO_VIPLIST and not self.isMod():
-                        client.sendNormalMessage(COLOUR_DARKRED+"iCraft Developer spotted;")
+                        self.factory.logger.info(COLOUR_DARKRED+"iCraft Developer spotted;")
+                        self.factory.logger.info("(This has been removed)")
                     client.sendServerMessage("%s has come online." % self.username)
                 if self.factory.irc_relay:
-                    if self.username.lower() in INFO_VIPLIST and not self.isMod():
-                        self.factory.irc_relay.sendServerMessage("04iCraft Developer spotted;")
                     self.factory.irc_relay.sendServerMessage("07%s has come online." % self.username)
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
@@ -383,7 +384,7 @@ class CoreServerProtocol(Protocol):
                 # If we're read-only, reverse the change
                     if self.isSpectator():
                         self.sendBlock(x, y, z)
-                        self.sendServerMessage("Specs cannot edit worlds.")
+                        self.sendServerMessage("Spectators cannot edit worlds.")
                         return
                     allowbuild = self.runHook("blockclick", x, y, z, block, "user")
                     if allowbuild is False:
@@ -392,7 +393,7 @@ class CoreServerProtocol(Protocol):
                     elif not self.AllowedToBuild(x, y, z):
                         self.sendBlock(x, y, z)
                         return
-                    # This try prevents out-of-range errors on the world storage
+                    # This tries to prevent out-of-range errors on the blockstore
                     # Track if we need to send back the block change
                     overridden = False
                     selected_block = block
@@ -626,7 +627,7 @@ class CoreServerProtocol(Protocol):
                             self.sendServerMessage("Please include a message to send.")
                         else:
                             self.sendWorldMessage ("!"+self.userColour()+self.usertitlename+":"+COLOUR_WHITE+" "+text)
-                            self.factory.logger.info("!"+self.usertitlename+" in "+str(self.world.id)+": "+text)
+                            self.factory.logger.info("!"+self.userColour()+self.usertitlename+"&f in &c"+str(self.world.id)+"&f: "+text)
                             self.wclog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] !"+self.usertitlename+" in "+str(self.world.id)+": "+text+"\n")
                             self.wclog.flush()
                             if self.factory.irc_relay:
