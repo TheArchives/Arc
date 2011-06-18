@@ -11,7 +11,8 @@ from core.globals import *
 from core.logger import ColouredLogger
 from core.server import CoreFactory
 
-logger = ColouredLogger()
+debug=(True if "--debug" in sys.argv else False)
+logger = ColouredLogger(false)
 
 try:
     from colorama import init
@@ -55,8 +56,7 @@ logging.root.addHandler(rotate)
 logger = logging.getLogger("iCraft")
 '''
 logger.info("Now starting up iCraft+ 1G version %s..." % VERSION)
-
-factory = CoreFactory(debug=(True if "--debug" in sys.argv else False))
+factory = CoreFactory(debug)
 try:
     factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
     reactor.listenTCP(30000, factory)

@@ -43,7 +43,7 @@ class ColouredLogger(logging.Logger):
 
     nocol = cols
 
-    def __init__(self, level=logging.INFO, debug=False):
+    def __init__(self, debug=False, level=logging.INFO):
         "Constructor, set everything up"
         self.debugswitch = debug
         self.logfile = open("logs/console/console.log", "a")
