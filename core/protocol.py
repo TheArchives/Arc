@@ -2,12 +2,12 @@ import cPickle, datetime, hashlib, logging, os, traceback, shutil
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
-from ConfigParser import RawConfigParser as ConfigParser
 
 from core.constants import *
 from core.decorators import *
 from core.irc_client import ChatBotFactory
 from core.plugins import protocol_plugins
+from core.playerdata import playerData
 
 class CoreServerProtocol(Protocol):
     """
@@ -22,8 +22,8 @@ class CoreServerProtocol(Protocol):
         self.loading_world = False
         # Load plugins for ourselves
         self.identified = False
-        self.commands = {}
         self.hooks = {}
+        self.commands = {}
         self.plugins = [plugin(self) for plugin in protocol_plugins]
         # Set identification variable to false
         self.identified = False
@@ -56,63 +56,7 @@ class CoreServerProtocol(Protocol):
         self.last_block_position = (-1, -1, -1)
         self.gone = 0
         self.frozen = False
-        self.dataReader = ConfigParser()
-        self.data = {}
         self.resetIdleTimer()
-
-    def loadData(self):
-        "Loads the player's data file"
-        if os.path.isfile("data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
-            try:
-                self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
-            except Exception as a: # If we can't read it, say that
-                self.factory.logger.error("Unable to read player data for %s!" % self.username)
-                self.factory.logger.error("Error: %s" % a)
-                self.loadDataFallback()
-                return False # Return false to show it failed
-            else:
-                self.factory.logger.debug("Parsing data/players/%s.ini" % self.username)
-        else: # If we have no file, copy it from the template
-            self.factory.logger.debug("No player data file for %s found." % self.username)
-            self.factory.logger.info("Creating data file data/players/%s.ini using template data/DEFAULT_TEMPLATE_PLAYER.ini" % self.username)
-            shutil.copy("data/DEFAULT_TEMPLATE_PLAYER.ini", "data/players/%s.ini" % self.username)
-            try:
-                self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
-            except Exception as a: # If we can't read it, say that
-                self.factory.logger.error("Unable to read player data for %s!" % self.username)
-                self.factory.logger.error("Error: %s" % a)
-                self.loadDataFallback()
-            return False # Return false to show it failed
-        try:
-            sections = self.dataReader.options("sections")
-        except Exception as a:
-            self.factory.logger.error("Unable to read section header for /data/players/%s.ini!" % self.username)
-            self.factory.logger.error("Error: %s" % a)
-            self.loadDataFallback()
-            return False
-        try:
-            for element in sections:
-                data = self.dataReader.items(element) # This gives us name, value pairs for the secion
-                self.data[element] = {}
-                for part in data:
-                    name, value = part
-                    self.data[element][name] = value
-            self.factory.logger.debug(str(self.data)) # DEBUG!!
-        except Exception as a:
-            self.factory.logger.error("Unable to read player data for %s!" % self.username)
-            self.factory.logger.error("Error: %s" % a)
-            self.loadDataFallback()
-            return False
-        self.factory.logger.info("Parsed data file for %s." % self.username)
-        return True
-
-    def loadDataFallback(self):
-        "Called when loading data fails. Prevents data saving and loads the default data values."
-        self.factory.logger.warn("Settings will not be saved.")
-
-    def saveData(self):
-        "Saves the player's data file"
-        pass # Derpishly, this does nothing yet. Derp derp.
 
     def registerCommand(self, command, func):
         "Registers func as the handler for the command named 'command'."
@@ -362,7 +306,7 @@ class CoreServerProtocol(Protocol):
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
                 self.resetIdleTimer()
-                self.loadData() # Load player data
+                self.data = playerData(self) # Create a player data object
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if block == 255:
