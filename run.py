@@ -33,8 +33,7 @@ def doExit():
     raw_input("\nPlease press enter to exit.")
 
 def main():  
-    debug = (True if "--debug" in sys.argv else False)
-    logger = ColouredLogger(debug)
+    global logger
 
     makefile("logs/")
     makefile("logs/console/")
