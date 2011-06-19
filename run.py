@@ -5,29 +5,36 @@ import datetime, logging, sys, time, traceback
 from twisted.internet import reactor
 from twisted.internet.error import CannotListenError
 
+from core.logger import ColouredLogger
+
+debug = (True if "--debug" in sys.argv else False)
+logger = ColouredLogger(debug)
+
+try:
+    from colorama import init
+    init()
+    logger.stdout("&f")
+    logger.debug("&fIf you see this, debug mode is &eon&f!")
+    logger.info("&fColorama &ainstalled&f - Console colours &cENABLED&f.")
+except ImportError:
+    logger.warn("Colorama is not installed - console colours DISABLED.")
+except Exception as e:
+    logger.warn("Unable to import colorama: %s" % e)
+    logger.warn("Console colours DISABLED.")
+
 from core.controller import ControllerFactory
 from core.constants import *
 from core.globals import *
-from core.logger import ColouredLogger
 from core.server import CoreFactory
+
+
 
 def doExit():
     raw_input("\nPlease press enter to exit.")
 
-def main():
+def main():  
     debug = (True if "--debug" in sys.argv else False)
     logger = ColouredLogger(debug)
-    try:
-        from colorama import init
-        init()
-        logger.stdout("&f")
-        logger.debug("&fIf you see this, debug mode is &eon&f!")
-        logger.info("&fColorama &ainstalled&f - Console colours &cENABLED&f.")
-    except ImportError:
-        logger.warn("Colorama is not installed - console colours DISABLED.")
-    except Exception as e:
-        logger.warn("Unable to import colorama: %s" % e)
-        logger.warn("Console colours DISABLED.")
 
     makefile("logs/")
     makefile("logs/console/")
