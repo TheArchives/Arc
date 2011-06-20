@@ -1,5 +1,4 @@
 import os, shutil
-
 from ConfigParser import RawConfigParser as ConfigParser
 
 class playerData():
@@ -15,11 +14,11 @@ class playerData():
         success = self.loadData()
         if not success:
             self.loadDataFallback() # If it failed, fall back.
-    
+
     @property
     def username(self):
         return self.client.username
-        
+
     def loadData(self):
         "Loads the player's data file"
         if os.path.isfile("data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
@@ -63,11 +62,11 @@ class playerData():
             return False
         self.logger.info("Parsed data file for %s." % self.username)
         return True
-    
+
     def loadDataFallback(self):
         "Called when loading data fails. Prevents data saving and loads the default data values."
         self.factory.logger.warn("Settings will not be saved.")
-    
+
     def saveData(self):
         "Saves the player's data file"
         pass # Derpishly, this does nothing yet. Derp derp.

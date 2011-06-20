@@ -72,7 +72,7 @@ class PortalPlugin(ProtocolPlugin):
                             self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
                     else:
                         if (rx, ry, rz) != self.last_block_position:
-                            self.client.sendServerMessage("You're WorldBanned from '%s'; so you're not allowed in." % world_id)
+                            self.client.sendServerMessage("You're WorldBanned from '%s'; you're not allowed in." % world_id)
                 else:
                     if world == self.client.world:
                         self.client.teleportTo(tx, ty, tz, th)
@@ -111,21 +111,13 @@ class PortalPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("r must be between 0 and 255.")
                     return
                 self.portal_dest = parts[1], x, y, z, h
-                self.client.sendServerMessage("/pend to stop")
+                self.client.sendServerMessage("You are now placing portal blocks. /pend to stop")
     
     @config("rank", "op")
     def commandPortalhere(self, parts, fromloc, overriderank):
-        "/phere [off] - Op\nEnables Portal creation mode, to here."
-        if len(parts) > 1:
-            if parts[1].lower() == "off":
-                self.portal_dest = None
-                self.portal_remove = False
-                self.client.sendServerMessage("You are no longer placing Portal blocks.")
-            else:
-                self.client.sendServerMessage("To turn off portal creation mode specify 'off'.")
-        else:
-            self.portal_dest = self.client.world.id, self.client.x>>5, self.client.y>>5, self.client.z>>5, self.client.h
-            self.client.sendServerMessage("/pend to stop")
+        "/phere - Op\nEnables Portal creation mode, to here."
+        self.portal_dest = self.client.world.id, self.client.x>>5, self.client.y>>5, self.client.z>>5, self.client.h
+        self.client.sendServerMessage("You are now placing portal blocks to here. /pend to stop")
     
     @config("rank", "op")
     def commandPortalend(self, parts, fromloc, overriderank):
@@ -144,16 +136,13 @@ class PortalPlugin(ProtocolPlugin):
 
     @config("rank", "op")
     def commandPortaldel(self, parts, fromloc, overriderank):
-        "/pdel [off|all] - Op\nAliases: deltp, pclear\nEnables Portal deletion mode"
+        "/pdel [all] - Op\nAliases: deltp, pclear\nEnables Portal deletion mode"
         if len(parts) > 1:
-            if parts[1].lower() == "off":
-                self.portal_remove = False
-                self.client.sendServerMessage("Portal deletion mode ended.")
-            elif parts[1].lower() == "all":
+            if parts[1].lower() == "all":
                 self.client.world.clear_teleports()
                 self.client.sendServerMessage("All Portals in this world removed.")
             else:
-                self.client.sendServerMessage("You need to specify 'off' or 'all'")
+                self.client.sendServerMessage("To delete all portals please specify 'all'.")
         else:
             self.client.sendServerMessage("You are now able to delete Portals. /pdelend to stop")
             self.portal_remove = True
