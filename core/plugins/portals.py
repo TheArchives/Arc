@@ -111,7 +111,7 @@ class PortalPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("r must be between 0 and 255.")
                     return
                 self.portal_dest = parts[1], x, y, z, h
-                self.client.sendServerMessage("Now you're thinking with Portals. /phere off to stop")
+                self.client.sendServerMessage("/pend to stop")
     
     @config("rank", "op")
     def commandPortalhere(self, parts, fromloc, overriderank):
@@ -125,7 +125,7 @@ class PortalPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("To turn off portal creation mode specify 'off'.")
         else:
             self.portal_dest = self.client.world.id, self.client.x>>5, self.client.y>>5, self.client.z>>5, self.client.h
-            self.client.sendServerMessage("Now you're thinking with Portals. /phere off to stop")
+            self.client.sendServerMessage("/pend to stop")
     
     @config("rank", "op")
     def commandPortalend(self, parts, fromloc, overriderank):
