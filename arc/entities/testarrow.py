@@ -3,7 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 vx, vy, vz = entity[4]
-rx,r y, rz = var_position
+rx, ry, rz = var_position
 x, y, z = int(round(rx)), int(round(ry)), int(round(rz))
 rx, ry, rz = rx + vx, ry + vy, rz + vz
 var_position = rx ,ry, rz
