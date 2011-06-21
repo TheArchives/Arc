@@ -55,6 +55,9 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "mute": "commandMute",
         "unmute": "commandUnmute",
         "muted": "commandMuted",
+
+        "clear": "commandClearChat",
+        "clearchat": "commandClearChat",
         }
 
     hooks = {
@@ -379,7 +382,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         except (IndexError, ValueError):
             self.client.sendServerMessage("Usage: /goto x y z [h p]")
             self.client.sendServerMessage("MCLawl users: /l world name")
-    
+
     @config("category", "player")
     @username_command
     def commandTeleport(self, user, fromloc, overriderank):
@@ -499,7 +502,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "/mute username - Guest\nStops you hearing messages from 'username'."
         self.muted.add(username)
         self.client.sendServerMessage("%s muted." % username)
-    
+
     @config("category", "player")
     @only_username_command
     def commandUnmute(self, username, fromloc, overriderank):
@@ -509,7 +512,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("%s unmuted." % username)
         else:
             self.client.sendServerMessage("%s wasn't muted to start with" % username)
-    
+
     @config("category", "player")
     def commandMuted(self, username, fromloc, overriderank):
         "/muted - Guest\nLists people you have muted."
@@ -517,3 +520,9 @@ class PlayerUtilPlugin(ProtocolPlugin):
             self.client.sendServerList(["Muted:"] + list(self.muted))
         else:
             self.client.sendServerMessage("You haven't muted anyone.")
+
+    @config("category", "player")
+    def commandClearChat(self, parts, fromloc, overriderank):
+        "/clear - Guest\nClears the chat screen."
+        for i in range(20):
+            self.client.sendServerMessage("")

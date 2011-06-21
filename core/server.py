@@ -591,7 +591,7 @@ class CoreFactory(Factory):
                             client.loading_world = True
                             breakable_admins = client.runHook("canbreakadmin")
                             client.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.server_name, world.id)), "Respawning world '%s'..." % world.id, 100 if breakable_admins else 0)
-                            client.sendLevel(slient=True)
+                            client.sendLevel()
                     # Someone spoke!
                     elif task is TASK_MESSAGE:
                         # More Word Filter

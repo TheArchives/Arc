@@ -815,10 +815,9 @@ class CoreServerProtocol(Protocol):
             self.sendPacked(TYPE_CHUNK, 1024, "\1"*1024, 50)
             reactor.callLater(0.001, self.sendOverloadChunk)
 
-    def sendLevel(self, slient=False):
+    def sendLevel(self):
         "Starts the process of sending a level to the client."
         self.factory.recordPresence(self.username)
-        self.sendLevelSlient = slient
         # Ask the World to flush the level and get a gzip handle back to us.
         if hasattr(self, "world"):
             self.world.get_gzip_handle().addCallback(self.sendLevelStart)
@@ -869,9 +868,7 @@ class CoreServerProtocol(Protocol):
         self.sendPacked(TYPE_SPAWNPOINT, chr(255), "", self.x, self.y, self.z, self.h, 0)
         self.sendAllNew()
         self.factory.queue.put((self, TASK_NEWPLAYER, (self.id, self.colouredUsername(), self.x, self.y, self.z, self.h, 0)))
-        if not self.sendLevelSlient:
-            self.sendWelcome()
-        del self.sendLevelSlient
+        self.sendWelcome()
 
     def sendAllNew(self):
         "Sends a 'new user' notification for each new user in the world."

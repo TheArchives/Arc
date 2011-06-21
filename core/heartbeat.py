@@ -1,4 +1,4 @@
-import logging, time, traceback, threading, urllib, urllib2
+import asyncore, logging, time, traceback, urllib, urllib2
 
 from twisted.internet import reactor
 
@@ -17,7 +17,7 @@ class Heartbeat(object):
 
     def turl(self):
         try:
-            threading.Thread(target=self.get_url).start()
+            asyncore.dispatcher.__init__(self.get_url)
         except:
             self.logger.error(traceback.format_exc())
             reactor.callLater(1, self.turl)
