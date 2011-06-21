@@ -1,4 +1,4 @@
 @ECHO off
-TITLE Server
-C:\Python26\python run.py --run
+TITLE Arc
+C:\Python26\python run.py
 PAUSE
