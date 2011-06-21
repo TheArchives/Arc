@@ -1,9 +1,13 @@
+# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is licensed under the BSD 2-Clause modified License.
+# To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
+
 #!/usr/bin/perl
 ################################################################
 use strict;
 use warnings;
 ################################################################
-# INFORMATION: This is a hardcoded Perl converter for iCraft+.
+# INFORMATION: This is a hardcoded Perl converter from iCraft to Arc.
 # Dicts and ConfigParsers can actually be turned into other
 # formats easily. THIS IS FOR REFERENCE ONLY!
 ################################################################
@@ -150,7 +154,7 @@ sub Begin {
 	PrintHeader();
 	print "Completed 100%\n";
 	print "You may now move the persist folder under your server root directory.\n";
-	print "Have fun using blockBox!\n";
+	print "Have fun using Arc!\n";
 	system("pause");
 	exit;
 }

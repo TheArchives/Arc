@@ -1,7 +1,12 @@
-
+# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is licensed under the BSD 2-Clause modified License.
+# To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import web
-import json as simplejson
+try:
+    import simplejson
+except:
+    import json as simplejson
 import socket
 import configuration as config
 
@@ -69,7 +74,6 @@ class status:
         mods = bs.query("Mods")['mods']
         members = bs.query("Members")['members']
         return render.status(name, motd, public, limit, awaytime, asd, gchat, bufreq, bumax, ircserver, ircchannel, owner, specs, worlds, users, directors, admins, mods, members)
-
 
 class css:
      def GET(self, css):

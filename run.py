@@ -1,3 +1,7 @@
+# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is licensed under the BSD 2-Clause modified License.
+# To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
+
 #!/usr/bin/python
 
 import datetime, logging, sys, time, traceback
@@ -5,7 +9,7 @@ import datetime, logging, sys, time, traceback
 from twisted.internet import reactor
 from twisted.internet.error import CannotListenError
 
-from core.logger import ColouredLogger
+from arc.logger import ColouredLogger
 
 debug = (True if "--debug" in sys.argv else False)
 logger = ColouredLogger(debug)
@@ -22,12 +26,10 @@ except Exception as e:
     logger.warn("Unable to import colorama: %s" % e)
     logger.warn("Console colours DISABLED.")
 
-from core.controller import ControllerFactory
-from core.constants import *
-from core.globals import *
-from core.server import CoreFactory
-
-
+from arc.controller import ControllerFactory
+from arc.constants import *
+from arc.globals import *
+from arc.server import ArcFactory
 
 def doExit():
     raw_input("\nPlease press enter to exit.")
@@ -65,7 +67,7 @@ def main():
     logger = logging.getLogger("iCraft")
     '''
     logger.info("Now starting up iCraft+ 1G version %s..." % VERSION)
-    factory = CoreFactory(debug)
+    factory = ArcFactory(debug)
     try:
         factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
         reactor.listenTCP(30000, factory)
