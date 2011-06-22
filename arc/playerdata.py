@@ -18,10 +18,8 @@ class PlayerData():
         success = self.loadData()
         if not success:
             self.loadDataFallback() # If it failed, fall back.
-
-    @property
-    def username(self):
-        return self.client.username
+        else:
+            self.saving = True
 
     def loadData(self):
         "Loads the player's data file"
@@ -44,13 +42,7 @@ class PlayerData():
                 self.logger.error("Unable to read player data for %s!" % self.username)
                 self.logger.error("Error: %s" % a)
                 return False
-        try:
-            sections = self.dataReader.options("sections")
-        except Exception as a:
-            self.logger.error("Unable to read section header for /data/players/%s.ini!" % self.username)
-            self.logger.error("Error: %s" % a)
-            self.loadDataFallback()
-            return False
+        sections = self.dataReader.sections()
         try:
             for element in sections:
                 data = self.dataReader.items(element) # This gives us name, value pairs for the secion
@@ -69,11 +61,83 @@ class PlayerData():
 
     def loadDataFallback(self):
         "Called when loading data fails. Prevents data saving and loads the default data values."
-        self.factory.logger.warn("Settings will not be saved.")
+        self.factory.logger.warn("Settings will not be saved. Default data being used.")
+        self.dataReader.read("data/DEFAULT_TEMPLATE_PLAYER.ini")
+        sections = self.dataReader.sections()
+        try:
+            for element in sections:
+                data = self.dataReader.items(element) # This gives us named items for the secion
+                self.data[element] = {}
+                for part in data:
+                    name, value = part # This gives us name, value pairs from the named items in the section
+                    self.data[element][name] = value
+            self.logger.debug("Player data dictionary:")
+            self.logger.debug(str(self.data))
+        except Exception as a:
+            self.logger.error("Unable to read default player data for %s!" % self.username)
+            self.logger.error("Error: %s" % a)
+            return False
+        self.logger.info("Parsed default data file for %s." % self.username)
+        self.saving = False
+        return True
 
-    def saveData(self):
-        "Saves the player's data file"
-        pass # Derpishly, this does nothing yet. Derp derp.
+    def saveData(self, username=self.username):
+        "Saves the player's data file, possibly cloning it to another player"
+        if self.saving:
+            self.logger.debug("Saving data/players/%s.ini..." % self.username)
+            try:
+                fp = open("data/players/%s.ini" % self.username, "w")
+            except Exception as a:
+                self.logger.error("Unable to open data/players/%s.ini for writing!" % self.username)
+                self.logger.error("%s" % a)
+            else:
+                for section in self.data.keys():
+                    if not self.dataReader.has_section(section):
+                        self.dataReader.add_section(section)
+                    for element in section.items():
+                        self.dataReader.set(section, element[0], str(element[1]))
+                try:
+                    self.dataReader.write(fp)
+                    fp.flush()
+                    fp.close()
+        else:
+            self.logger.warn("Unable to write player data for %s as it was unreadable." % self.username)
+            self.logger.warn("Check the log for when they joined for more information.")
+    
+    # Convenience functions
+    # These are here so that plugin authors can get and set data to the internal
+    # data dict without interfering with it.
+    
+    def get(self, section, key=None):
+        "Used to get data from the internal data dict"
+        pass
+    
+    def set(self, section, key):
+        "Used to set data to the internal data dict"
+        pass
+    
+    def flush(self):
+        "Saves the current data structure and reparses it."
+        pass
+        
+    def reload(self):
+        "Discards the current data structure and reparses it."
+        self.saveData()
+        self.loadData()
+    
+    # Properties (self.blah)
+    # These are here so that plugin authors can get at the class' data variables
+    # properly.
+    
+    @property
+    def username(self):
+        "Associated client's username"
+        return self.client.username
+    
+    @property
+    def canSave(self):
+        "Check to see if we can save or not"
+        return self.saving
 
 class ClanData():
     pass
