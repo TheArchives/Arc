@@ -100,6 +100,11 @@ class PlayerData():
                     self.dataReader.write(fp)
                     fp.flush()
                     fp.close()
+                except Exception as a:
+                    self.logger.error("Unable to write to data/players/%s.ini!" % self.username)
+                    self.logger.error("%s" % a)
+                else:
+                    self.logger.debug("Saved data/players/%s.ini successfully." % self.username)
         else:
             self.logger.warn("Unable to write player data for %s as it was unreadable." % self.username)
             self.logger.warn("Check the log for when they joined for more information.")
