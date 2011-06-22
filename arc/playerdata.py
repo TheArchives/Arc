@@ -26,8 +26,10 @@ class PlayerData():
         self.dataReader = ConfigParser()
         self.data = {}
         # Obviously, we need to load the data right away.
-        success = self.loadData()
-        if not success:
+        success = True
+        if not self.offline:
+            success = self.loadData()
+        if (not success) or self.offline:
             self.loadDataFallback() # If it failed, fall back.
         else:
             self.saving = True
