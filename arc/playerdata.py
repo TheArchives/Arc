@@ -118,11 +118,12 @@ class PlayerData():
     
     def flush(self):
         "Saves the current data structure and reparses it."
-        pass
+        self.saveData()
+        self.loadData()
         
     def reload(self):
         "Discards the current data structure and reparses it."
-        self.saveData()
+        del self.data
         self.loadData()
     
     # Properties (self.blah)
