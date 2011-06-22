@@ -5,12 +5,23 @@
 import os, shutil
 from ConfigParser import RawConfigParser as ConfigParser
 
+from arc.protocol import ArcServerProtocol
+
+debug = (True if "--debug" in sys.argv else False)
+
 class PlayerData():
     def __init__(self, client):
-        "Initialises the class with the client's protocol object."
-        self.logger = client.factory.logger # Get ourselves a logger
+        "Initialises the class with the client's username."
+        if isinstance(client, ArcServerProtocol):
+            self.logger = client.factory.logger # Get ourselves a logger
+            self.offline = False
+        else: # Offline
+            self.logger = ColouredLogger(debug)
+            self.offline = True
         # We're going to take a few things from the client, so we'll save it.
         self.client = client
+        # What is our username?
+        self.username = (self.client.username if not self.offline else self.client)
         # Create a RawConfigParser instance and data dict
         self.dataReader = ConfigParser()
         self.data = {}
@@ -21,14 +32,28 @@ class PlayerData():
         else:
             self.saving = True
 
+    def __str__(self):
+        if not offline:
+            return self.client.username # Or the client object?
+        else:
+            return self.client
+
+    # Enables use of context manager (e.g: with PlayerData(username) as pd:) so it works offline too
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.flush()
+
     def loadData(self):
         "Loads the player's data file"
         if os.path.isfile("data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
-            except Exception as a: # If we can't read it, say that
+            except Exception as e: # If we can't read it, say that
                 self.logger.error("Unable to read player data for %s!" % self.username)
-                self.logger.error("Error: %s" % a)
+                self.logger.error("Error: %s" % e)
                 return False # Return false to show it failed
             else:
                 self.logger.debug("Parsing data/players/%s.ini" % self.username)
@@ -38,9 +63,9 @@ class PlayerData():
             shutil.copy("data/DEFAULT_TEMPLATE_PLAYER.ini", "data/players/%s.ini" % self.username)
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
-            except Exception as a: # If we can't read it, say that
+            except Exception as e: # If we can't read it, say that
                 self.logger.error("Unable to read player data for %s!" % self.username)
-                self.logger.error("Error: %s" % a)
+                self.logger.error("Error: %s" % e)
                 return False
         sections = self.dataReader.sections()
         try:
@@ -52,9 +77,9 @@ class PlayerData():
                     self.data[element][name] = value
             self.logger.debug("Player data dictionary:")
             self.logger.debug(str(self.data))
-        except Exception as a:
+        except Exception as e:
             self.logger.error("Unable to read player data for %s!" % self.username)
-            self.logger.error("Error: %s" % a)
+            self.logger.error("Error: %s" % e)
             return False
         self.logger.info("Parsed data file for %s." % self.username)
         return True
@@ -73,9 +98,9 @@ class PlayerData():
                     self.data[element][name] = value
             self.logger.debug("Player data dictionary:")
             self.logger.debug(str(self.data))
-        except Exception as a:
+        except Exception as e:
             self.logger.error("Unable to read default player data for %s!" % self.username)
-            self.logger.error("Error: %s" % a)
+            self.logger.error("Error: %s" % e)
             return False
         self.logger.info("Parsed default data file for %s." % self.username)
         self.saving = False
@@ -87,9 +112,9 @@ class PlayerData():
             self.logger.debug("Saving data/players/%s.ini..." % self.username)
             try:
                 fp = open("data/players/%s.ini" % self.username, "w")
-            except Exception as a:
+            except Exception as e:
                 self.logger.error("Unable to open data/players/%s.ini for writing!" % self.username)
-                self.logger.error("%s" % a)
+                self.logger.error("Error: %s" % e)
             else:
                 for section in self.data.keys():
                     if not self.dataReader.has_section(section):
@@ -100,50 +125,103 @@ class PlayerData():
                     self.dataReader.write(fp)
                     fp.flush()
                     fp.close()
-                except Exception as a:
+                except Exception as e:
                     self.logger.error("Unable to write to data/players/%s.ini!" % self.username)
-                    self.logger.error("%s" % a)
+                    self.logger.error("Error: %s" % e)
                 else:
                     self.logger.debug("Saved data/players/%s.ini successfully." % self.username)
         else:
             self.logger.warn("Unable to write player data for %s as it was unreadable." % self.username)
             self.logger.warn("Check the log for when they joined for more information.")
-    
+
     # Convenience functions
     # These are here so that plugin authors can get and set data to the internal
     # data dict without interfering with it.
-    
-    def get(self, section, key=None):
-        "Used to get data from the internal data dict"
-        pass
-    
-    def set(self, section, key):
-        "Used to set data to the internal data dict"
-        pass
-    
+
+    def get(self, section, name, default=None):
+        try:
+            ret = self.data[section][name]
+        except:
+            if default is not None:
+                self.data[section][name] = default
+                ret = default
+            else:
+                ret = ""
+        return ret
+
+    def string(self, section, name, default=None):
+        try:
+            ret = self.data[section][name]
+        except:
+            if default is not None:
+                self.data[section][name] = default
+                ret = default
+            else:
+                ret = ""
+        return ret
+
+    def int(self, section, name, default=None):
+        try:
+            ret = self.data[section][name]
+        except:
+            if default is not None:
+                self.data[section][name] = default
+                ret = default
+            else:
+                ret = 0
+        return ret
+
+    def bool(self, section, name, default=None):
+        try:
+            ret = self.data[section][name]
+        except:
+            if default is not None:
+                self.data[section][name] = default
+                ret = default
+            else:
+                ret = False
+        return ret
+
+    def set(self, section, name, value):
+        try:
+            self.data[section][name] = value
+        except Exception as e:
+            self.logger.error("Error setting %s in section %s to %s!" % (name, section, str(value)))
+            self.logger.error("Error: %s" % e)
+            return False
+        else:
+            return True
+
     def flush(self):
-        "Saves the current data structure and reparses it."
+        "Saves the current data structure."
         self.saveData()
-        self.loadData()
-        
+
     def reload(self):
         "Discards the current data structure and reparses it."
         del self.data
         self.loadData()
-    
+
     # Properties (self.blah)
     # These are here so that plugin authors can get at the class' data variables
     # properly.
-    
+
     @property
     def username(self):
         "Associated client's username"
-        return self.client.username
-    
+        if not self.offline:
+            return self.client.username
+        else:
+            return self.client
+
     @property
     def canSave(self):
         "Check to see if we can save or not"
         return self.saving
+
+    @property
+    def isOffline(self):
+        "Check to see if we are in offline mode (no protocol object available)"
+        return self.offline
 
 class ClanData():
     pass
