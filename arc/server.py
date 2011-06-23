@@ -379,7 +379,7 @@ class ArcFactory(Factory):
             i += 1
         world_id = "a-%i" % i
         # Copy and boot
-        self.newWorld(world_id, "../core/archives/%s" % filename)
+        self.newWorld(world_id, "../arc/archives/%s" % filename)
         self.loadWorld("worlds/%s" % world_id, world_id)
         world = self.worlds[world_id]
         world.is_archive = True
@@ -761,7 +761,7 @@ class ArcFactory(Factory):
         # Find the template files, copy them to the new location
         for filename in ["blocks.gz", "world.meta"]:
             try:
-                shutil.copyfile("core/templates/%s/%s" % (template, filename), "worlds/%s/%s" % (new_name, filename))
+                shutil.copyfile("arc/templates/%s/%s" % (template, filename), "worlds/%s/%s" % (new_name, filename))
             except:
                 self.client.sendServerMessage("That template doesn't exist.")
 
@@ -873,9 +873,9 @@ class ArcFactory(Factory):
 
     def loadArchives(self):
         self.archives = {}
-        for name in os.listdir("core/archives/"):
-            if os.path.isdir(os.path.join("core/archives", name)):
-                for subfilename in os.listdir(os.path.join("core/archives", name)):
+        for name in os.listdir("arc/archives/"):
+            if os.path.isdir(os.path.join("arc/archives", name)):
+                for subfilename in os.listdir(os.path.join("arc/archives", name)):
                     match = re.match(r'^(\d\d\d\d\-\d\d\-\d\d_\d?\d\_\d\d)$', subfilename)
                     if match:
                         when = match.groups()[0]

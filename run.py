@@ -32,7 +32,10 @@ from arc.globals import *
 from arc.server import ArcFactory
 
 def doExit():
-    raw_input("\nPlease press enter to exit.")
+    if checkos() == "Windows":
+        raw_input("\nYou may now close the server console window.")
+    else:
+        raw_input("\nPlease press enter to exit.")
 
 def main():  
     global logger

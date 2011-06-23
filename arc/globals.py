@@ -259,10 +259,10 @@ def Staff(self, server=None):
 
 def Credits():
     Temp = []
-    Temp.append ("Thanks to the following people for making iCraft possible...")
+    Temp.append ("Thanks to the following people for making Arc possible...")
     Temp.append ("Mojang Specifications (Minecraft): Notch, c418, ez, jeb, kappe, mollstam...")
     Temp.append ("Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
-    Temp.append ("Devs (iCraft): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, NotMeh, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
+    Temp.append ("Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, NotMeh, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
     Temp.append ("Devs (blockBox): fizyplankton, tyteen4a03, UberFoX")
     Temp.append ("Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius (Red_Link), blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
     return Temp
@@ -299,7 +299,7 @@ def makedatfile(filename):
             del cPickle
     del os
 
-def checkos(self):
+def checkos():
     try:
         if (os.uname()[0] == "Darwin"):
             os = "Mac"
