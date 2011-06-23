@@ -11,12 +11,16 @@ except ImportError:
 from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
 
+from arc.logger import ColouredLogger
+
+debug = (True if "--debug" in sys.argv else False)
+
 class ControllerProtocol(LineReceiver):
     """
     Protocol for dealing with controller requests.
     """
     def connectionMade(self):
-        self.logger = logging.getLogger("Controller")
+        self.logger = ColouredLogger(debug)
         peer = self.transport.getPeer()
         self.logger.debug("Control connection made from %s:%s" % (peer.host, peer.port))
         self.factory, self.controller_factory = self.factory.main_factory, self.factory

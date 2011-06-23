@@ -11,6 +11,8 @@ from arc.blockstore import BlockStore
 from arc.constants import *
 from arc.deferred import Deferred
 from arc.logger import ColouredLogger
+
+debug = (True if "--debug" in sys.argv else False)
 #try:
 #    from arc.database import Connection
 #    apsw = 1
@@ -29,7 +31,7 @@ class World(object):
     """
 
     def __init__(self, basename, load=True):
-        self.logger = ColouredLogger()
+        self.logger = ColouredLogger(debug)
         self.basename = basename
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.meta_path = os.path.join(basename, "world.meta")

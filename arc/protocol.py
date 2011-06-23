@@ -275,7 +275,6 @@ class ArcServerProtocol(Protocol):
                         self.factory.logger.info("Kicked '%s'; invalid password (%s, %s)" % (self.username, mppass, correct_pass))
                         self.sendError("Incorrect authentication, please try again.")
                         return
-                self.logger = logging.getLogger(self.username)
                 self.factory.logger.info("Connected, as '%s'" % self.username)
                 self.identified = True
                 # Are they banned?

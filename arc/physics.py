@@ -2,12 +2,15 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import logging, time
+import sys, time
 from threading import Thread, Lock
 
 from twisted.internet import reactor
 
 from arc.constants import *
+from arc.logger import ColouredLogger
+
+debug = (True if "--debug" in sys.argv else False)
 
 CHR_WATER = chr(BLOCK_WATER)
 CHR_LAVA = chr(BLOCK_LAVA)
@@ -53,7 +56,7 @@ class Physics(Thread):
         # Placeholder for future Hardcore physics stuff
         self.mode = "normal"
         self.init_queues()
-        self.logger = logging.getLogger("Physics")
+        self.logger = ColouredLogger(debug)
     
     def stop(self):
         self.running = False

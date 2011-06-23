@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cmath, datetime, logging, random, traceback
+import cmath, datetime, random, sys, traceback
 
 from twisted.internet import protocol
 from twisted.words.protocols import irc
@@ -11,7 +11,10 @@ from twisted.words.protocols.irc import IRC
 from arc.constants import *
 from arc.decorators import *
 from arc.globals import *
+from arc.logger import ColouredLogger
 from arc.plugins import protocol_plugins
+
+debug = (True if "--debug" in sys.argv else False)
 
 class ChatBot(irc.IRCClient):
     """An IRC-server chat integration bot."""
@@ -20,7 +23,7 @@ class ChatBot(irc.IRCClient):
     ncommands = ["who", "worlds", "staff", "credits", "help", "rules", "cmdlist", "about", "lastseen", "roll"]
 
     def connectionMade(self):
-        self.logger = logging.getLogger("IRC Bot")
+        self.logger = ColouredLogger(debug)
         self.ops = []
         self.nickname = self.factory.main_factory.irc_nick
         self.password = self.factory.main_factory.irc_pass

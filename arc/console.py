@@ -2,15 +2,19 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import threading, logging, traceback, sys, time, datetime
+import datetime, sys, threading, time, traceback
+
 from arc.constants import *
 from arc.globals import *
+from arc.logger import ColouredLogger
+
+debug = (True if "--debug" in sys.argv else False)
 
 class StdinPlugin(threading.Thread):
 
     def __init__(self, factory):
         threading.Thread.__init__(self)
-        self.logger = logging.getLogger("Console")
+        self.logger = ColouredLogger(debug)
         self.factory = factory
         self.stop = False
         self.whisperlog = open("logs/server.log", "a")

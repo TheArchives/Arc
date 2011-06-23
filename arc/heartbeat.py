@@ -2,11 +2,14 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import asyncore, logging, time, traceback, urllib, urllib2
+import asyncore, sys, time, traceback, urllib, urllib2
 
 from twisted.internet import reactor
 
 from arc.constants import *
+from arc.logger import ColouredLogger
+
+debug = (True if "--debug" in sys.argv else False)
 
 class Heartbeat(object):
     """
@@ -16,7 +19,7 @@ class Heartbeat(object):
 
     def __init__(self, factory):
         self.factory = factory
-        self.logger = logging.getLogger("Heartbeat")
+        self.logger = ColouredLogger(debug)
         self.turl()
 
     def turl(self):
