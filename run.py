@@ -40,7 +40,7 @@ def main():
     makefile("logs/")
     makefile("logs/console/")
     makefile("logs/console/console.log")
-    makefile("core/archives/")
+    makefile("arc/archives/")
     makefile("logs/chat.log")
     makefile("logs/server.log")
     makefile("logs/staff.log")
