@@ -24,7 +24,7 @@ class Heartbeat(object):
 
     def turl(self):
         try:
-            asynarc.dispatcher.__init__(self.get_url)
+            asyncore.dispatcher.__init__(self.get_url)
         except:
             self.logger.error(traceback.format_exc())
             reactor.callLater(1, self.turl)
