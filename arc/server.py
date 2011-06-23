@@ -203,7 +203,7 @@ class ArcFactory(Factory):
         self.usernames = {}
         # Load up the server plugins
         self.serverPlugins = {} # {"Name": [class(), ["function", "function"]]}
-        reactor.callLater(1, self.loadServerPlugins , ())
+        self.loadServerPlugins()
     
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins. Might get a bit complicated though."
