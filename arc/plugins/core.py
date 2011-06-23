@@ -52,7 +52,7 @@ class CorePlugin(ProtocolPlugin):
     @config("rank", "admin")
     def commandPluginlist(self, parts, fromloc, overriderank):
         "/pllist - Admin\nAliases: pllistall\nShows all plugins."
-        pluginlist = os.listdir("core/plugins")
+        pluginlist = os.listdir("arc/plugins")
         newpluginlist = []
         for plugin in pluginlist:
             if not plugin.endswith(".pyc"):

@@ -30,11 +30,11 @@ class IsoImagePlugin(ProtocolPlugin):
             angle = 1
         world = self.client.world
         pathname = os.getcwd()
-        savepath = pathname + "/core/isoimage/images/"
+        savepath = pathname + "/arc/isoimage/images/"
         worldname = world.basename.split("/")[1]
         worldpath = pathname + "/worlds/" + worldname
         try:
-            os.chdir(pathname + "/core/isoimage/")
+            os.chdir(pathname + "/arc/isoimage/")
             if checkos() == "Windows":
                 os.system('java -Xms512M -Xmx1024M -cp minecraft-server.jar; OrigFormat save "%s" server_level.dat' % worldpath)
                 os.system('java -Xms128M -Xmx1024M -cp minecraft-server.jar;IsoCraft++.jar isocraft server_level.dat tileset.png output.png %s -1 -1 -1 -1 -1 -1 visible'%str(angle))
@@ -46,6 +46,6 @@ class IsoImagePlugin(ProtocolPlugin):
             self.client.sendServerMessage('Isoimage %s has been created.' %(worldname + str(angle) + ".png"))
         except:
             self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-            self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+            self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
             self.client.logger.error(traceback.format_exc())
             os.chdir(pathname)

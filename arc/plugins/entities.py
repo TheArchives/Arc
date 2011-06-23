@@ -11,7 +11,7 @@ from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
-initfile = open("core/entities/__init__.py")
+initfile = open("arc/entities/__init__.py")
 exec initfile
 initfile.close()
 initfile = None
@@ -23,19 +23,19 @@ maxentitiesperworld = 40
 
 def loadentities():
     global validentities
-    datafilelist = os.listdir("core/entities/")
+    datafilelist = os.listdir("arc/entities/")
     del datafilelist[datafilelist.index("__init__.py")]
     listofentityfiles = []
     for entry in datafilelist:
         if entry.find('_') == -1 and entry.endswith('.py'):
             listofentityfiles.append(entry)
     for entry in listofentityfiles:
-        entitycodedict[entry[:-3]] = open("core/entities/%s" % entry)
+        entitycodedict[entry[:-3]] = open("arc/entities/%s" % entry)
     validentities = entitycodedict.keys()
     for entry in validentities:
         possibeAliasFile = entry + "_aliases.txt"
         if possibeAliasFile in datafilelist:
-            for alias in open("core/entities/%s" % possibeAliasFile):
+            for alias in open("arc/entities/%s" % possibeAliasFile):
                 alias = alias.rstrip()
                 if alias != '':
                     entitycodedict[alias] = entitycodedict[entry]
@@ -46,11 +46,11 @@ def loadentities():
     for entry in validentities:
         possibeSelectFile = entry + "_select.py"
         if possibeSelectFile in datafilelist:
-            entityselectdict[entry] = open("core/entities/%s" % possibeSelectFile)
+            entityselectdict[entry] = open("arc/entities/%s" % possibeSelectFile)
 
         possibeCreateFile = entry + "_create.py"
         if possibeCreateFile in datafilelist:
-            entitycreatedict[entry] = open("core/entities/%s" % possibeCreateFile)
+            entitycreatedict[entry] = open("arc/entities/%s" % possibeCreateFile)
 loadentities()
 for validentity in validentities:
     if validentity not in entityblocklist:
@@ -196,7 +196,7 @@ class EntityPlugin(ProtocolPlugin):
                                 self.client.sendWorldMessage("UNKOWN ENTITY IN WORLD - FIX THIS!")
                     except:
                         self.client.sendPlainWorldMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                        self.client.sendPlainWorldMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+                        self.client.sendPlainWorldMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                         self.client.logger.error(traceback.format_exc())
                         world.entitylist = []
                         return

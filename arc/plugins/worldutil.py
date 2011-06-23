@@ -385,7 +385,7 @@ class WorldUtil(ProtocolPlugin):
     @config("category", "world")
     def commandTemplates(self, parts, fromloc, overriderank):
         "/templates - Guest\nLists available templates"
-        self.client.sendServerList(["Templates:"] + os.listdir("core/templates/"))
+        self.client.sendServerList(["Templates:"] + os.listdir("arc/templates/"))
 
     @config("category", "world")
     @config("rank", "admin")

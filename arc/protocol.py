@@ -546,7 +546,7 @@ class ArcServerProtocol(Protocol):
                         func(parts, "user", False) # fromloc is user, overriderank is false
                     except Exception as e:
                         self.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                        self.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+                        self.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                         self.factory.logger.error(traceback.format_exc())
                 elif message.startswith("@"):
                     # It's a whisper

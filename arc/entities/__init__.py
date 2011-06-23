@@ -52,7 +52,7 @@ class BaseEntity(object):
     Parent object all entities inherit from.
     """
     
-    metaclass=EntityMetaclass
+    metaclass = EntityMetaclass
 
     def __init__(self):
         pass

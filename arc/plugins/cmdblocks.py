@@ -157,7 +157,7 @@ class CommandPlugin(ProtocolPlugin):
                         func(parts, False, guest)
                 except UnboundLocalError:
                     self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                    self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+                    self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                     self.client.logger.error(traceback.format_exc())
             elif message.lower() == "n" or message.lower() == "no":
                 self.listeningforpay = False
@@ -364,7 +364,7 @@ class CommandPlugin(ProtocolPlugin):
             func(parts, "user", False) # fromloc is user, overriderank is false
         except Exception, e:
             self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-            self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+            self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
             self.client.logger.error(traceback.format_exc())
 
 
@@ -1018,11 +1018,11 @@ class CommandPlugin(ProtocolPlugin):
                         func(parts, "user", guest)
                 except UnboundLocalError:
                     self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                    self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+                    self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                     self.client.logger.error(traceback.format_exc())
             except Exception, e:
                 self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the iCraft Team, see /about for contact info)")
+                self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                 self.client.logger.error(traceback.format_exc())
         self.runningcmdlist.remove(self.runningcmdlist[0])
         reactor.callLater(0.1, self.runcommands)
