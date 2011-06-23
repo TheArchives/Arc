@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import datetime, gc, logging, os, random, re, shutil, sys, time, traceback
+import datetime, gc, os, random, re, shutil, sys, time, traceback
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
@@ -16,7 +16,6 @@ from arc.irc_client import ChatBotFactory
 from arc.logger import ColouredLogger
 from arc.plugins import *
 from arc.protocol import ArcServerProtocol
-from arc import serverplugins
 from arc.timer import ResettableTimer
 from arc.world import World
 
@@ -202,6 +201,23 @@ class ArcFactory(Factory):
         self.queue = Queue()
         self.clients = {}
         self.usernames = {}
+        # Load up the server plugins
+        self.serverPlugins = {} # {"Name": [class(), ["function", "function"]]}
+        reactor.callLater(1, self.loadServerPlugins , ())
+    
+    def loadServerPlugins(self, something=None):
+        "Used to load up all the server plugins. Might get a bit complicated though."
+        files = os.listdir("arc/serverplugins")
+        self.logger.debug("Server plugins: %s" % ", ".join(files))
+        files.remove("__init__.py")
+        for filen in files:
+            ext = filen.split(".")[-1]
+            if ext == "py":
+                pass
+            else:
+                self.logger.debug("Parsing %s from server plugins list.." % filen)
+                files.remove(filen)
+        self.logger.debug("Server plugins: %s" % ", ".join(files))
 
     def startFactory(self):
         self.console = StdinPlugin(self)
