@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import asyncore, sys, time, traceback, urllib, urllib2
+import sys, threading, time, traceback, urllib, urllib2
 
 from twisted.internet import reactor
 
@@ -11,7 +11,7 @@ from arc.logger import ColouredLogger
 
 debug = (True if "--debug" in sys.argv else False)
 
-class Heartbeat(object):
+class Heartbeat(threading.Thread):
     """
     Deals with registering with the Minecraft main server every so often.
     The Salt is also used to help verify users' identities.
@@ -24,7 +24,7 @@ class Heartbeat(object):
 
     def turl(self):
         try:
-            asyncore.dispatcher.__init__(self.get_url)
+            threading.Thread(target=self.get_url).start()
         except:
             self.logger.error(traceback.format_exc())
             reactor.callLater(1, self.turl)
