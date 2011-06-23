@@ -497,54 +497,64 @@ class ArcServerProtocol(Protocol):
                     if hasattr(func, "config"):
                         if func.config["disabled"]:
                             self.sendServerMessage("Command %s has been disabled by the server owner." % command)
+                            self.factory.logger.info("%s just tried '%s' but it has been disabled." % (self.username, " ".join(parts)))
                             return
                         if self.isSpectator() and func.config["rank"]:
                             self.sendServerMessage("'%s' is not available to spectators." % command)
+                            self.factory.logger.info("%s just tried '%s' but is a spectator." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "owner" and not self.isOwner():
                             self.sendServerMessage("'%s' is an Owner-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not an owner." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "director" and not self.isDirector():
                             self.sendServerMessage("'%s' is a Director-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not a director." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "admin" and not self.isAdmin():
                             self.sendServerMessage("'%s' is an Admin-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not an admin." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "mod" and not self.isMod():
                             self.sendServerMessage("'%s' is a Mod-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not a mod." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "helper" and not self.isHelper():
                             self.sendServerMessage("'%s' is a Helper-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not a helper." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "worldowner" and not self.isWorldOwner():
                             self.sendServerMessage("'%s' is an WorldOwner-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not a world owner." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "op" and not self.isOp():
                             self.sendServerMessage("'%s' is an Op-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not an op." % (self.username, " ".join(parts)))
                             return
                         if func.config["rank"] == "builder" and not self.isBuilder():
                             self.sendServerMessage("'%s' is a Builder-only command!" % command)
+                            self.factory.logger.info("%s just tried '%s' but is not a builder." % (self.username, " ".join(parts)))
                             return
                     # Using custom message?
                     if hasattr(func, "config"):
                         if func.config["custom_cmdlog_msg"]:
                             self.factory.logger.info("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
                     else:
-                        self.factory.logger.info("%s just used: %s" % (self.username, " ".join(parts)))
-                    # Log it in IRC, if enabled.
-                    if self.factory.irc_relay:
-                        if self.factory.irc_cmdlogs:
-                            if hasattr(func, "config"):
-                                if func.config["custom_cmdlog_msg"]:
-                                    self.factory.irc_relay.sendServerMessage("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
-                                else:
-                                    self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
-                            else:
-                                self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
+                        self.factory.logger.info("%s just used '%s'" % (self.username, " ".join(parts)))
+                    # Log it in IRC, if enabled. (Disabled for now)
+                    # if self.factory.irc_relay:
+                        # if self.factory.irc_cmdlogs:
+                            # if hasattr(func, "config"):
+                                # if func.config["custom_cmdlog_msg"]:
+                                    # self.factory.irc_relay.sendServerMessage("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
+                                # else:
+                                    # self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
+                            # else:
+                                # self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
                     try:
                         func(parts, "user", False) # fromloc is user, overriderank is false
                     except Exception as e:
-                        self.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
+                        self.sendSplitServerMessage("Error: %s" % e)
                         self.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                         self.factory.logger.error(traceback.format_exc())
                 elif message.startswith("@"):
@@ -592,51 +602,51 @@ class ArcServerProtocol(Protocol):
                             else:
                                 self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.username, message)))
                         if self.isMod():
-                            self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, self.userColour(), self.username, text,False)))
+                            self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, self.userColour(), self.username, text, False)))
                         else:
                             self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
                 else:
                     if self.isSilenced():
-                        self.sendServerMessage("Cat got your tongue?")
+                        self.sendServerMessage("You are silenced and cannot speak.")
                     else:
                         if override is not True:
                             self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
                 self.resetIdleTimer()
             else:
                 if type == 2:
-                    logging.logger.warn("Alpha Client Attempted to Connect.")
-                    self.sendPacked(255, self.packString("Sorry, but this server only works for Classic."))
+                    logging.logger.warn("Beta client attempted to connect.")
+                    self.sendPacked(255, self.packString("Sorry, but this is a Classic-only server."))
                     self.transport.loseConnection()
                 else:
-                    self.factory.logger.warn("Unhandleable type %s" % type)
+                    self.factory.logger.warn("Unable to handle type %s" % type)
 
     def userColour(self):
         if self.factory.colors:
             if (self.username.lower() in self.factory.spectators):
-                color = COLOUR_BLACK
+                colour = COLOUR_BLACK
             elif (self.username.lower() in self.factory.owners):
-                color = COLOUR_DARKGREEN
+                colour = COLOUR_DARKGREEN
             elif (self.username.lower() in self.factory.directors):
-                color = COLOUR_GREEN
+                colour = COLOUR_GREEN
             elif (self.username.lower() in self.factory.admins):
-                color = COLOUR_RED
+                colour = COLOUR_RED
             elif (self.username.lower() in self.factory.mods):
-                color = COLOUR_BLUE
+                colour = COLOUR_BLUE
             elif (self.username.lower() in self.factory.helpers):
-                color = COLOUR_DARKBLUE
+                colour = COLOUR_DARKBLUE
             elif self.username.lower() in INFO_VIPLIST:
-                color = COLOUR_YELLOW
+                colour = COLOUR_YELLOW
             elif (self.username.lower() in self.world.owner):
-                color = COLOUR_DARKYELLOW
+                colour = COLOUR_DARKYELLOW
             elif (self.username.lower() in self.world.ops):
-                color = COLOUR_DARKCYAN
+                colour = COLOUR_DARKCYAN
             elif (self.username.lower() in self.world.builders):
-                color = COLOUR_CYAN
+                colour = COLOUR_CYAN
             else:
-                color = COLOUR_WHITE
+                colour = COLOUR_WHITE
         else:
-            color = COLOUR_WHITE
-        return color
+            colour = COLOUR_WHITE
+        return colour
 
     def colouredUsername(self):
         return self.userColour() + self.username
