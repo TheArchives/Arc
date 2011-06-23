@@ -106,14 +106,16 @@ class PlayerData(object):
         self.saving = False
         return True
 
-    def saveData(self, username=self.username):
+    def saveData(self, username=None):
         "Saves the player's data file, possibly cloning it to another player"
         if self.saving:
-            self.logger.debug("Saving data/players/%s.ini..." % self.username)
+            if username is None:
+                username = self.username
+            self.logger.debug("Saving data/players/%s.ini..." % username)
             try:
-                fp = open("data/players/%s.ini" % self.username, "w")
+                fp = open("data/players/%s.ini" % username, "w")
             except Exception as e:
-                self.logger.error("Unable to open data/players/%s.ini for writing!" % self.username)
+                self.logger.error("Unable to open data/players/%s.ini for writing!" % username)
                 self.logger.error("Error: %s" % e)
             else:
                 for section in self.data.keys():
@@ -126,12 +128,12 @@ class PlayerData(object):
                     fp.flush()
                     fp.close()
                 except Exception as e:
-                    self.logger.error("Unable to write to data/players/%s.ini!" % self.username)
+                    self.logger.error("Unable to write to data/players/%s.ini!" % username)
                     self.logger.error("Error: %s" % e)
                 else:
-                    self.logger.debug("Saved data/players/%s.ini successfully." % self.username)
+                    self.logger.debug("Saved data/players/%s.ini successfully." % username)
         else:
-            self.logger.warn("Unable to write player data for %s as it was unreadable." % self.username)
+            self.logger.warn("Unable to write player data for %s as it was unreadable." % username)
             self.logger.warn("Check the log for when they joined for more information.")
 
     # Convenience functions
