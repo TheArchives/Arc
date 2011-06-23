@@ -16,6 +16,7 @@ from arc.irc_client import ChatBotFactory
 from arc.logger import ColouredLogger
 from arc.plugins import *
 from arc.protocol import ArcServerProtocol
+from arc import serverplugins
 from arc.timer import ResettableTimer
 from arc.world import World
 

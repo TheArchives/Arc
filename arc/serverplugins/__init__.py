@@ -7,7 +7,7 @@ from arc.logger import ColouredLogger
 
 debug = (True if "--debug" in sys.argv else False)
 logger = ColouredLogger()
-logger.debug("Imported arc/ folder.")
+logger.debug("Imported arc/serverplugins/ folder.")
 del logger
 del ColouredLogger
 del sys
