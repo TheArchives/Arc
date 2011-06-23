@@ -215,10 +215,10 @@ class ArcFactory(Factory):
             self.logger.debug("Checking file %s: %s" % (i, element))
             i = i + 1
             ext = element.split(".")[-1]
-            if ext != "py":
+            if element == "__init__.py":
                 self.logger.debug("Removing %s from server plugins list.." % element)
                 files.remove(element)
-            if element == "__init__.py":
+            elif ext != "py":
                 self.logger.debug("Removing %s from server plugins list.." % element)
                 files.remove(element)
         self.logger.debug("Files checked: %s / %s" % (i, len(os.listdir("arc/serverplugins"))-1))
