@@ -5,14 +5,12 @@
 import os, shutil
 from ConfigParser import RawConfigParser as ConfigParser
 
-from arc.protocol import ArcServerProtocol
-
 debug = (True if "--debug" in sys.argv else False)
 
-class PlayerData():
+class PlayerData(object):
     def __init__(self, client):
         "Initialises the class with the client's username."
-        if isinstance(client, ArcServerProtocol):
+        if isinstance(client, object):
             self.logger = client.factory.logger # Get ourselves a logger
             self.offline = False
         else: # Offline
@@ -225,5 +223,5 @@ class PlayerData():
         "Check to see if we are in offline mode (no protocol object available)"
         return self.offline
 
-class ClanData():
+class ClanData(object):
     pass
