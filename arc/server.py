@@ -207,22 +207,15 @@ class ArcFactory(Factory):
     
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins. Might get a bit complicated though."
-        files = os.listdir("arc/serverplugins")
-        self.logger.debug("Server plugins: %s" % ", ".join(files))
-        self.logger.debug("Files: %s / %s" % (len(files), len(os.listdir("arc/serverplugins"))))
-        i = 0
-        for element in files:
-            self.logger.debug("Checking file %s: %s" % (i, element))
-            i = i + 1
+        files = []
+        self.logger.debug("Listing server plugins..")
+        for element in os.listdir("arc/serverplugins"):
             ext = element.split(".")[-1]
             if element == "__init__.py":
-                self.logger.debug("Removing %s from server plugins list.." % element)
-                files.remove(element)
-            elif ext != "py":
-                self.logger.debug("Removing %s from server plugins list.." % element)
-                files.remove(element)
-        self.logger.debug("Files checked: %s / %s" % (i, len(os.listdir("arc/serverplugins"))-1))
-        self.logger.debug("Server plugins: %s" % ", ".join(files))
+                continue
+            elif ext == "py":
+                files.append(element)
+        self.logger.debug("Server plugins (%s): %s" % (len(files) ,", ".join(files)))
 
     def startFactory(self):
         self.console = StdinPlugin(self)
