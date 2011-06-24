@@ -8,6 +8,8 @@ from arc.constants import *
 from arc.globals import *
 from arc.logger import ColouredLogger
 
+import logging
+
 debug = (True if "--debug" in sys.argv else False)
 
 class StdinPlugin(threading.Thread):

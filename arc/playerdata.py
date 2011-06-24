@@ -8,18 +8,10 @@ from ConfigParser import RawConfigParser as ConfigParser
 debug = (True if "--debug" in sys.argv else False)
 
 class PlayerData(object):
-    def __init__(self, client):
+
+    def __init__(self, username):
         "Initialises the class with the client's username."
-        if isinstance(client, object):
-            self.logger = client.factory.logger # Get ourselves a logger
-            self.offline = False
-        else: # Offline
-            self.logger = ColouredLogger(debug)
-            self.offline = True
-        # We're going to take a few things from the client, so we'll save it.
-        self.client = client
-        # What is our username?
-        self.username = (self.client.username if not self.offline else self.client)
+        self.username = username
         # Create a RawConfigParser instance and data dict
         self.dataReader = ConfigParser()
         self.data = {}
@@ -31,12 +23,6 @@ class PlayerData(object):
             self.loadDataFallback() # If it failed, fall back.
         else:
             self.saving = True
-
-    def __str__(self):
-        if not offline:
-            return self.client.username # Or the client object?
-        else:
-            return self.client
 
     # Enables use of context manager (e.g: with PlayerData(username) as pd:) so it works offline too
 

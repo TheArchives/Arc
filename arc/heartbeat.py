@@ -9,6 +9,8 @@ from twisted.internet import reactor
 from arc.constants import *
 from arc.logger import ColouredLogger
 
+import logging
+
 debug = (True if "--debug" in sys.argv else False)
 
 class Heartbeat(threading.Thread):

@@ -11,7 +11,7 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 from arc.world import World
 
-class WorldUtil(ProtocolPlugin):
+class WorldUtilPlugin(ProtocolPlugin):
 
     commands = {
         "backup": "commandBackup",

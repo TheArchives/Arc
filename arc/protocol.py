@@ -13,6 +13,8 @@ from arc.irc_client import ChatBotFactory
 from arc.plugins import protocol_plugins
 from arc.playerdata import *
 
+import logging
+
 class ArcServerProtocol(Protocol):
     """
     Main protocol class for communicating with clients.
@@ -300,16 +302,13 @@ class ArcServerProtocol(Protocol):
                 )
                 # Then... stuff
                 for client in self.factory.usernames.values():
-                    if self.username.lower() in INFO_VIPLIST and not self.isMod():
-                        self.factory.logger.info(COLOUR_DARKRED+"iCraft Developer spotted;")
-                        self.factory.logger.info("(This has been removed)")
                     client.sendServerMessage("%s has come online." % self.username)
                 if self.factory.irc_relay:
                     self.factory.irc_relay.sendServerMessage("07%s has come online." % self.username)
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
                 self.resetIdleTimer()
-                self.data = PlayerData(self) # Create a player data object
+                self.data = PlayerData(self.username) # Create a player data object
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if block == 255:

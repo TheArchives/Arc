@@ -4,7 +4,7 @@
 
 import logging, string, sys, time
 
-class ColouredLogger(logging.Logger):
+class ColouredLogger(object):
     """
     This class is used to colour and log output.
     It handles colours, printing, and logging to console.log.
@@ -98,9 +98,10 @@ class ColouredLogger(logging.Logger):
             data = string.replace(data, element, self.cols[element])
         try:
             sys.stdout.write(data + "\n")
-        except Exception as a:
+        except Exception as e:
             print("Unable to write directly to stdout!")
-            print("%s" % a)
+            print("%s" % e)
+            #print("Data is: %s" % data)
         self.log(data)
 
     def stderr(self, data):
@@ -109,7 +110,7 @@ class ColouredLogger(logging.Logger):
             data = string.replace(data, element, self.cols[element])
         try:
             sys.stderr.write(data + "\n")
-        except Exception as a:
+        except Exception as e:
             self.stdout(data)
         else:
             self.log(data)

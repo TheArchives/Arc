@@ -14,6 +14,8 @@ from arc.globals import *
 from arc.logger import ColouredLogger
 from arc.physics import Physics
 
+import logging
+
 class BlockStore(Thread):
     """
     A class which deals with storing the block worlds, flushing them, etc.

@@ -21,6 +21,8 @@ debug = (True if "--debug" in sys.argv else False)
 #    apsw = 0
 apsw = 0
 
+import logging
+
 class World(object):
     """
     Represents... well, a World.

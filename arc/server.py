@@ -19,6 +19,8 @@ from arc.protocol import ArcServerProtocol
 from arc.timer import ResettableTimer
 from arc.world import World
 
+import logging
+
 class ArcFactory(Factory):
     """
     Factory that deals with the general world actions and cross-user comms.
@@ -45,6 +47,8 @@ class ArcFactory(Factory):
         self.options_config = ConfigParser()
         self.ploptions_config = ConfigParser()
         self.wordfilter = ConfigParser()
+        self.plugins = [plugin(self) for plugin in server_plugins]
+        self.hooks = {}
         self.save_count = 1
         try:
             self.config.read("config/main.conf")
@@ -240,6 +244,28 @@ class ArcFactory(Factory):
             reactor.callLater(float(self.backup_freq * 60), self.AutoBackup)
         gc.disable()
         self.cleanGarbage()
+
+    def registerHook(self, hook, func):
+        "Registers func as something to be run for hook 'hook'."
+        if hook not in self.hooks:
+            self.hooks[hook] = []
+        self.hooks[hook].append(func)
+
+    def unregisterHook(self, hook, func):
+        "Unregisters func from hook 'hook'."
+        try:
+            self.hooks[hook].remove(func)
+        except (KeyError, ValueError):
+            self.factory.logger.warn("Hook '%s' is not registered to %s." % (command, func))
+
+    def runHook(self, hook, *args, **kwds):
+        "Runs the hook 'hook'."
+        for func in self.hooks.get(hook, []):
+            result = func(*args, **kwds)
+            # If they return False, we can skip over and return
+            if result is not None:
+                return result
+        return None
 
     def cleanGarbage(self):
         count = gc.collect()
@@ -554,6 +580,9 @@ class ArcFactory(Factory):
             if issubclass(plugin, ProtocolPlugin):
                 for client in self.clients.values():
                     client.unloadPlugin(plugin)
+            elif issubclass(plugin, ServerPlugin):
+                self.plugins.remove(plugin)
+                plugin.unregister()
         # Unload it
         unload_plugin(plugin_name)
 
@@ -565,6 +594,8 @@ class ArcFactory(Factory):
             if issubclass(plugin, ProtocolPlugin):
                 for client in self.clients.values():
                     client.loadPlugin(plugin)
+            elif issubclass(plugin, ServerPlugin):
+                plugins.append(plugins_by_module_name(plugin_name))
 
     def sendMessages(self):
         "Sends all queued messages, and lets worlds recieve theirs."
@@ -661,7 +692,9 @@ class ArcFactory(Factory):
                         for client in world.clients:
                             if client != source_client:
                                 client.sendNewPlayer(*data)
-                            client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
+                            sendmessage = self.runHook("changeworld", source_client)
+                            if sendmessage:
+                                client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
                     # Someone left!
                     elif task is TASK_PLAYERLEAVE:
                         # Only run it for clients who weren't the source.

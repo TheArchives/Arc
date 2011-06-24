@@ -264,3 +264,47 @@ class InteractionPlugin(ProtocolPlugin):
         cPickle.dump(messages, file)
         file.close()
         self.client.sendServerMessage("All your messages have been deleted.")
+
+    @config("disabled", True)
+    def commandRainbow(self, parts, fromloc, overriderank):
+        "/rainbow - Guest\nAliases: fabulous, fab\nMakes your text rainbow."
+        if len(parts) == 1:
+            self.client.sendServerMessage("Please include a message to rainbowify.")
+        else:
+            stringInput = parts[1:]
+            input  = ""
+            for a in stringInput:
+                input = input + a + " "
+            output = ""
+            colorNum = 0
+            for x in input:
+                if x != " ":
+                    output = output + self.colors[colorNum] + x
+                    colorNum = colorNum + 1
+                    if colorNum >= 9:
+                        colorNum = 0
+                if x == " ":
+                    output = output + x
+            self.client.factory.queue.put((self.client, TASK_ONMESSAGE, " "+self.client.userColour()+self.client.username+": "+output))
+
+    @config("disabled", True)
+    def commandMeRainbow(self, parts, fromloc, overriderank):
+        "/mefab - Guest\nAliases: merainbow\nSends an action in rainbow colors."
+        if len(parts) == 1:
+            self.client.sendServerMessage("Please include an action to rainbowify.")
+        else:
+            stringInput = parts[1:]
+            input  = ""
+            for a in stringInput:
+                input = input + a + " "
+            output = ""
+            colorNum = 0
+            for x in input:
+                if x != " ":
+                    output = output + colors[colorNum] + x
+                    colorNum = colorNum + 1
+                    if colorNum >= 9:
+                        colorNum = 0
+                if x == " ":
+                    output = output + x
+            self.client.factory.queue.put((self.client, TASK_ONMESSAGE, "* "+self.client.userColour()+self.client.username+": "+output))

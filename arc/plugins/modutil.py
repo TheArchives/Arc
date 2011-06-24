@@ -4,7 +4,7 @@
 
 from arc.constants import *
 from arc.decorators import *
-from arc.plugins import ProtocolPlugin
+from arc.plugins import *
 
 class ModUtilPlugin(ProtocolPlugin):
 
@@ -436,3 +436,16 @@ class ModUtilPlugin(ProtocolPlugin):
         else:
             self.client.sendServerMessage("You are no longer spectating %s" % user.username)
             self.client.spectating = False
+
+# Testing ServerPlugin utility
+class ModUtilServerPlugin(ServerPlugin):
+
+    hooks = {
+        "changeworld": "worldChanged",
+    }
+    
+    def worldChanged(self, user):
+        if user.plugins["modutil"].hiding:
+            return False
+        else:
+            return True

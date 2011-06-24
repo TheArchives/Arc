@@ -3,6 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import sys, traceback
+import logging
 
 from arc.logger import ColouredLogger
 
@@ -44,7 +45,20 @@ class ServerPlugin(object):
 
     def __init__(self, factory):
     # Store the factory
-    # self.factory = factory
+        self.factory = factory
+        self.logger = ColouredLogger(debug)
+        # Register our hooks
+        if hasattr(self, "hooks"):
+            for name, fname in self.hooks.items():
+                try:
+                    self.factory.registerHook(name, getattr(self, fname))
+                except AttributeError:
+                    # Nope, can't find the method for that hook. Return error
+                    self.logger.error("Cannot find hook code for %s." % fname)
+        # Call clean setup method
+        self.gotServer()
+
+    def gotServer():
         pass
 
 class ProtocolPlugin(object):
@@ -76,7 +90,6 @@ class ProtocolPlugin(object):
                     # Nope, can't find the method for that hook. Return error
                     self.logger.error("Cannot find hook code for %s." % fname)
         # Call clean setup method
-
         self.gotClient()
 
     def unregister(self):
@@ -95,7 +108,7 @@ class ProtocolPlugin(object):
 
 def load_plugins(plugins):
     "Given a list of plugin names, imports them so they register."
-    debug=(True if "--debug" in sys.argv else False)
+    debug = (True if "--debug" in sys.argv else False)
     logger = ColouredLogger(debug)
     for module_name in plugins:
         try:
@@ -107,7 +120,7 @@ def load_plugins(plugins):
 def unload_plugin(plugin_name):
     "Given a plugin name, reloads and re-imports its code."
     # Unload all its classes from our lists
-    debug=(True if "--debug" in sys.argv else False)
+    debug = (True if "--debug" in sys.argv else False)
     logger = ColouredLogger(debug)
     for plugin in plugins_by_module_name(plugin_name):
         if plugin in protocol_plugins:
@@ -127,15 +140,15 @@ def load_plugin(plugin_name):
 
 def plugins_by_module_name(module_name):
     "Given a module name, returns the plugin classes in it."
-    debug=(True if "--debug" in sys.argv else False)
+    debug = (True if "--debug" in sys.argv else False)
     logger = ColouredLogger(debug)
     try:
         module = __import__("arc.plugins.%s" % module_name, {}, {}, ["*"])
     except ImportError:
         logger.warn("Unable to load plugin: %s" % module_name)
-    except Exception as a:
+    except Exception as e:
         logger.warn("Unable to load plugin: %s" % module_name)
-        logger.error("%s" % a)
+        logger.error("%s" % e)
     else:
         for name, val in module.__dict__.items():
             if isinstance(val, type):

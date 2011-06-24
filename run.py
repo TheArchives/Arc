@@ -54,21 +54,21 @@ def main():
     makedatfile("config/data/inbox.dat")
     makedatfile("config/data/jail.dat")
     makedatfile("config/data/titles.dat")
-    '''
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=("--debug" in sys.argv) and logging.DEBUG or logging.INFO,
-        datefmt="%m/%d/%Y %H:%M:%S",
-    )
 
-    rotate = logging.handlers.TimedRotatingFileHandler(
-        filename="logs/console/console.log", when="H",
-        interval=6, backupCount=14,
-    )
-    logging.root.addHandler(rotate)
+    #logging.basicConfig(
+    #    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    #    level=("--debug" in sys.argv) and logging.DEBUG or logging.INFO,
+    #    datefmt="%m/%d/%Y %H:%M:%S",
+    #)
 
-    logger = logging.getLogger("iCraft")
-    '''
+    #rotate = logging.handlers.TimedRotatingFileHandler(
+    #    filename="logs/console/console.log", when="H",
+    #    interval=6, backupCount=14,
+    #)
+    #logging.root.addHandler(rotate)
+
+    logger = ColouredLogger(debug)
+
     logger.info("Now starting up iCraft+ 1G version %s..." % VERSION)
     factory = ArcFactory(debug)
     try:

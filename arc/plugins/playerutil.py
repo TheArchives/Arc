@@ -60,7 +60,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "unmute": "commandUnmute",
         "muted": "commandMuted",
 
-        "clear": "commandClearChat",
         "clearchat": "commandClearChat",
         }
 
@@ -274,50 +273,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
             user.respawn()
             user.sendServerMessage("You have been respawned by %s." % self.client.username)
             self.client.sendServerMessage("%s respawned." % user.username)
-
-    @config("disabled", True)
-    def commandRainbow(self, parts, fromloc, overriderank):
-        "/rainbow - Guest\nAliases: fabulous, fab\nMakes your text rainbow."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Please include a message to rainbowify.")
-        else:
-            stringInput = parts[1:]
-            input  = ""
-            for a in stringInput:
-                input = input + a + " "
-            output = ""
-            colorNum = 0
-            for x in input:
-                if x != " ":
-                    output = output + self.colors[colorNum] + x
-                    colorNum = colorNum + 1
-                    if colorNum >= 9:
-                        colorNum = 0
-                if x == " ":
-                    output = output + x
-            self.client.factory.queue.put((self.client, TASK_ONMESSAGE, " "+self.client.userColour()+self.client.username+": "+output))
-
-    @config("disabled", True)
-    def commandMeRainbow(self, parts, fromloc, overriderank):
-        "/mefab - Guest\nAliases: merainbow\nSends an action in rainbow colors."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Please include an action to rainbowify.")
-        else:
-            stringInput = parts[1:]
-            input  = ""
-            for a in stringInput:
-                input = input + a + " "
-            output = ""
-            colorNum = 0
-            for x in input:
-                if x != " ":
-                    output = output + colors[colorNum] + x
-                    colorNum = colorNum + 1
-                    if colorNum >= 9:
-                        colorNum = 0
-                if x == " ":
-                    output = output + x
-            self.client.factory.queue.put((self.client, TASK_ONMESSAGE, "* "+self.client.userColour()+self.client.username+": "+output))
 
     @config("category", "player")
     @username_command
