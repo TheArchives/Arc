@@ -20,6 +20,8 @@ class ArcServerProtocol(Protocol):
     Main protocol class for communicating with clients.
     Commands are mainly provided by plugins (protocol plugins).
     """
+    
+    hooks = {}
 
     def connectionMade(self):
         "We've got a TCP connection, let's set ourselves up."
@@ -308,7 +310,7 @@ class ArcServerProtocol(Protocol):
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
                 self.resetIdleTimer()
-                self.data = PlayerData(self.username) # Create a player data object
+                self.data = PlayerData(self) # Create a player data object
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if block == 255:

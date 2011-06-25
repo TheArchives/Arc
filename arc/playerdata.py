@@ -9,15 +9,17 @@ debug = (True if "--debug" in sys.argv else False)
 
 class PlayerData(object):
 
-    def __init__(self, username):
+    def __init__(self, client):
         "Initialises the class with the client's username."
-        self.username = username
+        self.client = client
+        self.logger = client.factory.logger
+        self.offline = False
         # Create a RawConfigParser instance and data dict
         self.dataReader = ConfigParser()
         self.data = {}
         # Obviously, we need to load the data right away.
         success = True
-        if not self.offline:
+        if not self.isOffline:
             success = self.loadData()
         if (not success) or self.offline:
             self.loadDataFallback() # If it failed, fall back.
