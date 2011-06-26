@@ -22,7 +22,6 @@ class PluginMetaclass(type):
     def __new__(cls, name, bases, dct):
         # Supercall
         new_cls = type.__new__(cls, name, bases, dct)
-        debug = (True if "--debug" in sys.argv else False)
         logger = ColouredLogger(debug)
         # Register!
         if bases != (object,):
@@ -33,7 +32,7 @@ class PluginMetaclass(type):
                 logger.debug("Loaded server plugin: %s" % name)
                 server_plugins.append(new_cls)
             else:
-                self.logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
+                logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
         return new_cls
 
 class ServerPlugin(object):

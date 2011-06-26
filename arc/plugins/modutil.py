@@ -438,14 +438,14 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.spectating = False
 
 # Testing ServerPlugin utility
-class ModUtilServerPlugin(ServerPlugin):
+#class ModUtilServerPlugin(ServerPlugin):
+#
+#    hooks = {
+#        "changeworld": "worldChanged",
+#    }
 
-    hooks = {
-        "changeworld": "worldChanged",
-    }
-    
-    def worldChanged(self, user):
-        if user.plugins["modutil"].hiding:
-            return False
-        else:
-            return True
+#    def worldChanged(self, user):
+#        if user.plugins["modutil"].hiding:
+#            return False
+#        else:
+#            return True

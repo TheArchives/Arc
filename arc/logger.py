@@ -94,14 +94,14 @@ class ColouredLogger(object):
 
     def stdout(self, data):
         "Output to stdout, parsing colours."
+        origdata = data
         for element in self.cols.keys():
             data = string.replace(data, element, self.cols[element])
         try:
             sys.stdout.write(data + "\n")
         except Exception as e:
-            print("Unable to write directly to stdout!")
+            print("Unable to write directly to stdout! Data: %s" % origdata)
             print("%s" % e)
-            #print("Data is: %s" % data)
         self.log(data)
 
     def stderr(self, data):
@@ -118,7 +118,7 @@ class ColouredLogger(object):
     def log(self, data):
         "Outputs to the console.log file"
         for element in self.nocol.keys():
-            data = string.replace(data, element, self.nocol[element])
+            data = string.replace(data, element, "") # Do not log colour codes in file
         self.logfile.write(data + "\n")
         self.logfile.flush()
 
