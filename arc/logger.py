@@ -159,3 +159,17 @@ class ColouredLogger(object):
             status = " - &9DEBUG &f - "
             done = "&f" + atime + status + data
             self.stdout(done)
+
+class ChatLogHandler(object):
+    """
+    A Chat Log handler. Given a file and a format, starts
+    listening for logs to get in.
+    """
+
+    def __init__(self, file, formatter):
+        self.file = file
+        self.formatter = string.Formatter(formatter)
+
+    def log(self, message):
+        "Takes in a message dictioary, work out the formation and log them."
+        pass
