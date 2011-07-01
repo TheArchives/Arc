@@ -168,8 +168,30 @@ class ChatLogHandler(object):
 
     def __init__(self, file, formatter):
         self.file = file
-        self.formatter = string.Formatter(formatter)
+        self.formatter = formatter
 
     def log(self, message):
-        "Takes in a message dictioary, work out the formation and log them."
-        pass
+        "Takes in a message dictioary, works out the formation."
+        if not isinstance(message, dict) and not instance(message, list): # Not a list or a dict
+            messages = [message]
+        elif not isinstance(message, list): # List
+            for item in message:
+                i = 1
+                _message[i] = item
+                i += 1
+            messages = _message
+        else: # Dict, what we want!
+            messages = message
+        try:
+            final = (formatter % messages)
+        except Exception as e:
+            raise ValueError("Something went wrong when saving! Exception: %s, Data is %s, Formatter is %s"
+                             % e, " ".join(messages), formatter)
+        else:
+            self._log(final)
+            return True
+
+    def _log(self, message):
+        "Does the dirty work."
+        self.file.write(message)
+        self.file.flush()
