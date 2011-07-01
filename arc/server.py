@@ -215,11 +215,32 @@ class ArcFactory(Factory):
         self.logger.debug("Listing server plugins..")
         for element in os.listdir("arc/serverplugins"):
             ext = element.split(".")[-1]
+            file = element.split(".")[0]
             if element == "__init__.py":
                 continue
             elif ext == "py":
-                files.append(element)
-        self.logger.debug("Server plugins (%s): %s" % (len(files) ,", ".join(files)))
+                files.append(file)
+        self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,", ".join(files)))
+        self.logger.debug("Loading server plugins..")
+        for element in files:
+            reloaded = False
+            if not "arc.serverplugins.%s" % element in sys.modules.keys():
+                __import__("arc.serverplugins.%s" % element)
+                mod = sys.modules["arc.serverplugins.%s" % element]
+            else:
+                mod = self.serverPlugins[element][0]
+                del mod
+                del self.serverPlugins[element]
+                del sys.modules["arc.serverplugins.%s" % element]
+                __import__("arc.serverplugins.%s" % element)
+                mod = sys.modules["arc.serverplugins.%s" % element]
+                reloaded = True
+            self.serverPlugins[element] = [mod, []]
+            if not reloaded:
+                self.logger.debug("Loaded server plugin '%s'" % element)
+            else:
+                self.logger.debug("Reloaded server plugin '%s'" % element)
+        self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
 
     def startFactory(self):
         self.console = StdinPlugin(self)
