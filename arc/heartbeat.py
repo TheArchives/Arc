@@ -46,6 +46,8 @@ class Heartbeat(threading.Thread):
             self.url = fh.read().strip()
             self.logger.info("Heartbeat Sent. Your URL (saved to docs/SERVERURL): %s" % self.url)
             open('config/data/SERVERURL', 'w').write(self.url)
+            #self.factory.runHook("onheartbeatsent")
+
             #fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
             #"port": CHANGETHEPORT,
             #"users": len(self.factory.clients),

@@ -29,13 +29,14 @@ class ArcFactory(Factory):
 
     def __init__(self, debug=False):
         self.logger = ColouredLogger(debug)
-        
+
         # Load up the server plugins right away
         self.logger.info("Loading server plugins..")
         self.serverPlugins = {} # {"Name": class()}
+        self.serverHooks = {}
         self.loadServerPlugins()
         self.logger.info("Loaded server plugins.")
-        
+
         # Initialise internal datastructures
         self.worlds = {}
         self.owners = set()
@@ -54,7 +55,7 @@ class ArcFactory(Factory):
         self.options_config = ConfigParser()
         self.ploptions_config = ConfigParser()
         self.wordfilter = ConfigParser()
-        self.plugins = [plugin(self) for plugin in server_plugins]
+        #self.plugins = [plugin(self) for plugin in server_plugins] <- useful code?
         self.hooks = {}
         self.save_count = 1
         try:
@@ -212,7 +213,7 @@ class ArcFactory(Factory):
         self.queue = Queue()
         self.clients = {}
         self.usernames = {}
-    
+
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins. Might get a bit complicated though."
         files = []
@@ -258,13 +259,20 @@ class ArcFactory(Factory):
             else:
                 self.logger.debug("Reloaded server plugin: %s" % name)
         self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
-    
+
     def runServerHook(self, hook):
         "Used to run hooks for ServerPlugins"
         if hook in self.serverHooks:
             pass
         pass
 
+    def buildProtocol(self, addr):
+        "Builds the protocol. Used to switch between Manic Digger and Minecraft."
+        # Some male/female/alien idenfication code here
+        p = self.protocol()
+        p.factory = self
+        return p
+        
     def startFactory(self):
         self.console = StdinPlugin(self)
         self.console.start()
