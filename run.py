@@ -69,7 +69,7 @@ def main():
 
     logger = ColouredLogger(debug)
 
-    logger.info("Now starting up iCraft+ 1G version %s..." % VERSION)
+    logger.info("Starting up &bArc&f %s" % VERSION)
     factory = ArcFactory(debug)
     try:
         factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
@@ -80,8 +80,9 @@ def main():
     controller = ControllerFactory(factory)
     try:
         reactor.listenTCP(factory.config.getint("network", "controller_port"), controller)
-    except CannotListenError:
+    except CannotListenError as a:
         logger.warning("Controller cannot listen on port %s. Disabled." % factory.config.getint("network", "port"))
+        logger.warning("Error: %s" % a)
         del controller
     # TODO: Well...
     money_logger = logging.getLogger('TransactionLogger')

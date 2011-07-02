@@ -29,6 +29,13 @@ class ArcFactory(Factory):
 
     def __init__(self, debug=False):
         self.logger = ColouredLogger(debug)
+        
+        # Load up the server plugins right away
+        self.logger.info("Loading server plugins..")
+        self.serverPlugins = {} # {"Name": class()}
+        self.loadServerPlugins()
+        self.logger.info("Loaded server plugins.")
+        
         # Initialise internal datastructures
         self.worlds = {}
         self.owners = set()
@@ -183,7 +190,7 @@ class ArcFactory(Factory):
             sys.exit(1)
         self.logger.info("Loading plugins...")
         load_plugins(plugins)
-        #load_plugins(plugins)
+        self.logger.info("Loaded plugins.")
         # Open the chat log, ready for appending
         self.chatlog = open("logs/server.log", "a")
         self.chatlog = open("logs/chat.log", "a")
@@ -205,9 +212,6 @@ class ArcFactory(Factory):
         self.queue = Queue()
         self.clients = {}
         self.usernames = {}
-        # Load up the server plugins
-        self.serverPlugins = {} # {"Name": [class(), ["function", "function"]]}
-        self.loadServerPlugins()
     
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins. Might get a bit complicated though."
@@ -220,27 +224,46 @@ class ArcFactory(Factory):
                 continue
             elif ext == "py":
                 files.append(file)
-        self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,", ".join(files)))
+        self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,".py, ".join(files)+".py"))
         self.logger.debug("Loading server plugins..")
         for element in files:
             reloaded = False
             if not "arc.serverplugins.%s" % element in sys.modules.keys():
                 __import__("arc.serverplugins.%s" % element)
-                mod = sys.modules["arc.serverplugins.%s" % element]
+                try:
+                    mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
+                    name = mod.name
+                except Exception as a:
+                    self.logger.error("Unable to load server plugin from %s" % element+".py")
+                    self.logger.error("Error: %s" % a)
+                    continue
             else:
                 mod = self.serverPlugins[element][0]
                 del mod
                 del self.serverPlugins[element]
                 del sys.modules["arc.serverplugins.%s" % element]
                 __import__("arc.serverplugins.%s" % element)
-                mod = sys.modules["arc.serverplugins.%s" % element]
+                try:
+                    mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
+                    name = mod.name
+                except Exception as a:
+                    self.logger.error("Unable to load server plugin from %s" % element+".py")
+                    self.logger.error("Error: %s" % a)
+                    continue
                 reloaded = True
-            self.serverPlugins[element] = [mod, []]
+            mod.filename = element
+            self.serverPlugins[name] = mod
             if not reloaded:
-                self.logger.debug("Loaded server plugin '%s'" % element)
+                self.logger.debug("Loaded server plugin: %s" % name)
             else:
-                self.logger.debug("Reloaded server plugin '%s'" % element)
+                self.logger.debug("Reloaded server plugin: %s" % name)
         self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
+    
+    def runServerHook(self, hook):
+        "Used to run hooks for ServerPlugins"
+        if hook in self.serverHooks:
+            pass
+        pass
 
     def startFactory(self):
         self.console = StdinPlugin(self)
@@ -595,7 +618,7 @@ class ArcFactory(Factory):
             self.logger.error("%s" % a)
 
     def unloadPlugin(self, plugin_name):
-        "Reloads the plugin with the given module name."
+        "Unloads the plugin with the given module name."
         # Unload the plugin from everywhere
         for plugin in plugins_by_module_name(plugin_name):
             if issubclass(plugin, ProtocolPlugin):
