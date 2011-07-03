@@ -50,7 +50,10 @@ class ColouredLogger(object):
     def __init__(self, debug=False, level=logging.INFO):
         "Constructor, set everything up"
         self.debugswitch = debug
-        self.logfile = open("logs/console/console.log", "a")
+        try:
+            self.logfile = open("logs/console/console.log", "a")
+        except Exception as a:
+            pass
         try:
             from colorama import Fore, Back, Style
             self.cols = {
