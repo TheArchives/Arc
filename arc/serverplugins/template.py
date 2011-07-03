@@ -14,3 +14,5 @@ class TemplateServerPlugin():
         self.factory = factory
         self.logger = self.factory.logger
         self.logger.debug("Logged from template plugin!")
+        
+serverPlugin = TemplateServerPlugin
