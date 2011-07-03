@@ -4,4 +4,4 @@
 
 # This file just contains the latest SVN revision number.
 # Please do not edit it.
-version = 156
+SVN_VERSION = 159
