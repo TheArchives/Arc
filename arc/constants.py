@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-VERSION = "v1.0.0"
+VERSION = filter(str.isdigit, "$Revision$")
 
 INFO_VIPLIST = [
     # Mojang staff (current or retired)
