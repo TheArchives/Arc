@@ -69,7 +69,7 @@ def main():
 
     logger = ColouredLogger(debug)
 
-    logger.info("Starting up &bArc&f %s" % VERSION)
+    logger.info("Starting up &bArc&f r%s" % VERSION)
     factory = ArcFactory(debug)
     try:
         factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
