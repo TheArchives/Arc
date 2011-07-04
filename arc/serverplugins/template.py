@@ -6,13 +6,14 @@ class TemplateServerPlugin():
 
     name = "TemplatePlugin" # What does this do? -tyteen
 
-    hooks = {
-        "onheartbeatbuild": "onHeartbeatBuild"
-    }
-
     def __init__(self, factory):
-        self.factory = factory
-        self.logger = self.factory.logger
-        self.logger.debug("Logged from template plugin!")
+        factory.logger.debug("Logged from template plugin!")
+        
+    def onLastseen(factory, data):
+        factory.logger.info("Player %s had lastseen set at %s" % (data["username"], data["time"]))
+        
+    hooks = {
+        "lastseen": onLastseen
+    }
         
 serverPlugin = TemplateServerPlugin

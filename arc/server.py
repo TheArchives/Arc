@@ -55,7 +55,8 @@ class ArcFactory(Factory):
         self.options_config = ConfigParser()
         self.ploptions_config = ConfigParser()
         self.wordfilter = ConfigParser()
-        #self.plugins = [plugin(self) for plugin in server_plugins] <- useful code?
+        # self.plugins = [plugin(self) for plugin in server_plugins] <- useful code?
+        # Maybe, but I'm initialising them already in the loader
         self.hooks = {}
         self.save_count = 1
         try:
@@ -217,54 +218,73 @@ class ArcFactory(Factory):
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins. Might get a bit complicated though."
         files = []
+        self.serverHooks = {} # Clear the list of hooks
         self.logger.debug("Listing server plugins..")
-        for element in os.listdir("arc/serverplugins"):
+        for element in os.listdir("arc/serverplugins"): # List the plugins
             ext = element.split(".")[-1]
             file = element.split(".")[0]
-            if element == "__init__.py":
+            if element == "__init__.py": # Skip the initialiser
                 continue
-            elif ext == "py":
+            elif ext == "py": # Check if it ends in .py
                 files.append(file)
         self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,".py, ".join(files)+".py"))
         self.logger.debug("Loading server plugins..")
-        for element in files:
+        for element in files: 
             reloaded = False
-            if not "arc.serverplugins.%s" % element in sys.modules.keys():
-                __import__("arc.serverplugins.%s" % element)
+            if not "arc.serverplugins.%s" % element in sys.modules.keys(): # Check if we already imported it
+                __import__("arc.serverplugins.%s" % element) # If not, import it
                 try:
-                    mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
-                    name = mod.name
+                    mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self) # Grab the actual plugin class
+                    name = mod.name # What's the name?
                 except Exception as a:
                     self.logger.error("Unable to load server plugin from %s" % element+".py")
                     self.logger.error("Error: %s" % a)
                     continue
-            else:
-                mod = self.serverPlugins[element][0]
-                del mod
-                del self.serverPlugins[element]
-                del sys.modules["arc.serverplugins.%s" % element]
-                __import__("arc.serverplugins.%s" % element)
+            else: # We already imported it
+                mod = self.serverPlugins[element][0] #
+                del mod #
+                del self.serverPlugins[element] #
+                del sys.modules["arc.serverplugins.%s" % element] # Unimport it by deleting it
+                __import__("arc.serverplugins.%s" % element) # Import it again
                 try:
                     mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
-                    name = mod.name
+                    name = mod.name # get the name
                 except Exception as a:
                     self.logger.error("Unable to load server plugin from %s" % element+".py")
                     self.logger.error("Error: %s" % a)
                     continue
-                reloaded = True
+                reloaded = True # Remember that we reloaded it
             mod.filename = element
-            self.serverPlugins[name] = mod
+            self.serverPlugins[name] = mod # Put it in the plugins list
             if not reloaded:
                 self.logger.debug("Loaded server plugin: %s" % name)
             else:
                 self.logger.debug("Reloaded server plugin: %s" % name)
         self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
+        self.logger.debug("Getting hooks..")
+        for plugin in self.serverPlugins.values(): # For every plugin,
+            try:
+                for element in plugin.hooks.keys(): # For every hook in the plugin,
+                    if element not in self.serverHooks.keys():
+                        self.serverHooks[element] = [plugin.hooks[element]] # Make a note of the hook in the hooks dict
+                    else:
+                        self.serverHooks[element].append(plugin.hooks[element]) # Make a note of the hook in the hooks dict
+                    self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
+            except Exception as a:
+                self.logger.error("Unable to get hooks from server plugin %s" % plugin.name)
+                self.logger.error("Error: %s" % a)
+                continue
+        self.logger.debug("self.serverHooks: %s" % self.serverHooks)
 
-    def runServerHook(self, hook):
+    def runServerHook(self, hook, data):
         "Used to run hooks for ServerPlugins"
-        if hook in self.serverHooks:
-            pass
-        pass
+        finalvalue = True
+        if hook in self.serverHooks.keys():
+            for element in self.serverHooks[hook]:
+                value = element(self, data)
+                if value == False:
+                    finalvalue = False
+        return finalvalue
 
     def buildProtocol(self, addr):
         "Builds the protocol. Used to switch between Manic Digger and Minecraft."
@@ -619,6 +639,7 @@ class ArcFactory(Factory):
         """
         Records a sighting of 'username' in the lastseen dict.
         """
+        self.runServerHook("lastseen", {"username": username, "time": time.time()})
         try:
             self.lastseen[username.lower()] = time.time()
         except Exception as a:

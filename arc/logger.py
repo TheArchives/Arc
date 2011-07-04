@@ -52,6 +52,11 @@ class ColouredLogger(object):
         self.debugswitch = debug
         try:
             self.logfile = open("logs/console/console.log", "a")
+            self.infolog = open("logs/levels/info.log", "a")
+            self.errorlog = open("logs/levels/error.log", "a")
+            self.warnlog = open("logs/levels/warn.log", "a")
+            self.criticallog = open("logs/levels/critical.log", "a")
+            self.debuglog = open("logs/levels/debug.log", "a")
         except Exception as a:
             pass
         try:
@@ -105,31 +110,33 @@ class ColouredLogger(object):
         except Exception as e:
             print("Unable to write directly to stdout! Data: %s" % origdata)
             print("%s" % e)
-        self.log(data)
 
     def stderr(self, data):
         "Output to stderr, parsing colours."
+        origdata = data
         for element in self.cols.keys():
             data = string.replace(data, element, self.cols[element])
         try:
             sys.stderr.write(data + "\n")
         except Exception as e:
             self.stdout(data)
-        else:
-            self.log(data)
 
-    def log(self, data):
+    def log(self, data, file = None):
+        if file is None:
+            file = self.logfile
         "Outputs to the console.log file"
         for element in self.nocol.keys():
-            data = string.replace(data, element, "") # Do not log colour codes in file
-        self.logfile.write(data + "\n")
-        self.logfile.flush()
+            data = string.replace(data, element, self.nocol[element]) # Do not log colour codes in file
+        file.write(data + "\n")
+        file.flush()
 
     def info(self, data):
         "INFO level output"
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - &2INFO&f - "
         done = "&f" + atime + status + data
+        self.log(done)
+        self.log(done, self.infolog)
         self.stdout(done)
 
     def warn(self, data):
@@ -137,6 +144,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - &eWARN&f - "
         done = "&f" + atime + status + data
+        self.log(done)
+        self.log(done, self.warnlog)
         self.stderr(done)
 
     warning = warn
@@ -146,6 +155,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - &cERROR&f - "
         done = "&f" + atime + status + data
+        self.log(done)
+        self.log(done, self.errorlog)
         self.stdout(done)
 
     def critical(self, data):
@@ -153,6 +164,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - " + "\x01" + "c" + "CRITICAL&f - "
         done = "&f" + atime + status + data
+        self.log(done)
+        self.log(done, self.criticallog)
         self.stdout(done)
 
     def debug(self, data):
@@ -161,6 +174,8 @@ class ColouredLogger(object):
             atime = time.strftime("%d %b (%H:%M:%S)")
             status = " - &9DEBUG &f - "
             done = "&f" + atime + status + data
+            self.log(done)
+            self.log(done, self.debuglog)
             self.stdout(done)
 
 class ChatLogHandler(object):
@@ -174,7 +189,7 @@ class ChatLogHandler(object):
         self.formatter = formatter
 
     def log(self, message):
-        "Takes in a message dictioary, works out the formation."
+        "Takes in a message dictionary, works out the formation."
         if not isinstance(message, dict) and not instance(message, list): # Not a list or a dict
             messages = [message]
         elif not isinstance(message, list): # List
@@ -189,7 +204,7 @@ class ChatLogHandler(object):
             final = (formatter % messages)
         except Exception as e:
             raise ValueError("Something went wrong when saving! Exception: %s, Data is %s, Formatter is %s"
-                             % e, " ".join(messages), formatter)
+                             % (e, " ".join(messages), formatter))
         else:
             self._log(final)
             return True
