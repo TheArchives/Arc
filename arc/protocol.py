@@ -98,7 +98,7 @@ class ArcServerProtocol(Protocol):
         try:
             self.hooks[hook].remove(func)
         except (KeyError, ValueError):
-            self.factory.logger.warn("Hook '%s' is not registered to %s." % (command, func))
+            self.factory.logger.warn("Hook '%s' is not registered to %s." % (hook, func))
 
     def unloadPlugin(self, plugin_class):
         "Unloads the given plugin class."

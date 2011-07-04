@@ -237,7 +237,7 @@ class ArcFactory(Factory):
                     mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self) # Grab the actual plugin class
                     name = mod.name # What's the name?
                 except Exception as a:
-                    self.logger.error("Unable to load server plugin from %s" % element+".py")
+                    self.logger.error("Unable to load server plugin from %s" % (element+".py"))
                     self.logger.error("Error: %s" % a)
                     continue
             else: # We already imported it
@@ -250,7 +250,7 @@ class ArcFactory(Factory):
                     mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
                     name = mod.name # get the name
                 except Exception as a:
-                    self.logger.error("Unable to load server plugin from %s" % element+".py")
+                    self.logger.error("Unable to load server plugin from %s" % (element+".py"))
                     self.logger.error("Error: %s" % a)
                     continue
                 reloaded = True # Remember that we reloaded it
@@ -261,14 +261,15 @@ class ArcFactory(Factory):
             else:
                 self.logger.debug("Reloaded server plugin: %s" % name)
         self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
+        #The following code should be handled by the ServerPlugins class and registerHook
         self.logger.debug("Getting hooks..")
         for plugin in self.serverPlugins.values(): # For every plugin,
             try:
                 for element in plugin.hooks.keys(): # For every hook in the plugin,
                     if element not in self.serverHooks.keys():
-                        self.serverHooks[element] = [plugin.hooks[element]] # Make a note of the hook in the hooks dict
+                        self.serverHooks[element] = [getattr(plugin, plugin.hooks[element])] # Make a note of the hook in the hooks dict
                     else:
-                        self.serverHooks[element].append(plugin.hooks[element]) # Make a note of the hook in the hooks dict
+                        self.serverHooks[element].append(getattr(plugin, plugin.hooks[element])) # Make a note of the hook in the hooks dict
                     self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
             except Exception as a:
                 self.logger.error("Unable to get hooks from server plugin %s" % plugin.name)
@@ -320,15 +321,15 @@ class ArcFactory(Factory):
     def registerHook(self, hook, func):
         "Registers func as something to be run for hook 'hook'."
         if hook not in self.hooks:
-            self.hooks[hook] = []
-        self.hooks[hook].append(func)
+            self.serverHooks[hook] = []
+        self.serverHooks[hook].append(func)
 
     def unregisterHook(self, hook, func):
         "Unregisters func from hook 'hook'."
         try:
-            self.hooks[hook].remove(func)
+            self.serverHooks[hook].remove(func)
         except (KeyError, ValueError):
-            self.factory.logger.warn("Hook '%s' is not registered to %s." % (command, func))
+            self.logger.warn("Hook '%s' is not registered to %s." % (hook, func))
 
     def runHook(self, hook, *args, **kwds):
         "Runs the hook 'hook'."
