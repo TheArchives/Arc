@@ -196,7 +196,6 @@ class ArcFactory(Factory):
         self.runServerHook("pluginsLoaded")
         self.logger.info("Loaded plugins.")
         # Open the chat log, ready for appending
-        self.chatlog = open("logs/server.log", "a")
         self.chatlog = open("logs/chat.log", "a")
         # Create a default world, if there isn't one.
         if not os.path.isdir("worlds/%s" % self.default_name):
@@ -216,6 +215,8 @@ class ArcFactory(Factory):
         self.queue = Queue()
         self.clients = {}
         self.usernames = {}
+        # Open the adminchat log.
+        self.adlog = open("logs/server.log", "a")
 
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins. Might get a bit complicated though."
@@ -861,7 +862,6 @@ class ArcFactory(Factory):
                             if self.staffchat and self.irc_relay and len(data)>3:
                                 self.irc_relay.sendServerMessage("#"+username+": "+text,True,username,IRC)
                             self.logger.info("#"+colour+username+"&f: "+text)
-                            self.adlog = open("logs/server.log", "a")
                             self.adlog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] #"+username+": "+text+"\n")
                             self.adlog.flush()
                     elif task == TASK_GLOBALMESSAGE:
