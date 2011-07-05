@@ -4,7 +4,7 @@
 
 class TemplateServerPlugin():
 
-    name = "TemplatePlugin" # What does this do? -tyteen
+    name = "TemplatePlugin"
 
     def __init__(self, factory):
         self.factory = factory
