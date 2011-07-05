@@ -267,9 +267,9 @@ class ArcFactory(Factory):
             try:
                 for element in plugin.hooks.keys(): # For every hook in the plugin,
                     if element not in self.serverHooks.keys():
-                        self.serverHooks[element] = [getattr(plugin, plugin.hooks[element])] # Make a note of the hook in the hooks dict
+                        self.serverHooks[element] = [[plugin, plugin.hooks[element]]] # Make a note of the hook in the hooks dict
                     else:
-                        self.serverHooks[element].append(getattr(plugin, plugin.hooks[element])) # Make a note of the hook in the hooks dict
+                        self.serverHooks[element].append([[plugin, plugin.hooks[element]]]) # Make a note of the hook in the hooks dict
                     self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
             except Exception as a:
                 self.logger.error("Unable to get hooks from server plugin %s" % plugin.name)
@@ -282,7 +282,7 @@ class ArcFactory(Factory):
         finalvalue = True
         if hook in self.serverHooks.keys():
             for element in self.serverHooks[hook]:
-                value = element(self, data)
+                value = element[1](element[0], data)
                 if value == False:
                     finalvalue = False
         return finalvalue
