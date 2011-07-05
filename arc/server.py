@@ -285,12 +285,22 @@ class ArcFactory(Factory):
         finalvalue = True
         if hook in self.serverHooks.keys():
             for element in self.serverHooks[hook]:
-                if data is not None:
-                    value = element[1](element[0], data)
-                else:
-                    value = element[1](element[0])
-                if value == False:
-                    finalvalue = False
+                try:
+                    if data is not None:
+                        value = element[1](element[0], data)
+                    else:
+                        value = element[1](element[0])
+                    if value == False:
+                        finalvalue = False
+                except Exception as a:
+                    try:
+                        self.logger.error("Unable to run %s in server plugin %s!" % (element[1].__name__, element[0].name))
+                        self.logger.error("Error: %s" % a)
+                    except Exception as b:
+                        self.logger.error("Some plugin hook failed!")
+                        self.logger.error("Error when getting details: %s" % b)
+                        self.logger.error("Error when running hook: %s" % a)
+                    self.logger.error("Objects: %s" % element)
         return finalvalue
 
     def buildProtocol(self, addr):
