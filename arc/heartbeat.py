@@ -21,7 +21,8 @@ class Heartbeat(threading.Thread):
 
     def __init__(self, factory):
         self.factory = factory
-        self.logger = ColouredLogger(debug)
+        self.logger = factory.logger
+        self.factory.runServerHook("heartbeatBuilt")
         self.turl()
 
     def turl(self):
@@ -46,7 +47,7 @@ class Heartbeat(threading.Thread):
             self.url = fh.read().strip()
             self.logger.info("Heartbeat Sent. Your URL (saved to docs/SERVERURL): %s" % self.url)
             open('config/data/SERVERURL', 'w').write(self.url)
-            #self.factory.runHook("onheartbeatsent")
+            self.factory.runServerHook("heartbeatSent")
 
             #fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
             #"port": CHANGETHEPORT,
