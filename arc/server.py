@@ -232,7 +232,9 @@ class ArcFactory(Factory):
                 files.append(file)
         self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,".py, ".join(files)+".py"))
         self.logger.debug("Loading server plugins..")
-        for element in files: 
+        i = 0
+        while i < len(files):
+            element = files[i]
             reloaded = False
             if not "arc.serverplugins.%s" % element in sys.modules.keys(): # Check if we already imported it
                 __import__("arc.serverplugins.%s" % element) # If not, import it
@@ -242,6 +244,7 @@ class ArcFactory(Factory):
                 except Exception as a:
                     self.logger.error("Unable to load server plugin from %s" % (element+".py"))
                     self.logger.error("Error: %s" % a)
+                    i = i + 1
                     continue
             else: # We already imported it
                 mod = self.serverPlugins[element][0] #
@@ -255,6 +258,7 @@ class ArcFactory(Factory):
                 except Exception as a:
                     self.logger.error("Unable to load server plugin from %s" % (element+".py"))
                     self.logger.error("Error: %s" % a)
+                    i = i + 1
                     continue
                 reloaded = True # Remember that we reloaded it
             mod.filename = element
@@ -263,6 +267,7 @@ class ArcFactory(Factory):
                 self.logger.debug("Loaded server plugin: %s" % name)
             else:
                 self.logger.debug("Reloaded server plugin: %s" % name)
+            i = i + 1
         self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
         #The following code should be handled by the ServerPlugins class and registerHook
         self.logger.debug("Getting hooks..")
