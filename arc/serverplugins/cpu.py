@@ -19,15 +19,15 @@ class CpuServerPlugin():
             cpucores = psutil.cpu_percent(interval=0, percpu=True)
             cores = len(cpucores)
             if cores == 1:
-                self.logger.info("CPU usage: %s (in one core)" % cpuall)
+                self.logger.info("CPU usage: %s%% (in one core)" % cpuall)
             elif cores > 1:
                 done = ""
                 i = 1
                 for element in cpucores:
-                    done = done + ("%s: %s, " % (i, element))
+                    done = done + ("%s: %s%%, " % (i, element))
                     i = i + 1
                 done = done[0:(len(done)-2)]
-                self.logger.info("CPU usage: %s (%s)" % (cpuall, done))
+                self.logger.info("CPU usage: %s%% (%s)" % (cpuall, done))
         
     hooks = {
         "heartbeatSent": onHeartbeat
