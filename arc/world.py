@@ -32,8 +32,8 @@ class World(object):
     the gzip on disk is updated with the new blocks.
     """
 
-    def __init__(self, basename, load=True):
-        self.logger = ColouredLogger(debug)
+    def __init__(self, basename, load=True, factory=None):
+        self.logger = factory.logger
         self.basename = basename
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.meta_path = os.path.join(basename, "world.meta")
