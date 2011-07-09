@@ -237,29 +237,43 @@ class ArcFactory(Factory):
             element = files[i]
             reloaded = False
             if not "arc.serverplugins.%s" % element in sys.modules.keys(): # Check if we already imported it
-                __import__("arc.serverplugins.%s" % element) # If not, import it
                 try:
-                    mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self) # Grab the actual plugin class
-                    name = mod.name # What's the name?
-                except Exception as a:
-                    self.logger.error("Unable to load server plugin from %s" % (element+".py"))
+                    __import__("arc.serverplugins.%s" % element) # If not, import it
+                except Exception as a: # Got an error!
+                    self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
                     i = i + 1
                     continue
+                else:
+                    try:
+                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self) # Grab the actual plugin class
+                        name = mod.name # What's the name?
+                    except Exception as a:
+                        self.logger.error("Unable to load server plugin from %s" % (element+".py"))
+                        self.logger.error("Error: %s" % a)
+                        i = i + 1
+                        continue
             else: # We already imported it
                 mod = self.serverPlugins[element][0] #
                 del mod #
                 del self.serverPlugins[element] #
                 del sys.modules["arc.serverplugins.%s" % element] # Unimport it by deleting it
-                __import__("arc.serverplugins.%s" % element) # Import it again
                 try:
-                    mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
-                    name = mod.name # get the name
-                except Exception as a:
-                    self.logger.error("Unable to load server plugin from %s" % (element+".py"))
+                    __import__("arc.serverplugins.%s" % element) # import it again
+                except Exception as a: # Got an error!
+                    self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
                     i = i + 1
                     continue
+                else:
+                    try:
+                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
+                        name = mod.name # get the name
+                    except Exception as a:
+                        self.logger.error("Unable to load server plugin from %s" % (element+".py"))
+                        self.logger.error("Error: %s" % a)
+                        i = i + 1
+                        continue
                 reloaded = True # Remember that we reloaded it
             mod.filename = element
             self.serverPlugins[name] = mod # Put it in the plugins list
@@ -275,9 +289,8 @@ class ArcFactory(Factory):
             try:
                 for element in plugin.hooks.keys(): # For every hook in the plugin,
                     if element not in self.serverHooks.keys():
-                        self.serverHooks[element] = [[plugin, plugin.hooks[element]]] # Make a note of the hook in the hooks dict
-                    else:
-                        self.serverHooks[element].append([[plugin, plugin.hooks[element]]]) # Make a note of the hook in the hooks dict
+                        self.serverHooks[element] = [] # Make a note of the hook in the hooks dict
+                    self.serverHooks[element].append([plugin, plugin.hooks[element]]) # Make a note of the hook in the hooks dict
                     self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
             except Exception as a:
                 self.logger.error("Unable to get hooks from server plugin %s" % plugin.name)
