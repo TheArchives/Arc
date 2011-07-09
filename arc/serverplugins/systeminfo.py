@@ -21,7 +21,7 @@ class SystemInfoServerPlugin():
         physramusage = psutil.phymem_usage()
         virtramusage = psutil.virtmem_usage()
         processes = len(psutil.get_pid_list())
-        self.logger.info("CPU USAGE: %s%%, DISK USAGE: %s%% RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (cpuall, diskusage[3], physramusage[3], virtramusage[3], processes))
+        self.logger.info("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (cpuall, cores, diskusage[3], physramusage[3], virtramusage[3], processes))
         if cores == 1:
             self.logger.debug("CPU: %s%% (in one core)" % cpuall)
         elif cores > 1:
