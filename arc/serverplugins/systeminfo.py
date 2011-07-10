@@ -26,7 +26,7 @@ class SystemInfoServerPlugin():
         diskusage = psutil.disk_usage("/")
         physramusage = psutil.phymem_usage()
         virtramusage = psutil.virtmem_usage()
-        processes = len(psutil.get_pid_list())'
+        processes = len(psutil.get_pid_list())
         theDict = {cpuall, cores, diskusage[3], physramusage[3], virtramusage[3], processes}
         return theDict
 
