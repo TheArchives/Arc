@@ -299,16 +299,6 @@ def makedatfile(filename):
             del cPickle
     del os
 
-def checkos():
-    try:
-        if (os.uname()[0] == "Darwin"):
-            os = "Mac"
-        else:
-            os = "Linux"
-    except:
-        os = "Windows"
-    return os
-
 def invertDict(OldDict):
     NewDict = dict()
     for key in OldDict.iterkeys():

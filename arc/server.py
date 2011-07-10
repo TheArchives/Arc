@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import datetime, gc, os, random, re, shutil, sys, time, traceback
+import ctypes, datetime, gc, os, platform, random, re, shutil, subprocess, sys, time, traceback
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
@@ -1114,6 +1114,64 @@ class ArcFactory(Factory):
         self.logger.info("Loaded %s discrete archives." % len(self.archives))
         reactor.callLater(300, self.loadArchives)
         self.runServerHook("archivesLoaded", {"number": len(self.archives)})
+
+    def getMemoryUsage(self):
+        """
+        Attempts to retrieve memory usage. Works on Windows and unix like operating systems.
+        Returns a float representing how many MB is in use.
+        """
+        if platform.system() == "Windows":
+            return self._getMemoryUsageWin32()
+        else:
+            result = self._getMemoryUsageUnix()
+            if int(result) == 0:
+                result = self._getMemoryUsageLinux()
+            return result
+   
+    def _getMemoryUsageLinux(self):
+        "Gets the memory usage, linux style."
+        try:
+            with open("/proc/%d/status" % os.getpid()) as f:
+                for line in f.readlines():
+                    tokens = line.split()
+                    if tokens[0] == "VmSize:":
+                        return float(tokens[1]) / 1024.0
+        except:
+            return 0.0
+   
+    def _getMemoryUsageUnix(self):
+        "Gets the memory usage, UNIX style."
+        try:
+            proc = subprocess.Popen(["ps", "-o", "vsize", "-p", str(os.getpid())], stdout=subprocess.PIPE)
+            return float(proc.communicate()[0].split()[1]) / 1024.0
+        except:
+            return 0.0
+    
+    def _getMemoryUsageWin32(self):
+        "Gets the memory usage, Win32 style."
+        class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
+            _fields_ = [('cb', ctypes.c_ulong),
+                        ('PageFaultCount', ctypes.c_ulong),
+                        ('PeakWorkingSetSize', ctypes.c_size_t),
+                        ('WorkingSetSize', ctypes.c_size_t),
+                        ('QuotaPeakPagedPoolUsage', ctypes.c_size_t),
+                        ('QuotaPagedPoolUsage', ctypes.c_size_t),
+                        ('QuotaPeakNonPagedPoolUsage', ctypes.c_size_t),
+                        ('QuotaNonPagedPoolUsage', ctypes.c_size_t),
+                        ('PagefileUsage', ctypes.c_size_t),
+                        ('PeakPagefileUsage', ctypes.c_size_t),
+                        ('PrivateUsage', ctypes.c_size_t),
+                       ]
+  
+        mem_struct = PROCESS_MEMORY_COUNTERS_EX()
+        ret = ctypes.windll.psapi.GetProcessMemoryInfo(
+                    ctypes.windll.kernel32.GetCurrentProcess(),
+                    ctypes.byref(mem_struct),
+                    ctypes.sizeof(mem_struct)
+                    )
+        if not ret:
+            return 0
+        return mem_struct.PrivateUsage / 1024.0 / 1024.0
 
     def reloadIrcBot(self):
         if (self.irc_relay):

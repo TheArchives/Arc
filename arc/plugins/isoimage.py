@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import shutil, os, traceback
+import os, platform, shutil, traceback
 
 from twisted.internet import reactor
 
@@ -35,7 +35,7 @@ class IsoImagePlugin(ProtocolPlugin):
         worldpath = pathname + "/worlds/" + worldname
         try:
             os.chdir(pathname + "/arc/isoimage/")
-            if checkos() == "Windows":
+            if platform.system() == "Windows":
                 os.system('java -Xms512M -Xmx1024M -cp minecraft-server.jar; OrigFormat save "%s" server_level.dat' % worldpath)
                 os.system('java -Xms128M -Xmx1024M -cp minecraft-server.jar;IsoCraft++.jar isocraft server_level.dat tileset.png output.png %s -1 -1 -1 -1 -1 -1 visible'%str(angle))
             else:

@@ -7,4 +7,11 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class DevToolsPlugin(ProtocolPlugin):
-    pass
+
+    commands = {
+        "sinfo": "commandServerInfo",
+    }
+
+    def commandServerInfo(self, parts, fromloc, overriderank):
+        usageDict = self.client.factory.serverPlugins["SystemInfoPlugin"].calculateSystemUsage()
+        self.client.sendServerMessage("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (usageDict))

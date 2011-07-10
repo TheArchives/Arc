@@ -2,9 +2,16 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import psutil
+try:
+    import psutil
+except ImportError:
+    import reqs.psutil
 
 class SystemInfoServerPlugin():
+
+    hooks = {
+        "heartbeatSent": onHeartbeat
+    }
 
     name = "SystemInfoPlugin"
     errored = False
@@ -12,18 +19,23 @@ class SystemInfoServerPlugin():
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
-        
-    def onHeartbeat(self, data=None):
+
+    def calculateSystemUsage(self):
         cpuall = psutil.cpu_percent(interval=0)
-        cpucores = psutil.cpu_percent(interval=0, percpu=True)
         cores = len(cpucores)
         diskusage = psutil.disk_usage("/")
         physramusage = psutil.phymem_usage()
         virtramusage = psutil.virtmem_usage()
-        processes = len(psutil.get_pid_list())
-        self.logger.info("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (cpuall, cores, diskusage[3], physramusage[3], virtramusage[3], processes))
+        processes = len(psutil.get_pid_list())'
+        theDict = {cpuall, cores, diskusage[3], physramusage[3], virtramusage[3], processes}
+        return theDict
+
+    def onHeartbeat(self, data=None):
+        usageDict = self.calculateSystemUsage
+        cpucores = psutil.cpu_percent(interval=0, percpu=True)
+        self.logger.info("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (usageDict))
         if cores == 1:
-            self.logger.debug("CPU: %s%% (in one core)" % cpuall)
+            self.logger.debug("CPU: %s%% (in one core)" % usageDict[0])
         elif cores > 1:
             done = ""
             i = 1
@@ -31,10 +43,6 @@ class SystemInfoServerPlugin():
                 done = done + ("%s: %s%%, " % (i, element))
                 i = i + 1
             done = done[0:(len(done)-2)]
-            self.logger.debug("CPU: %s%% (%s)" % (cpuall, done))
-        
-    hooks = {
-        "heartbeatSent": onHeartbeat
-    }
-        
+            self.logger.debug("CPU: %s%% (%s)" % (usageDict[0], done))
+
 serverPlugin = SystemInfoServerPlugin
