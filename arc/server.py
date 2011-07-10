@@ -19,8 +19,6 @@ from arc.protocol import ArcServerProtocol
 from arc.timer import ResettableTimer
 from arc.world import World
 
-import logging
-
 class ArcFactory(Factory):
     """
     Factory that deals with the general world actions and cross-user comms.
@@ -298,7 +296,7 @@ class ArcFactory(Factory):
                 continue
         self.logger.debug("self.serverHooks: %s" % self.serverHooks)
         self.runServerHook("serverPluginsLoaded")
-        
+
     def serverPluginExists(self, plugin):
         return plugin in self.serverPlugins.keys()
 
@@ -332,7 +330,7 @@ class ArcFactory(Factory):
         p.factory = self
         self.runServerHook("protocolBuilt")
         return p
-        
+
     def startFactory(self):
         self.console = StdinPlugin(self)
         self.console.start()
@@ -731,7 +729,7 @@ class ArcFactory(Factory):
             elif issubclass(plugin, ServerPlugin):
                 plugins.append(plugins_by_module_name(plugin_name))
         self.runServerHook("pluginLoaded", {"plugin_name": plugin_name})
-        
+
     def sendMessages(self):
         "Sends all queued messages, and lets worlds recieve theirs."
         try:
@@ -1130,7 +1128,7 @@ class ArcFactory(Factory):
             if int(result) == 0:
                 result = self._getMemoryUsageLinux()
             return result
-   
+
     def _getMemoryUsageLinux(self):
         "Gets the memory usage, linux style."
         try:
@@ -1141,7 +1139,7 @@ class ArcFactory(Factory):
                         return float(tokens[1]) / 1024.0
         except:
             return 0.0
-   
+
     def _getMemoryUsageUnix(self):
         "Gets the memory usage, UNIX style."
         try:
@@ -1149,7 +1147,7 @@ class ArcFactory(Factory):
             return float(proc.communicate()[0].split()[1]) / 1024.0
         except:
             return 0.0
-    
+
     def _getMemoryUsageWin32(self):
         "Gets the memory usage, Win32 style."
         class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
@@ -1165,7 +1163,7 @@ class ArcFactory(Factory):
                         ('PeakPagefileUsage', ctypes.c_size_t),
                         ('PrivateUsage', ctypes.c_size_t),
                        ]
-  
+
         mem_struct = PROCESS_MEMORY_COUNTERS_EX()
         ret = ctypes.windll.psapi.GetProcessMemoryInfo(
                     ctypes.windll.kernel32.GetCurrentProcess(),

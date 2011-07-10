@@ -76,7 +76,6 @@ class ArcServerProtocol(Protocol):
         self.last_block_position = (-1, -1, -1)
         self.gone = 0
         self.frozen = False
-        self.resetIdleTimer()
 
     def registerCommand(self, command, func):
         "Registers func as the handler for the command named 'command'."
@@ -147,24 +146,6 @@ class ArcServerProtocol(Protocol):
                 data,
             ))
 
-    def stopIdleTimer(self):
-        if hasattr(self, "idleCB"):
-            if self.idleCB.active():
-                self.idleCB.cancel()
-
-    def resetIdleTimer(self):
-        self.stopIdleTimer()
-        if self.gone or not self.factory.away_kick:
-            return
-        if self.username:
-            if self.isMod():
-                return
-        self.idleCB = reactor.callLater(60*self.factory.away_time, self.onIdleKick)
-
-    def onIdleKick(self):
-        self.sendError("You were away too long.")
-        return
-
     def sendWorldMessage(self, message):
         "Sends a message to everyone in the current world."
         self.queueTask(TASK_WORLDMESSAGE, (255, self.world, COLOUR_YELLOW+message))
@@ -195,7 +176,6 @@ class ArcServerProtocol(Protocol):
             self.runHook("playerquit", self.username)
             self.factory.logger.debug("(reason: %s)" % (reason))
         # Kill all plugins
-        self.stopIdleTimer()
         del self.plugins
         del self.commands
         del self.hooks
@@ -321,7 +301,6 @@ class ArcServerProtocol(Protocol):
                     self.factory.irc_relay.sendServerMessage("07%s has come online." % self.username)
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
-                self.resetIdleTimer()
                 self.data = PlayerData(self) # Create a player data object
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
@@ -393,7 +372,6 @@ class ArcServerProtocol(Protocol):
                         self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1]+self.last_block_changes[1:2]
                     else:
                         self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1]
-                self.resetIdleTimer()
             elif type == TYPE_PLAYERPOS:
                 # If we're loading a world, ignore these.
                 if self.loading_world:
@@ -401,8 +379,6 @@ class ArcServerProtocol(Protocol):
                 naff, x, y, z, h, p = parts
                 pos_change = not (x == self.x and y == self.y and z == self.z)
                 dir_change = not (h == self.h and p == self.p)
-                if dir_change:
-                    self.resetIdleTimer()
                 if self.frozen:
                     newx = self.x >> 5
                     newy = self.y >> 5
@@ -630,7 +606,6 @@ class ArcServerProtocol(Protocol):
                     else:
                         if override is not True:
                             self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
-                self.resetIdleTimer()
             else:
                 if type == 2:
                     logging.logger.warn("Beta client attempted to connect.")
