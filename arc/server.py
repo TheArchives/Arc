@@ -299,7 +299,7 @@ class ArcFactory(Factory):
         self.logger.debug("self.serverHooks: %s" % self.serverHooks)
         self.runServerHook("serverPluginsLoaded")
         
-    def serverPluginExists(self, plugin)
+    def serverPluginExists(self, plugin):
         return plugin in self.serverPlugins.keys()
 
     def runServerHook(self, hook, data = None):
