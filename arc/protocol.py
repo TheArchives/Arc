@@ -32,7 +32,19 @@ class ArcServerProtocol(Protocol):
         self.identified = False
         self.hooks = {}
         self.commands = {}
-        self.plugins = [plugin(self) for plugin in protocol_plugins]
+        self.plugins = []
+        for plugin in protocol_plugins:
+            try:
+                self.plugins.append(plugin(self))
+            except Exception as a:
+                self.factory.logger.error("Unable to load protocol plugin '%s'" % plugin.__name__)
+                self.factory.logger.error("Error: %s" % a)
+                error = traceback.format_exc()
+                errorsplit = error.split("\n")
+                for element in errorsplit:
+                    if not element.strip(" ") == "":
+                        self.factory.logger.debug(element)
+                continue
         # Set identification variable to false
         self.identified = False
         # Get an ID for ourselves
@@ -555,9 +567,15 @@ class ArcServerProtocol(Protocol):
                     try:
                         func(parts, "user", False) # fromloc is user, overriderank is false
                     except Exception as e:
+                        self.sendSplitServerMessage("Unable to run that command!")
                         self.sendSplitServerMessage("Error: %s" % e)
-                        self.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
-                        self.factory.logger.error(traceback.format_exc())
+                        self.sendSplitServerMessage("Please report this to the staff!")
+                        self.factory.logger.error("Error in command '%s': %s" % (command.title(), e))
+                        error = traceback.format_exc()
+                        errorsplit = error.split("\n")
+                        for element in errorsplit:  
+                            if not element.strip(" ") == "":
+                                self.factory.logger.debug(element)
                 elif message.startswith("@"):
                     # It's a whisper
                     try:
