@@ -23,29 +23,29 @@ class McBans():
     def connect(self, player, ip):
         data = {"player": player, "ip": ip, "exec": "playerConnect"}
         values = self._request(data)
-        return values
+        return values # {'banStatus': 'n', 'playerRep': 10, 'altList': 'username: REP 0, username: REP 10'(, 'banReason': 'banned')}
         
     def disconnect(self, player):
         data = {"player": player, "exec": "playerDisconnect"}   
         values = self._request(data)
-        return values
+        return values # {'result': 'y'}
     
     # Banning activity
     
     def unban(self, player, admin):
         data = {"player": player, "admin": admin, "exec": "unBan"}
         values = self._request(data)
-        return values
+        return values # {"result": "y"}
     
     def localBan(self, player, ip, reason, admin):
         data = {"player": player, "ip": ip, "reason": reason, "admin": admin, "exec": "localBan"}
         values = self._request(data)
-        return values
+        return values # {"result": "y"}
         
     def globalBan(self, player, ip, reason, admin):
         data = {"player": player, "ip": ip, "reason": reason, "admin": admin, "exec": "globalBan"}
         values = self._request(data)
-        return values
+        return values # {"result": "y"}
     
     def tempBan(self, player, ip, reason, admin, duration, measure):
         if measure is ("m" or "h" or "d"):
@@ -53,18 +53,18 @@ class McBans():
             values = self._request(data)
         else:
             raise ValueError("'measure' must be m, h or d!")
-        return values
+        return values # {"result": "y"}
     
     # Lookups
     
     def lookup(self, player, admin="None"):
         data = {"player": player, "admin": admin, "exec": "playerLookup"}
         values = self._request(data)
-        return values
+        return values # {'global': ['servername .:. reason', 'servername .:. reason'], u'total': 4, u'local': ['servername .:. reason'], 'reputation': 5}
         
     # Account confirmation
     
     def confirm(self, player, key):
         data = {"player": player, "string": key, "exec": "playerSet"}
         values = self._request(data)
-        return values
+        return values # {"result": "n"}
