@@ -40,7 +40,6 @@ class SystemInfoServerPlugin():
             self.logger.debug("CPU: %s%% (%s)" % (usageList[0], done))
     
     name = "SystemInfoPlugin"
-    errored = False
     
     hooks = {
         "heartbeatSent": onHeartbeat

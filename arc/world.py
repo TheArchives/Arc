@@ -64,7 +64,7 @@ class World(object):
         self.userzones = {}
         self.rankzones = {}
         self.entitylist = []
-        #Unsaved variables
+        # Unsaved variables
         self.entities_worldblockchangesdict = {}
         self.entities_childerenlist = []
         self.entities_childerenlist_index = 0
@@ -169,7 +169,7 @@ class World(object):
         try:
             self.x = config.getint("size", "x")
         except:
-            self.factory.logger.error("This world was attempted to be loaded, it's missing a world.meta file.")
+            self.factory.logger.error("Cannot load world, no world.meta found.")
             pass
         self.y = config.getint("size", "y")
         self.z = config.getint("size", "z")
@@ -367,7 +367,7 @@ class World(object):
             for x in cmd:
                 cmdstr = cmdstr + x + "&n"
             config.set("commands", str(offset), cmdstr)
-        #store mines
+        # Store mines
         for offset in self.mines:
             config.set("mines", str(offset), "True")
         # Store user zones
@@ -493,7 +493,7 @@ class World(object):
         return offset in self.mines    
         
     def clear_mines(self):
-        self.mines = list([])
+        self.mines = []
 
     def __getitem__(self, (x, y, z)):
         "Gets the value of a block. Returns a Deferred."
