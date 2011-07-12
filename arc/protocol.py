@@ -54,9 +54,7 @@ class ArcServerProtocol(Protocol):
             self.sendError("The server is full.")
             return
         # Open the Whisper Log, Adminchat log and WorldChat Log
-        self.whisperlog = open("logs/server.log", "a")
-        self.wclog = open("logs/server.log", "a")
-        self.adlog = open("logs/server.log", "a")
+        # TODO: Use a chatlog handler, this is stupid and breaks things.
         self.whisperlog = open("logs/whisper.log", "a")
         self.wclog = open("logs/staff.log", "a")
         self.adlog = open("logs/world.log", "a")
@@ -891,6 +889,7 @@ class ArcServerProtocol(Protocol):
                 r = open('config/greeting.example.txt', 'r')
             for line in r:
                 self.sendPacked(TYPE_MESSAGE, 127, line)
+            r.close()
             self.sent_first_welcome = True
             self.runHook("playerjoined",self.username)
             self.MessageAlert()

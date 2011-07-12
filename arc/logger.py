@@ -7,7 +7,8 @@ import logging, string, sys, time
 class ColouredLogger(object):
     """
     This class is used to colour and log output.
-    It handles colours, printing, and logging to console.log.
+    It handles colours, printing, and logging to console.log and 
+        the individual level log files.
     """
     cols = {
         "&0": "",
@@ -184,32 +185,27 @@ class ChatLogHandler(object):
     listening for logs to get in.
     """
 
-    def __init__(self, file, formatter):
-        self.file = file
-        self.formatter = formatter
+    def __init__(self):
+        self.worldlog = open("logs/world.log", "a")
+        self.whisperlog = open("logs/whisper.log", "a")
+        self.stafflog = open("logs/staff.log", "a")
+        self._write(self.worldlog, "\n -------------------------------------------- \n")
+        self._write(self.whisperlog, "\n -------------------------------------------- \n")
+        self._write(self.stafflog, "\n -------------------------------------------- \n")
 
-    def log(self, message):
-        "Takes in a message dictionary, works out the formation."
-        if not isinstance(message, dict) and not instance(message, list): # Not a list or a dict
-            messages = [message]
-        elif not isinstance(message, list): # List
-            for item in message:
-                i = 1
-                _message[i] = item
-                i += 1
-            messages = _message
-        else: # Dict, what we want!
-            messages = message
-        try:
-            final = (formatter % messages)
-        except Exception as e:
-            raise ValueError("Something went wrong when saving! Exception: %s, Data is %s, Formatter is %s"
-                             % (e, " ".join(messages), formatter))
-        else:
-            self._log(final)
-            return True
-
-    def _log(self, message):
-        "Does the dirty work."
-        self.file.write(message)
-        self.file.flush()
+    def world(self, player, world, message):
+        data = "[%s] %s (in %s): %s" % (time.strftime("%d %b (%H:%M:%S)"), player, world, message)
+        self._write(self.worldlog, data)
+    
+    def staff(self, player, message):
+        data = "[%s] %s: %s" % (time.strftime("%d %b (%H:%M:%S)"), player, message)
+        self._write(self.whisperlog, data)    
+    
+    def whisper(self, player, target, message):
+        data = "[%s] %s -> %s: %s" % (time.strftime("%d %b (%H:%M:%S)"), player, target, message)
+        self._write(self.stafflog, data)
+    
+    def _write(self, file, data):
+        file.write("%s\n" % data)
+        file.flush()
+    
