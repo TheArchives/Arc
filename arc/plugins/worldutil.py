@@ -277,11 +277,12 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Please specify a template.")
                 return
             world_id = parts[1].lower()
-            self.client.factory.newWorld(world_id, template, client=self.client)
-            self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-            self.client.factory.worlds[world_id].all_write = False
-            if len(parts) < 4:
-                self.client.sendServerMessage("World '%s' made and booted." % world_id)
+            result = self.client.factory.newWorld(world_id, template, client=self.client)
+            if result:
+                self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
+                self.client.factory.worlds[world_id].all_write = False
+                if len(parts) < 4:
+                    self.client.sendServerMessage("World '%s' made and booted." % world_id)
 
     @config("category", "world")
     @config("rank", "mod")

@@ -977,7 +977,7 @@ class ArcFactory(Factory):
         except:
             if not client is None:
                 client.sendServerMessage("Sorry, that world already exists!")
-            return
+            return False
         # Find the template files, copy them to the new location
         for filename in ["blocks.gz", "world.meta"]:
             try:
@@ -985,8 +985,9 @@ class ArcFactory(Factory):
             except:
                 if not client is None:
                     client.sendServerMessage("That template doesn't exist.")
-                return
+                return False
         self.runServerHook("worldCreated", {"name": new_name, "template": template})
+        return True
 
     def renameWorld(self, old_worldid, new_worldid):
         "Renames a world."
