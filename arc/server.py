@@ -969,19 +969,22 @@ class ArcFactory(Factory):
         # Come back soon!
         reactor.callLater(0.1, self.sendMessages)
 
-    def newWorld(self, new_name, template="default"):
+    def newWorld(self, new_name, template="default", client=None):
         "Creates a new world from some template."
         # Make the directory
         try:
             os.mkdir("worlds/%s" % new_name)
         except:
-            client.sendServerMessage("Sorry, that world already exists!")
+            if not client is None:
+                client.sendServerMessage("Sorry, that world already exists!")
+            return
         # Find the template files, copy them to the new location
         for filename in ["blocks.gz", "world.meta"]:
             try:
                 shutil.copyfile("arc/templates/%s/%s" % (template, filename), "worlds/%s/%s" % (new_name, filename))
             except:
-                self.client.sendServerMessage("That template doesn't exist.")
+                if not client is None:
+                    client.sendServerMessage("That template doesn't exist.")
                 return
         self.runServerHook("worldCreated", {"name": new_name, "template": template})
 

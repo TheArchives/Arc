@@ -277,7 +277,7 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Please specify a template.")
                 return
             world_id = parts[1].lower()
-            self.client.factory.newWorld(world_id, template)
+            self.client.factory.newWorld(world_id, template, client=self.client)
             self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             self.client.factory.worlds[world_id].all_write = False
             if len(parts) < 4:
