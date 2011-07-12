@@ -17,8 +17,10 @@ class McBansServerPlugin():
         data = self.handler.lookup(client.username)
         if int(data["total"]) > 0:
             self.logger.warn("User %s has %s bans on record at MCBans!" % (client.username, data["total"]))
+            client.sendServerMessage("[%sMCBans%s] You have %s%s%s bans on MCBans!" % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["total"], COLOUR_YELLOW)
         else:
             self.logger.info("User %s has no bans on record at MCBans!" % client.username)
+            client.sendServerMessage("[%sMCBans%s] You have %sno%s bans on MCBans!" % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, COLOUR_YELLOW)
         # print "Total bans: %s\n" % readable["total"]
         # if int(readable["total"]) > 0:
             # print "-- Global bans --"
