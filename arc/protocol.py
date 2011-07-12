@@ -28,6 +28,8 @@ class ArcServerProtocol(Protocol):
         # We use the buffer because TCP is a stream protocol :)
         self.buffer = ""
         self.loading_world = False
+        self.chatlogger = self.factory.chatlogger
+        self.logger = self.factory.logger
         # Load plugins for ourselves
         self.identified = False
         self.hooks = {}
@@ -55,9 +57,6 @@ class ArcServerProtocol(Protocol):
             return
         # Open the Whisper Log, Adminchat log and WorldChat Log
         # TODO: Use a chatlog handler, this is stupid and breaks things.
-        self.whisperlog = open("logs/whisper.log", "a")
-        self.wclog = open("logs/staff.log", "a")
-        self.adlog = open("logs/world.log", "a")
         # Check for IP bans
         ip = self.transport.getPeer().host
         if self.factory.isIpBanned(ip):
@@ -561,9 +560,8 @@ class ArcServerProtocol(Protocol):
                         if username in self.factory.usernames:
                             self.factory.usernames[username].sendWhisper(self.username, text)
                             self.sendWhisper(self.username, text)
-                            self.factory.logger.info("@"+self.username+" (from "+self.username+"): "+text)
-                            self.whisperlog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] @"+self.username+" (from "+self.usertitlename+"): "+text+"\n")
-                            self.whisperlog.flush()
+                            self.factory.logger.info("@"+username+" (from "+self.username+"): "+text)
+                            self.chatlogger.whisper(self.usertitlename, username, text)
                         else:
                             self.sendServerMessage("%s is currently offline." % username)
                 elif message.startswith("!"):
@@ -578,12 +576,11 @@ class ArcServerProtocol(Protocol):
                         else:
                             self.sendWorldMessage ("!"+self.userColour()+self.usertitlename+":"+COLOUR_WHITE+" "+text)
                             self.factory.logger.info("!"+self.userColour()+self.usertitlename+"&f in &c"+str(self.world.id)+"&f: "+text)
-                            self.wclog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] !"+self.usertitlename+" in "+str(self.world.id)+": "+text+"\n")
-                            self.wclog.flush()
+                            self.chatlogger.world(self.usertitlename, str(self.world.id), text)
                             if self.factory.irc_relay:
                                 self.factory.irc_relay.sendServerMessage(COLOUR_YELLOW+"!"+self.userColour()+self.usertitlename+COLOUR_BLACK+" in "+str(self.world.id)+": "+text)
                 elif message.startswith("#"):
-                    # It's an staff-only message.
+                    # It's a staff-only message.
                     if len(message) == 1:
                         self.sendServerMessage("Please include a message to send.")
                     else:
@@ -596,6 +593,8 @@ class ArcServerProtocol(Protocol):
                                 self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.username, message)))
                         if self.isMod():
                             self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, self.userColour(), self.username, text, False)))
+                            self.chatlogger.staff(self.username, text)
+                            self.logger.info("# %s: %s" % (self.username, text))
                         else:
                             self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
                 else:

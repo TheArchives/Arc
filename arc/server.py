@@ -13,7 +13,7 @@ from arc.console import StdinPlugin
 from arc.constants import *
 from arc.heartbeat import Heartbeat
 from arc.irc_client import ChatBotFactory
-from arc.logger import ColouredLogger
+from arc.logger import ColouredLogger, ChatLogHandler
 from arc.plugins import *
 from arc.protocol import ArcServerProtocol
 from arc.timer import ResettableTimer
@@ -27,6 +27,7 @@ class ArcFactory(Factory):
 
     def __init__(self, debug=False):
         self.logger = ColouredLogger(debug)
+        self.chatlogger = ChatLogHandler()
 
         # Load up the server plugins right away
         self.logger.info("Loading server plugins..")
