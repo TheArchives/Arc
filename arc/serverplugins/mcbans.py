@@ -5,6 +5,8 @@
 from arc.includes.mcbans_api import McBans
 from ConfigParser import RawConfigParser
 
+from arc.constants import *
+
 class McBansServerPlugin():
 
     def __init__(self, factory):
