@@ -4,7 +4,7 @@
 
 #!/usr/bin/python
 
-import datetime, logging, sys, time, traceback
+import datetime, logging, sys, time, traceback, os
 
 from twisted.internet import reactor
 from twisted.internet.error import CannotListenError
@@ -32,7 +32,7 @@ from arc.globals import *
 from arc.server import ArcFactory
 
 def doExit():
-    if checkos() == "Windows":
+    if os.name == "nt":
         raw_input("\nYou may now close the server console window.")
     else:
         raw_input("\nPlease press enter to exit.")
