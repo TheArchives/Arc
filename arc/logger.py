@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import logging, string, sys, time
+import logging, string, sys, time, os
 
 class ColouredLogger(object):
     """
@@ -131,6 +131,7 @@ class ColouredLogger(object):
         file = open(file, "a")
         file.write(data + "\n")
         file.flush()
+        os.fsync(file.fileno())
         file.close()
 
     def info(self, data):
