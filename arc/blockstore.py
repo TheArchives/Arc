@@ -208,6 +208,8 @@ class BlockStore(Thread):
                     chunk_end = pos + len(chunk)
                 # Safety first. If this isn't true, there's a bug.
                 assert blocks_pos == len(ordered_blocks)
+                new_gz.flush()
+                os.fsync(new_gz.fileno())
                 # OK, close up shop.
                 gz.close()
                 new_gz.close()
