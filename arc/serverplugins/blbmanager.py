@@ -13,3 +13,8 @@ class BlbManagerServerPlugin():
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
+        
+    hooks = {
+        }
+
+serverPlugin = BlbManagerServerPlugin

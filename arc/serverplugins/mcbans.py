@@ -3,7 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 from arc.includes.mcbans_api import McBans
-from ConfigParser import RawConfigParser as ConfigParser
+import ConfigParser
 
 from arc.constants import *
 
@@ -13,7 +13,7 @@ class McBansServerPlugin():
         self.factory = factory
         self.logger = factory.logger
         self.logger.debug("[&1MCBans&f] Reading in API Key..")
-        config = ConfigParser()
+        config = ConfigParser.RawConfigParser()
         try:
             config.read("config/plugins/mcbans.conf")
             api_key = config.get("mcbans", "apikey")
@@ -23,10 +23,9 @@ class McBansServerPlugin():
             self.has_api = False
         else:
             self.logger.debug("[&1MCBans&f] Found API key: &1%s&f" % api_key)
+            self.handler = McBans(api_key)
             self.has_api = True
         del config
-        del ConfigParser
-        self.handler = McBans(api_key)
         
     def onlineLookup(self, data):
         if self.has_api:
