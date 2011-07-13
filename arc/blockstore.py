@@ -211,8 +211,10 @@ class BlockStore(Thread):
                 # OK, close up shop.
                 gz.close()
                 new_gz.close()
-                # Copy the new level over the old.
-                os.remove(self.blocks_path)
+                # Make a backup of the old level and put the new one in place
+                if os.path.exists(self.blocks_path + ".old"):
+                    os.remove(self.blocks_path + ".old")
+                os.rename(self.blocks_path, self.blocks_path + ".old")
                 os.rename(self.blocks_path + ".new", self.blocks_path)
                 self.queued_blocks = {}
             except:
