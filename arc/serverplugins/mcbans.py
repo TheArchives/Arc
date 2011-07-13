@@ -3,7 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 from arc.includes.mcbans_api import McBans
-from ConfigParser import RawConfigParser
+from ConfigParser import RawConfigParser as ConfigParser
 
 from arc.constants import *
 
