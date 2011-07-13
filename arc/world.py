@@ -388,6 +388,8 @@ class World(object):
             config.set("entitylist", str(i), str(entry))
         fp = open(self.meta_path, "w")
         config.write(fp)
+        fp.flush()
+        os.fsync(fp.fileno())
         fp.close()
 
     @classmethod
