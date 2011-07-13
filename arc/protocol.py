@@ -170,6 +170,7 @@ class ArcServerProtocol(Protocol):
         self.factory.queue.put((self, TASK_PLAYERLEAVE, (self.id,)))
         if self.username:
             self.factory.logger.info("Disconnected '%s'" % (self.username))
+            self.factory.runServerHook("playerQuit", {"client": self})
             self.runHook("playerquit", self.username)
             self.factory.logger.debug("(reason: %s)" % (reason))
         # Kill all plugins
