@@ -562,7 +562,7 @@ class ArcServerProtocol(Protocol):
                             self.factory.usernames[username].sendWhisper(self.username, text)
                             self.sendWhisper(self.username, text)
                             self.factory.logger.info("@"+username+" (from "+self.username+"): "+text)
-                            self.chatlogger.whisper(self.usertitlename, username, text)
+                            self.factory.chatlogger.whisper(self.usertitlename, username, text)
                         else:
                             self.sendServerMessage("%s is currently offline." % username)
                 elif message.startswith("!"):
@@ -577,7 +577,7 @@ class ArcServerProtocol(Protocol):
                         else:
                             self.sendWorldMessage ("!"+self.userColour()+self.usertitlename+":"+COLOUR_WHITE+" "+text)
                             self.factory.logger.info("!"+self.userColour()+self.usertitlename+"&f in &c"+str(self.world.id)+"&f: "+text)
-                            self.chatlogger.world(self.usertitlename, str(self.world.id), text)
+                            self.factory.chatlogger.world(self.usertitlename, str(self.world.id), text)
                             if self.factory.irc_relay:
                                 self.factory.irc_relay.sendServerMessage(COLOUR_YELLOW+"!"+self.userColour()+self.usertitlename+COLOUR_BLACK+" in "+str(self.world.id)+": "+text)
                 elif message.startswith("#"):
@@ -594,7 +594,7 @@ class ArcServerProtocol(Protocol):
                                 self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.username, message)))
                         if self.isMod():
                             self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, self.userColour(), self.username, text, False)))
-                            self.chatlogger.staff(self.username, text)
+                            self.factory.chatlogger.staff(self.username, text)
                             self.logger.info("# %s: %s" % (self.username, text))
                         else:
                             self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
@@ -661,7 +661,7 @@ class ArcServerProtocol(Protocol):
         # End of code that needs to be plugin-fied
         self.initial_position = position
         if self.world.is_archive:
-            self.sendSplitServerMessage("This world is an Archive, and will cease to exist once the last person leaves.")
+            self.sendSplitServerMessage("This world is an archive, and will cease to exist once the last person leaves.")
             self.sendServerMessage(COLOUR_RED+"Staff: Please do not reboot this world.")
         breakable_admins = self.runHook("canbreakadmin")
         self.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.factory.server_name, world_id)), "Entering world '%s'" % world_id, 100 if breakable_admins else 0)
@@ -886,13 +886,8 @@ class ArcServerProtocol(Protocol):
 
     def sendWelcome(self):
         if not self.sent_first_welcome:
-            try:
-                r = open('config/greeting.txt', 'r')
-            except:
-                r = open('config/greeting.example.txt', 'r')
-            for line in r:
+            for line in self.factory.greeting:
                 self.sendPacked(TYPE_MESSAGE, 127, line)
-            r.close()
             self.sent_first_welcome = True
             self.runHook("playerjoined",self.username)
             self.MessageAlert()
@@ -1049,11 +1044,9 @@ class ArcServerProtocol(Protocol):
 
     def MessageAlert(self):
         if os.path.exists("config/data/inbox.dat"):
-            file = open('config/data/inbox.dat', 'r')
-            messages = cPickle.load(file)
-            file.close()
+            self.messages = self.factory.messages
             for client in self.factory.clients.values():
-                if client.username in messages:
+                if client.username in self.messages:
                     client.sendServerMessage("You have a message waiting in your Inbox.")
                     client.sendServerMessage("Use /inbox to check and see.")
                     reactor.callLater(300, self.MessageAlert)
@@ -1107,7 +1100,4 @@ class ArcServerProtocol(Protocol):
         return limit
 
     def loadRank(self):
-        file = open('config/data/titles.dat', 'r')
-        rank_dic = cPickle.load(file)
-        file.close()
-        return rank_dic
+        return self.factory.rank_dic

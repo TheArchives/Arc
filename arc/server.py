@@ -58,6 +58,22 @@ class ArcFactory(Factory):
         # Maybe, but I'm initialising them already in the loader
         self.hooks = {}
         self.save_count = 1
+        # Read in the greeting
+        try:
+            r = open('config/greeting.txt', 'r')
+        except:
+            r = open('config/greeting.example.txt', 'r')
+        self.greeting = r.read()
+        r.close()
+        # Read in the titles
+        file = open('config/data/titles.dat', 'r')
+        self.rank_dic = cPickle.load(file)
+        file.close()
+        # Read in the messages
+        if os.path.exists("config/data/inbox.dat"):
+            file = open('config/data/inbox.dat', 'r')
+            self.messages = cPickle.load(file)
+            file.close()
         try:
             self.config.read("config/main.conf")
         except Exception as a:
