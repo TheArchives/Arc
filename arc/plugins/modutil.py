@@ -234,10 +234,10 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("rank", "admin")
     def commandBan(self, parts, fromloc, overriderank):
         "/ban username reason - Admin\nBans the Player from this server."
-        username = parts[1]
         if len(parts) <= 1:
-            self.client.sendServerMessage("Please specify a reason.")
+            self.client.sendServerMessage("Please specify a username and a reason.")
             return
+        username = parts[1]
         if self.client.factory.isBanned(username):
             self.client.sendServerMessage("%s is already banned." % username)
         else:
