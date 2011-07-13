@@ -52,12 +52,12 @@ class ColouredLogger(object):
         "Constructor, set everything up"
         self.debugswitch = debug
         try:
-            self.logfile = open("logs/console/console.log", "a")
-            self.infolog = open("logs/levels/info.log", "a")
-            self.errorlog = open("logs/levels/error.log", "a")
-            self.warnlog = open("logs/levels/warn.log", "a")
-            self.criticallog = open("logs/levels/critical.log", "a")
-            self.debuglog = open("logs/levels/debug.log", "a")
+            self.logfile = "logs/console/console.log"
+            self.infolog = "logs/levels/info.log"
+            self.errorlog = "logs/levels/error.log"
+            self.warnlog = "logs/levels/warn.log"
+            self.criticallog = "logs/levels/critical.log"
+            self.debuglog = "logs/levels/debug.log",
         except Exception as a:
             pass
         try:
@@ -128,8 +128,10 @@ class ColouredLogger(object):
         "Outputs to the console.log file"
         for element in self.nocol.keys():
             data = string.replace(data, element, self.nocol[element]) # Do not log colour codes in file
+        file = open(file, "a")
         file.write(data + "\n")
         file.flush()
+        file.close()
 
     def info(self, data):
         "INFO level output"
@@ -186,9 +188,9 @@ class ChatLogHandler(object):
     """
 
     def __init__(self):
-        self.worldlog = open("logs/world.log", "a")
-        self.whisperlog = open("logs/whisper.log", "a")
-        self.stafflog = open("logs/staff.log", "a")
+        self.worldlog = "logs/world.log"
+        self.whisperlog = "logs/whisper.log"
+        self.stafflog = "logs/staff.log"
         self._write(self.worldlog, "\n -------------------------------------------- \n")
         self._write(self.whisperlog, "\n -------------------------------------------- \n")
         self._write(self.stafflog, "\n -------------------------------------------- \n")
@@ -206,5 +208,7 @@ class ChatLogHandler(object):
         self._write(self.whisperlog, data)
 
     def _write(self, file, data):
+        file = open(file, "a")
         file.write("%s\n" % data)
         file.flush()
+        file.close()
