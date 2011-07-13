@@ -36,6 +36,7 @@ class World(object):
         self.logger = factory.logger
         self.basename = basename
         self.blocks_path = os.path.join(basename, "blocks.gz")
+        self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")
         self.database_path = os.path.join(basename, "storage.db")
         # Other settings
@@ -540,9 +541,17 @@ class World(object):
         handle_deferred = Deferred()
         # Now, make a function that will call that on the first one
         def on_flush(result):
-            handle_deferred.callback((
-                open(self.blocks_path, "rb"),
-                os.stat(self.blocks_path).st_size,
-            ))
+            if os.path.exists(self.blocks_path):
+                handle_deferred.callback((
+                        open(self.blocks_path, "rb"),
+                        os.stat(self.blocks_path).st_size,
+                ))
+            elif os.path.exists(self.old_blocks_path):
+                handle_deferred.callback((
+                        open(self.old_blocks_path, "rb"),
+                        os.stat(self.old_blocks_path).st_size,
+                ))
+            else:
+                raise Exception("No blocks files found for world %s!" % (self.id))
         self.flush_deferred.addCallback(on_flush)
         return handle_deferred

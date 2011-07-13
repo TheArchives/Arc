@@ -221,7 +221,9 @@ class BlockStore(Thread):
                 reactor.callLater(3, self.flush)
         else:
             try:
-                os.remove(self.blocks_path)
+                if os.path.exists(self.blocks_path + ".old"):
+                    os.remove(self.blocks_path + ".old")
+                os.rename(self.blocks_path, self.blocks_path + ".old")
                 os.rename(self.blocks_path + ".new", self.blocks_path)
                 self.saving = False
             except:
