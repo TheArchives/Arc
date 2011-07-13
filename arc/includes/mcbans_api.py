@@ -7,13 +7,13 @@ import simplejson as json
 
 class McBans():
     def __init__(self, apikey):
-        self.url = "http://72.10.39.172/v2/"
+        self.url = "http://72.10.39.172/v2" # No trailing "/"!
         self.key = apikey
     
     def _request(self, data):
         """Convenience function to send data to MCBans"""
         data = urllib.urlencode(data)
-        request = urllib2.Request(self.url+self.key, data)
+        request = urllib2.Request("%s/%s" % (self.url, self.key), data)
         response = urllib2.urlopen(request)
         readable = json.loads(response.read())
         return readable
@@ -66,5 +66,37 @@ class McBans():
     
     def confirm(self, player, key):
         data = {"player": player, "string": key, "exec": "playerSet"}
+        values = self._request(data)
+        return values # {"result": "n"}
+    
+    # Messaging API
+    
+    def inbox(self, player):
+        data = {"player": player, "exec": "getInbox"}
+        values = self._request(data)
+        return values # {"result": "n", "messages": ???}
+        
+    def getNewMessage(self, player):
+        data = {"player": player, "exec": "getNewMessage"}
+        values = self._request(data)
+        return values # {"result": "n", "message": message}
+    
+    def getMessage(self, player, messageID):
+        data = {"player": player, "message": messageID, "exec": "getMessage"}
+        values = self._request(data)
+        return values # {"result": "n", "message": message}
+    
+    def sendMessage(self, player, target, message):
+        data = {"player": player, "target": target, "message": message, "exec": "sendMessage"}
+        values = self._request(data)
+        return values # {"result": "n"}
+    
+    def block(self, player, target):
+        data = {"player": player, "target": target, "exec": "playerBlock"}
+        values = self._request(data)
+        return values # {"result": "a"}
+    
+    def unblock(self, player, target):
+        data = {"player": player, "target": target, "exec": "playerUnBlock"}
         values = self._request(data)
         return values # {"result": "n"}

@@ -12,36 +12,32 @@ class McBansServerPlugin():
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
-        self.handler = McBans("3c6167438cf0183a78ddf27760ec44d84580c27c")
+        self.logger.debug("[&1MCBans&f] Reading in API Key..")
+        config = ConfigParser()
+        try:
+            config.read("config/plugins/mcbans.conf")
+            api_key = config.get("mcbans", "apikey")
+        except Exception as a:
+            self.logger.error("[&1MCBans&f] &4Unable to find API key in config/plugins/mcbans.conf!")
+            self.logger.error("[&1MCBans&f] &4%s" % a)
+            self.has_api = False
+        else:
+            self.logger.debug("[&1MCBans&f] Found API key: &1%s&f" % api_key)
+            self.has_api = True
+        del config
+        del ConfigParser
+        self.handler = McBans(api_key)
         
     def onlineLookup(self, data):
-        client = data["client"]
-        data = self.handler.lookup(client.username)
-        if int(data["total"]) > 0:
-            self.logger.warn("User %s has %s bans on record at MCBans!" % (client.username, data["total"]))
-            client.sendServerMessage("[%sMCBans%s] You have %s%s%s bans on MCBans!" % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["total"], COLOUR_YELLOW))
-        else:
-            self.logger.info("User %s has no bans on record at MCBans!" % client.username)
-            client.sendServerMessage("[%sMCBans%s] You have %sno%s bans on MCBans!" % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, COLOUR_YELLOW))
-        # print "Total bans: %s\n" % readable["total"]
-        # if int(readable["total"]) > 0:
-            # print "-- Global bans --"
-            # if len(readable["global"]) > 0:
-                # for element in readable["global"]:
-                    # data = element.split(" .:. ")
-                    # print data[0] + ": " + data[1]
-            # else:
-                # print "No bans"
-            # print ""
-            # print "-- Local bans --"
-            # if len(readable["local"]) > 0:
-                # for element in readable["local"]:
-                    # data = element.split(" .:. ")
-                    # print data[0] + ": " + data[1]
-            # else:
-                # print "No bans"
-            # print ""
-        # print "Reputation: %s/10" % readable["reputation"]
+        if self.has_api:
+            client = data["client"]
+            data = self.handler.lookup(client.username)
+            if int(data["total"]) > 0:
+                self.logger.warn("User %s has &4%s&f bans on record at MCBans and a reputation of %s/10." % (client.username, data["total"], data["reputation"]))
+                client.sendServerMessage("[%sMCBans%s] You have %s%s%s bans on MCBans!" % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["total"], COLOUR_YELLOW))
+            else:
+                self.logger.info("User %s has &ano&f bans on record at MCBans and a reputation of %s/10." % (client.username, data["reputation"]))
+                client.sendServerMessage("[%sMCBans%s] You have %sno%s bans on MCBans!" % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, COLOUR_YELLOW))
         
     name = "McBansServerPlugin"
     
