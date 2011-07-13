@@ -611,14 +611,14 @@ class ArcFactory(Factory):
     def leaveWorld(self, world, user):
         world.clients.remove(user)
         self.runServerHook("worldLeft", {"world_id": world.id, "client": user})
-        if world.autoshutdown and len(world.clients)<1:
+        if world.autoshutdown and len(world.clients) < 1:
             if world.basename == ("worlds/" + self.default_name):
                 return
             else:
                 if not self.asd_delay == 0:
-                    world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload)
+                    world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload, ASD=True)
                 else:
-                    world.ASD = ResettableTimer(30, 1, world.unload)
+                    world.ASD = ResettableTimer(30, 1, world.unload, ASD=True)
                 world.ASD.start()
 
     def loadWorld(self, filename, world_id):
@@ -636,21 +636,19 @@ class ArcFactory(Factory):
         self.runServerHook("worldLoaded", {"world_id": world_id})
         return world_id
 
-    def unloadWorld(self, world_id,ASD=False):
+    def unloadWorld(self, world_id, ASD=False):
         """
         Unloads the given world ID.
         """
         try:
-            if ASD and len(self.worlds[world_id].clients)>0:
+            if ASD and len(self.worlds[world_id].clients) > 0:
                 self.worlds[world_id].ASD.kill()
                 self.worlds[world_id].ASD = None
                 return
         except KeyError:
             return
-        try:
-            assert world_id != self.default_name
-        except:
-            self.client.sendServerMessage("You can't shutdown %s." % self.default_name)
+        # Devs should check this on input level
+        assert world_id != self.default_name
         if not self.worlds[world_id].ASD == None:
             self.worlds[world_id].ASD.kill()
             self.worlds[world_id].ASD = None

@@ -76,6 +76,7 @@ class World(object):
         self.flush_deferred = None
         if load:
             assert os.path.isfile(self.blocks_path), "No blocks file: %s" % self.blocks_path
+            assert os.path.isfile(self.meta_path), "No meta file: %s" % self.meta_path
             self.load_meta()
 
     def start(self):
@@ -95,8 +96,14 @@ class World(object):
         self.blockstore.in_queue.put([TASK_STOP])
         self.save_meta()
 
-    def unload(self):
-        self.factory.unloadWorld(self.id, True)
+    def unload(self, ASD=False):
+        #if ASD:
+        #   overriden = self.factory.runServerHook("attemptASD", {"world_id": world.id})
+        #   if not overriden: # Nope, we don't want them to ASD!
+        #       self.ASD.kill()
+        #       self.ASD = None
+        #       return
+        self.factory.unloadWorld(self.id, ASD=True)
         if apsw == 1:
             self.BlockEngine.dbclose()
             self.BlockEngine = None
@@ -166,11 +173,7 @@ class World(object):
     def load_meta(self):
         config = ConfigParser()
         config.read(self.meta_path)
-        try:
-            self.x = config.getint("size", "x")
-        except:
-            self.factory.logger.error("Cannot load world, no world.meta found.")
-            pass
+        self.x = config.getint("size", "x")
         self.y = config.getint("size", "y")
         self.z = config.getint("size", "z")
         self.spawn = (

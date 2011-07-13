@@ -7,7 +7,7 @@ import logging, string, sys, time
 class ColouredLogger(object):
     """
     This class is used to colour and log output.
-    It handles colours, printing, and logging to console.log and 
+    It handles colours, printing, and logging to console.log and
         the individual level log files.
     """
     cols = {
@@ -196,16 +196,15 @@ class ChatLogHandler(object):
     def world(self, player, world, message):
         data = "[%s] %s (in %s): %s" % (time.strftime("%d %b (%H:%M:%S)"), player, world, message)
         self._write(self.worldlog, data)
-    
+
     def staff(self, player, message):
         data = "[%s] %s: %s" % (time.strftime("%d %b (%H:%M:%S)"), player, message)
-        self._write(self.stafflog, data)    
-    
+        self._write(self.stafflog, data)
+
     def whisper(self, player, target, message):
         data = "[%s] %s -> %s: %s" % (time.strftime("%d %b (%H:%M:%S)"), player, target, message)
         self._write(self.whisperlog, data)
-    
+
     def _write(self, file, data):
         file.write("%s\n" % data)
         file.flush()
-    

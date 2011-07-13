@@ -758,7 +758,10 @@ class ArcServerProtocol(Protocol):
         current_line = items[0]
         for item in items[1:]:
             if len(current_line) + len(item) + 1 > wrap_at:
-                self.sendServerMessage(current_line)
+                if plain:
+                    self.sendNormalMessage(current_line)
+                else:
+                    self.sendServerMessage(current_line)
                 current_line = item
             else:
                 current_line += " " + item
