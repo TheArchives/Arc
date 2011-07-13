@@ -210,6 +210,7 @@ class BlockStore(Thread):
                 assert blocks_pos == len(ordered_blocks)
                 new_gz.flush()
                 os.fsync(new_gz.fileno())
+                os.fsync(gz.fileno())
                 # OK, close up shop.
                 gz.close()
                 new_gz.close()

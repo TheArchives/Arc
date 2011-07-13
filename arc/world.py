@@ -76,7 +76,9 @@ class World(object):
         # Current deferred to call after a flush is complete
         self.flush_deferred = None
         if load:
-            assert os.path.isfile(self.blocks_path), "No blocks file: %s" % self.blocks_path
+            if not os.path.isfile(self.blocks_path):
+                assert os.path.isfile(self.old_blocks_path), "No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path)
+                os.rename(self.old_blocks_path, self.blocks_path)
             assert os.path.isfile(self.meta_path), "No meta file: %s" % self.meta_path
             self.load_meta()
 
@@ -541,17 +543,9 @@ class World(object):
         handle_deferred = Deferred()
         # Now, make a function that will call that on the first one
         def on_flush(result):
-            if os.path.exists(self.blocks_path):
-                handle_deferred.callback((
-                        open(self.blocks_path, "rb"),
-                        os.stat(self.blocks_path).st_size,
-                ))
-            elif os.path.exists(self.old_blocks_path):
-                handle_deferred.callback((
-                        open(self.old_blocks_path, "rb"),
-                        os.stat(self.old_blocks_path).st_size,
-                ))
-            else:
-                raise Exception("No blocks files found for world %s!" % (self.id))
+            handle_deferred.callback((
+                    open(self.blocks_path, "rb"),
+                    os.stat(self.blocks_path).st_size,
+            ))
         self.flush_deferred.addCallback(on_flush)
         return handle_deferred
