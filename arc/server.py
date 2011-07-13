@@ -632,9 +632,9 @@ class ArcFactory(Factory):
                 return
             else:
                 if not self.asd_delay == 0:
-                    world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload, ASD=True)
+                    world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload)
                 else:
-                    world.ASD = ResettableTimer(30, 1, world.unload, ASD=True)
+                    world.ASD = ResettableTimer(30, 1, world.unload)
                 world.ASD.start()
 
     def loadWorld(self, filename, world_id):
