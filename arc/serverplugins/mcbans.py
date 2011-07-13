@@ -23,6 +23,7 @@ class McBansServerPlugin():
             self.has_api = False
         else:
             self.logger.debug("[&1MCBans&f] Found API key: &1%s&f" % api_key)
+            self.logger.info("[&1MCBans&f] MCBans enabled!")
             self.handler = McBans(api_key)
             self.has_api = True
         del config
