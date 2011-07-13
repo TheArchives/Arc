@@ -53,7 +53,7 @@ class World(object):
         self.commands = {}
         self.mines = {}
         self.id = None
-        self.factory = None
+        self.factory = factory
         self.autoshutdown = True
         self.saving = False
         self.users = {}
@@ -97,12 +97,12 @@ class World(object):
         self.save_meta()
 
     def unload(self, ASD=False):
-        #if ASD:
-        #   overriden = self.factory.runServerHook("attemptASD", {"world_id": world.id})
-        #   if not overriden: # Nope, we don't want them to ASD!
-        #       self.ASD.kill()
-        #       self.ASD = None
-        #       return
+        if ASD:
+           overriden = self.factory.runServerHook("attemptASD", {"world_id": world.id})
+           if not overriden: # Nope, we don't want them to ASD!
+               self.ASD.kill()
+               self.ASD = None
+               return
         self.factory.unloadWorld(self.id, ASD=True)
         if apsw == 1:
             self.BlockEngine.dbclose()

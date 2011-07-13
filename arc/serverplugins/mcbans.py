@@ -26,15 +26,22 @@ class McBansServerPlugin():
             self.logger.info("[&1MCBans&f] MCBans enabled!")
             self.handler = McBans(api_key)
             self.has_api = True
-        try:
-            self.threshold = config.getint("mcbans", "ban_threshold")
-        except Exception as a:
-            self.logger.error("[&1MCBans&f] Unable to get the ban threshold, ignoring global ban reputations!")
-            self.logger.error("[&1MCBans&f] %s" % a)
-            self.threshold = 0
-        else:
-            self.logger.info("[&1MCBans&f] Ban threshold is %s/10" % self.threshold) 
-        self.exceptions = config.options("exceptions")
+            try:
+                self.threshold = config.getint("mcbans", "ban_threshold")
+            except Exception as a:
+                self.logger.warn("[&1MCBans&f] Unable to get the ban threshold, ignoring global ban reputations!")
+                self.logger.warn("[&1MCBans&f] %s" % a)
+                self.threshold = 0
+            else:
+                self.logger.info("[&1MCBans&f] Ban threshold is %s/10" % self.threshold) 
+            try:
+                self.exceptions = config.options("exceptions")
+            except Exception as a:
+                self.logger.warn("[&1MCBans&f] Unable to get the exceptions list! Ignoring exceptions.")
+                self.logger.warn("[&1MCBans&f] %s" % a)
+                self.exceptions = []
+            else:
+                self.logger.info("[&1MCBans&f] %s exceptions loaded." % len(self.exceptions))
         del config
             
     def connected(self, data):
