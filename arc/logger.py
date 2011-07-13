@@ -57,7 +57,7 @@ class ColouredLogger(object):
             self.errorlog = "logs/levels/error.log"
             self.warnlog = "logs/levels/warn.log"
             self.criticallog = "logs/levels/critical.log"
-            self.debuglog = "logs/levels/debug.log",
+            self.debuglog = "logs/levels/debug.log"
         except Exception as a:
             pass
         try:
