@@ -63,7 +63,7 @@ class ArcFactory(Factory):
             r = open('config/greeting.txt', 'r')
         except:
             r = open('config/greeting.example.txt', 'r')
-        self.greeting = r.readLines()
+        self.greeting = r.readlines()
         r.close()
         # Read in the titles
         file = open('config/data/titles.dat', 'r')
