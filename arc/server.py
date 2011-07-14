@@ -632,9 +632,15 @@ class ArcFactory(Factory):
                 return
             else:
                 if not self.asd_delay == 0:
-                    world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload, ASD=True)
+                    try:
+                        world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload, ASD=True)
+                    except Exception:
+                        world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload)
                 else:
-                    world.ASD = ResettableTimer(30, 1, world.unload, ASD=True)
+                    try:
+                        world.ASD = ResettableTimer(30, 1, world.unload, ASD=True)
+                    except Exception:
+                        world.ASD = ResettableTimer(30, 1, world.unload)
                 world.ASD.start()
 
     def loadWorld(self, filename, world_id):
@@ -844,13 +850,11 @@ class ArcFactory(Factory):
                                 self.irc_relay.sendAction(username, text)
                     # Someone connected to the server
                     elif task is TASK_PLAYERCONNECT:
-                        value = self.runServerHook("onPlayerConnect", {"client": source_client})
-                        if value:
-                            for client in self.usernames:
-                                self.usernames[client].sendNewPlayer(*data)
-                                self.usernames[client].sendNormalMessage("%s%s&e has come online." % (source_client.userColour(), source_client.username))
-                            if self.irc_relay and world:
-                                self.irc_relay.sendServerMessage("07%s has come online." % source_client.username)
+                        for client in self.usernames:
+                            self.usernames[client].sendNewPlayer(*data)
+                            self.usernames[client].sendNormalMessage("%s%s&e has come online." % (source_client.userColour(), source_client.username))
+                        if self.irc_relay and world:
+                            self.irc_relay.sendServerMessage("07%s has come online." % source_client.username)
                     # Someone joined a world!
                     elif task is TASK_NEWPLAYER:
                         value = self.runServerHook("onNewPlayer", {"client": source_client})

@@ -26,6 +26,7 @@ class ArcServerProtocol(Protocol):
     def connectionMade(self):
         "We've got a TCP connection, let's set ourselves up."
         # We use the buffer because TCP is a stream protocol :)
+        self.factory.runServerHook("onPlayerConnect", {"client": self})
         self.buffer = ""
         self.loading_world = False
         self.chatlogger = self.factory.chatlogger
