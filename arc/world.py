@@ -11,15 +11,9 @@ from arc.blockstore import BlockStore
 from arc.constants import *
 from arc.deferred import Deferred
 from arc.logger import ColouredLogger
+from arc.blocktracker import Tracker
 
 debug = (True if "--debug" in sys.argv else False)
-#try:
-#    from arc.database import Connection
-#    apsw = 1
-#except:
-#    print ("You should install APSW if you want blocktracking.")
-#    apsw = 0
-apsw = 0
 
 import logging
 
@@ -38,7 +32,7 @@ class World(object):
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")
-        self.database_path = os.path.join(basename, "storage.db")
+        self.blocktracker = Tracker("blocks", directory=basename)
         # Other settings
         self.owner = "N/A"
         self.ops = set()
@@ -58,8 +52,6 @@ class World(object):
         self.autoshutdown = True
         self.saving = False
         self.users = {}
-        if apsw == 1:
-            self.BlockEngine = Connection(self)
         self.global_chat = True
         self.zoned = False
         self.userzones = {}
@@ -86,8 +78,6 @@ class World(object):
         "Starts up this World; we spawn a BlockStore, and run it."
         self.blockstore = BlockStore(self.blocks_path, self.x, self.y, self.z)
         self.blockstore.start()
-        if apsw == 1:
-            self.BlockEngine.tableopen()
         # If physics is on, turn it on
         if self._physics:
             self.blockstore.in_queue.put([TASK_PHYSICSON])
@@ -97,6 +87,7 @@ class World(object):
     def stop(self):
         "Signals the BlockStore to stop."
         self.blockstore.in_queue.put([TASK_STOP])
+        self.blocktracker.close()
         self.save_meta()
 
     def unload(self, ASD=False):
@@ -107,9 +98,6 @@ class World(object):
                self.ASD = None
                return
         self.factory.unloadWorld(self.id, ASD=True)
-        if apsw == 1:
-            self.BlockEngine.dbclose()
-            self.BlockEngine = None
 
     def read_queue(self):
         "Reads messages from the BlockStore and acts on them."

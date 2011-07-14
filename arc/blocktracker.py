@@ -10,7 +10,7 @@ class Tracker(object):
     """ Provides facilities for block tracking and storage. """
     def __init__(self, world, buffersize = 500, directory = getcwd()):
         """ Set up database pool, buffers, and other preperations """
-        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db')
+        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', cp_min=1, cp_max=1)
         self.databuffer = list()
         self.buffersize = buffersize
 
@@ -26,20 +26,25 @@ class Tracker(object):
         self.databuffer.append(data)
         if len(self.databuffer) > self.buffersize:
             self._flush()
+            
+    def close(self):
+        """ Flushes and closes the database """
+        self._flush()
+        self.database.close()
 
     def _flush(self):
-        """ Flushes buffer to databajac se"""
+        """ Flushes buffer to database """
         tempbuf = self.databuffer
         self.databuffer = []
         self.database.runInteraction(self._executemany, tempbuf)
 
     def _executemany(self, cursor, dbbuffer):
-        """ Work around for the absence of an executemany in adbapi"""
+        """ Work around for the absence of an executemany in adbapi """
         cursor.executemany("insert or replace into main (?,?,?,?)", dbbuffer)
         return None
 
     def getblockedits(self, blockx, blocky, blockz):
-        """ Gets the players that have edited a specified block"""
+        """ Gets the players that have edited a specified block """
         self._flush()
         edits = self.database.runQuery('select all from main where name = ?',username)
 
