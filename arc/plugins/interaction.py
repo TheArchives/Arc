@@ -23,6 +23,7 @@ class InteractionPlugin(ProtocolPlugin):
         "slap": "commandSlap",
         "punch": "commandPunch",
         "roll": "commandRoll",
+		"kill": "commandKill",
 
         "count": "commandCount",
         "countdown": "commandCount",
@@ -151,16 +152,22 @@ class InteractionPlugin(ProtocolPlugin):
     @config("rank", "mod")
     @username_command
     def commandKill(self, user, fromloc, overriderank, params=[]):
-        "/kill username [reason] - Mod\nKills the user for reason (optional)"
-        killer = self.client.username
-        if user.isMod():
-            self.client.sendServerMessgae("You can't kill staff!")
+        "/kill username - Mod\nKills the user."        
+        killer = self.client.username				
+        if user in ["someone"]:
+            self.client.sendServerMessage("You can't kill awesome people, sorry.")
         else:
             user.teleportTo(user.world.spawn[0], user.world.spawn[1], user.world.spawn[2], user.world.spawn[3])
-            user.sendServerMessage("You have been killed by %s." % self.client.username)
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been killed by %s." % (user.username, killer)))
-            if params:
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
+            if killer == user.username:
+                user.sendServerMessage("You have died.")
+                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has died" % (user.username)))
+            else:
+                user.sendServerMessage("You have been killed by %s." % self.client.username)
+                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been killed by %s." % (user.username, killer)))
+                if params:
+                    self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
+                else:
+                    return
 
     @config("rank", "mod")
     @only_username_command
