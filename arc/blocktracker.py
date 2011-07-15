@@ -10,12 +10,14 @@ class Tracker(object):
     """ Provides facilities for block tracking and storage. """
     def __init__(self, world, buffersize = 500, directory = getcwd()):
         """ Set up database pool, buffers, and other preperations """
-        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', cp_min=1, cp_max=1)
+        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', cp_min=1, cp_max=1, check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
-
-        self.database.runOperation('CREATE TABLE main (offset INTEGER, matbefore INTEGER,\
-        matafter INTEGER, name VARCHAR(50), date DATE if not exists main)')
+        try:
+            self.database.runOperation('CREATE TABLE main (offset INTEGER, matbefore INTEGER,\
+            matafter INTEGER, name VARCHAR(50), date DATE)')
+        except:
+            pass
         self.run = True
         #TODO - Pragma statements
 
@@ -40,7 +42,7 @@ class Tracker(object):
 
     def _executemany(self, cursor, dbbuffer):
         """ Work around for the absence of an executemany in adbapi """
-        cursor.executemany("insert or replace into main (?,?,?,?)", dbbuffer)
+        cursor.executemany("insert or replace into main values (?,?,?,?,?)", dbbuffer)
         return None
 
     def getblockedits(self, blockx, blocky, blockz):

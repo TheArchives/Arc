@@ -210,7 +210,6 @@ class BlockStore(Thread):
                 assert blocks_pos == len(ordered_blocks)
                 new_gz.flush()
                 os.fsync(new_gz.fileno())
-                os.fsync(gz.fileno())
                 # OK, close up shop.
                 gz.close()
                 new_gz.close()
@@ -220,8 +219,9 @@ class BlockStore(Thread):
                 os.rename(self.blocks_path, self.blocks_path + ".old")
                 os.rename(self.blocks_path + ".new", self.blocks_path)
                 self.queued_blocks = {}
-            except:
+            except Exception as a:
                 self.logger.error("Problem saving world %s" %self.blocks_path)
+                self.logger.error("Error: %s" % a)
                 self.saving = True
                 reactor.callLater(3, self.flush)
         else:
