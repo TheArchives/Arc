@@ -26,7 +26,6 @@ class ArcServerProtocol(Protocol):
     def connectionMade(self):
         "We've got a TCP connection, let's set ourselves up."
         # We use the buffer because TCP is a stream protocol :)
-        self.factory.runServerHook("onPlayerConnect", {"client": self})
         self.buffer = ""
         self.loading_world = False
         self.chatlogger = self.factory.chatlogger
@@ -301,6 +300,7 @@ class ArcServerProtocol(Protocol):
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
                 self.data = PlayerData(self) # Create a player data object
+                self.factory.runServerHook("onPlayerConnect", {"client": self}) # Run the player connect hook
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if block == 255:
