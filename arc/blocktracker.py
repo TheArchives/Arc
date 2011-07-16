@@ -14,7 +14,7 @@ class Tracker(object):
         self.databuffer = list()
         self.buffersize = buffersize
         try:
-            self.database.runOperation('CREATE TABLE main (offset INTEGER, matbefore INTEGER,\
+            self.d = self.database.runOperation('CREATE TABLE main (block_offset INTEGER, matbefore INTEGER,\
             matafter INTEGER, name VARCHAR(50), date DATE)')
         except:
             pass
@@ -45,14 +45,18 @@ class Tracker(object):
         cursor.executemany("insert or replace into main values (?,?,?,?,?)", dbbuffer)
         return None
 
-    def getblockedits(self, offset):
+    def getblockedits(self, block_offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        edits = self.database.runQuery("select all from main where offset = ?", offset)
+        # edits = self.database.runQuery("SELECT * FROM main")
+        edits = self.database.runQuery("SELECT * FROM main AS main WHERE block_offset = (?)", int(block_offset))
+        def callback(args):
+            print args
+        edits.addCallback(callback)
         return edits
 
     def getplayeredits(self, username):
         """ Gets the blocks, along with materials, that a player has edited """
         self._flush()
-        playeredits = self.database.runQuery("select all from main where name = ?", username)
+        playeredits = self.database.runQuery("select * from main as main where name = (?)", username)
         return playeredits
