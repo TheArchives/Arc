@@ -107,9 +107,8 @@ class ArcFactory(Factory):
             self.controller_password = self.config.get("network", "controller_password")
             self.server_name = self.config.get("main", "name")
             # Salt, for the heartbeat server/verify-names
-            self.salt = self.config.get("main", "salt") # Now reads config to cope with WoM's direct connect
-            if self.server_name == "iCraft Server":
-                self.logger.error("You forgot to give your server a name.")
+            self.salt = self.config.get("main", "salt") # Now reads config to cope with WoM's direct connect ???????
+            #self.heartbeats = self.config.options("heartbeats")
         except Exception as e:
             self.logger.error("Error parsing main.conf (%s)" % e)
             sys.exit(1)

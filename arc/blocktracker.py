@@ -2,24 +2,21 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-# This blocktracker was written by Clay Sweetser, AKA Varriount (clay.sweetser@gmail.com) <- Isn't this already address in the attrib. file?
+# This blocktracker was written by Clay Sweetser, AKA Varriount (clay.sweetser@gmail.com)
 
 from os import getcwd
-
 from twisted.enterprise import adbapi
-
 class Tracker(object):
     """ Provides facilities for block tracking and storage. """
-    def __init__(self, world, buffersize=500, directory=getcwd()):
+    def __init__(self, world, buffersize = 500, directory = getcwd()):
         """ Set up database pool, buffers, and other preperations """
-        self.database = adbapi.ConnectionPool('sqlite3', ("%s\\%s.db" % directory, world), cp_min=1, cp_max=1, check_same_thread=False)
+        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', cp_min=1, cp_max=1, check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
         try:
-            self.d = self.database.runOperation('CREATE TABLE main (block_offset INTEGER, matbefore INTEGER,\
+            self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
             matafter INTEGER, name VARCHAR(50), date DATE)')
         except:
-            # Dummy-ish code
             i = 1
         finally:
             self.run = True
@@ -46,21 +43,18 @@ class Tracker(object):
 
     def _executemany(self, cursor, dbbuffer):
         """ Work around for the absence of an executemany in adbapi """
-        cursor.executemany("INSERT OR REPLACE INTO main VALUES (?,?,?,?,?)", dbbuffer)
+        cursor.executemany("insert or replace into history values (?,?,?,?,?)", dbbuffer)
         return None
 
-    def getblockedits(self, block_offset):
+    def getblockedits(self, offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        # edits = self.database.runQuery("SELECT * FROM main")
-        edits = self.database.runQuery("SELECT * FROM main AS main WHERE block_offset = (?)", int(block_offset))
-        def callback(args):
-            print args
-        edits.addCallback(callback)
+        string = "select * from history where block_offset = {0}".format(offset)
+        edits = self.database.runQuery(string)
         return edits
 
     def getplayeredits(self, username):
         """ Gets the blocks, along with materials, that a player has edited """
         self._flush()
-        playeredits = self.database.runQuery("SELECT * FROM main AS main WHERE name = (?)", username)
+        playeredits = self.database.runQuery("select * from history as history where name = (?)", [username])
         return playeredits

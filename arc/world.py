@@ -35,7 +35,7 @@ class World(object):
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")
-        self.blocktracker = Tracker("blocks", 10, directory=basename)
+        self.blocktracker = Tracker("blocks", directory=basename)
         # Other settings
         self.owner = "N/A"
         self.ops = set()
