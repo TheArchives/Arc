@@ -43,4 +43,3 @@ class BlockTracker(ProtocolPlugin):
             self.isChecking = True
         else:
             self.client.sendServerMessage("Already checking for edits: Place or remove a block!")
-            
