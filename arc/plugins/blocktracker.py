@@ -15,13 +15,14 @@ class BlockTracker(ProtocolPlugin):
     hooks = {
         "blockchange": "blockChanged"
     }
-    
+
     commands = {
-        "checkblock": "checkBlock"
+        "checkblock": "commandCheckBlock"
     }
-    
-    isChecking = False
-    
+
+    def gotClient(self):
+        self.isChecking = False
+
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
         if not self.isChecking:
@@ -34,7 +35,7 @@ class BlockTracker(ProtocolPlugin):
                 self.client.sendServerMessage("No edits stored for that block.")
             self.isChecking = False
             return selected_block
-    
+
     @config("category", "build")
     def checkBlock(self, parts, fromloc, overriderank):
         "/checkblock: Checks the next edited block for past edits."
