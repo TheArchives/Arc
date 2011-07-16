@@ -48,7 +48,7 @@ class McBans():
         return values # {"result": "y"}
     
     def tempBan(self, player, ip, reason, admin, duration, measure):
-        if measure is ("m" or "h" or "d"):
+        if measure == "m" or measure == "h" or measure == "d":
             data = {"player": player, "ip": ip, "reason": reason, "admin": admin, "duration": duration, "measure": measure, "exec": "tempBan"}
             values = self._request(data)
         else:

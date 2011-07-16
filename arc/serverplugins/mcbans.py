@@ -91,12 +91,24 @@ class McBansServerPlugin():
     def disconnected(self, data):
         if self.has_api:
             self.handler.disconnect(data["client"].username)
-        
+            
+    def banned(self, data):
+        value = self.handler.localBan(data["username"], self.factory.clients[data["username"]].getPeer().host if data["username"] in self.factory.clients.keys() else "Local", data["reason"], "Local")
+        if value["result"] != u'y':
+            self.factory.logger.warn("Unable to add %s to the MCBans local ban list!")
+    
+    def unbanned(self, data):
+        value = self.handler.unban(data["username"], "Local")
+        if value["result"] != u'y':
+            self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
+            
     name = "McBansServerPlugin"
     
     hooks = {
         "onPlayerConnect": connected,
-        "playerQuit": disconnected
+        "playerQuit": disconnected,
+        "playerBanned": banned,
+        "playerUnbanned": unbanned
     }
 
 serverPlugin = McBansServerPlugin
