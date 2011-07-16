@@ -33,7 +33,7 @@ class McBansServerPlugin():
                 self.logger.warn("[&1MCBans&f] %s" % a)
                 self.threshold = 0
             else:
-                self.logger.info("[&1MCBans&f] Ban threshold is %s/10" % self.threshold) 
+                self.logger.info("[&1MCBans&f] Ban threshold is %s/10" % self.threshold)
             try:
                 self.exceptions = config.options("exceptions")
             except Exception as a:
@@ -43,7 +43,7 @@ class McBansServerPlugin():
             else:
                 self.logger.info("[&1MCBans&f] %s exceptions loaded." % len(self.exceptions))
         del config
-            
+
     def connected(self, data):
         self.logger.info("MCBans!")
         if self.has_api:
@@ -87,7 +87,7 @@ class McBansServerPlugin():
                     client.sendError("Your MCBans reputation of %s/10 is too low!" % data["playerRep"])
                 else:
                     self.logger.info("[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (client.username, data["playerRep"]))
-        
+
     def disconnected(self, data):
         if self.has_api:
             self.handler.disconnect(data["client"].username)
@@ -103,7 +103,7 @@ class McBansServerPlugin():
             self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
             
     name = "McBansServerPlugin"
-    
+
     hooks = {
         "onPlayerConnect": connected,
         "playerQuit": disconnected,

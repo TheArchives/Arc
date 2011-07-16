@@ -1,0 +1,35 @@
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+
+CREATE TABLE IF NOT EXISTS `arc_clans` (
+  `clanid` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET latin1 NOT NULL,
+  `leaders` text CHARACTER SET latin1 NOT NULL,
+  `coleaders` text CHARACTER SET latin1 NOT NULL,
+  `reputation` int(11) NOT NULL,
+  PRIMARY KEY (`clanid`),
+  UNIQUE KEY `clanid` (`clanid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `arc_userassoc` (
+  `rid` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `uid` int(10) unsigned NOT NULL COMMENT 'UID of the table',
+  `app` varchar(255) NOT NULL COMMENT 'The application',
+  `app_uid` int(10) unsigned NOT NULL COMMENT 'User''s UID on that application',
+  PRIMARY KEY (`uid`,`app_uid`,`rid`),
+  UNIQUE KEY `rid` (`rid`),
+  KEY `app` (`app`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `arc_users` (
+  `uid` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `salt` varchar(255) NOT NULL,
+  `mainusergroup` varchar(255) CHARACTER SET latin1 NOT NULL,
+  `extusergroups` varchar(255) CHARACTER SET latin1 NOT NULL,
+  `clan` int(10) unsigned NOT NULL COMMENT 'The clan the user belongs to (clanID)',
+  PRIMARY KEY (`username`,`uid`),
+  UNIQUE KEY `uid` (`uid`),
+  KEY `clan` (`clan`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;

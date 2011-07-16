@@ -13,7 +13,13 @@ class BlbManagerServerPlugin():
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
-        
+ 
+    def acceptChangeset(self, client, changeset):
+        """ Accepts a changeset. 
+        The changeset can either be a range or a generator.
+        """
+        pass
+
     hooks = {
         }
 
