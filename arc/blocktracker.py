@@ -45,14 +45,14 @@ class Tracker(object):
         cursor.executemany("insert or replace into main values (?,?,?,?,?)", dbbuffer)
         return None
 
-    def getblockedits(self, blockx, blocky, blockz):
+    def getblockedits(self, offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        edits = self.database.runQuery('select all from main where name = ?',username)
-
+        edits = self.database.runQuery("select all from main where offset = ?", offset)
+        return edits
 
     def getplayeredits(self, username):
         """ Gets the blocks, along with materials, that a player has edited """
         self._flush()
-        playeredits = self.database.runQuery('select all from main where name = ?',username)
+        playeredits = self.database.runQuery("select all from main where name = ?", username)
         return playeredits
