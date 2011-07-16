@@ -348,7 +348,7 @@ class WorldUtilPlugin(ProtocolPlugin):
     @config("category", "world")
     def commandWorlds(self, parts, fromloc, overriderank):
         "/worlds [letter|all] - Guest\nAliases: maps\nLists available worlds - by letter, online, or all."
-        if len(parts) != 2 and len(parts) != 3:
+        if len(parts) < 2:
             self.client.sendServerMessage("Do /worlds all for all worlds or choose a letter.")
             self.client.sendServerList(["Online:"] + [id for id, world in self.client.factory.worlds.items() if self.client.canEnter(world)])
             return
@@ -356,7 +356,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             worldlist = os.listdir("worlds/")
             newworldlist = []
             for world in worldlist:
-                if not world.startswith("."):
+                if not world.startswith("."): # Hidden worlds!
                     newworldlist.append(world)
             if parts[1] == 'all':
                 self.client.sendServerList(["Worlds:"] + newworldlist)

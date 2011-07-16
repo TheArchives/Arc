@@ -29,6 +29,9 @@ class World(object):
     def __init__(self, basename, load=True, factory=None):
         self.logger = ColouredLogger(debug)
         self.basename = basename
+        self.hidden = False
+        if self.basename.split("/")[1].startswith("."):
+            self.hidden = True
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")

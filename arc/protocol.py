@@ -664,6 +664,8 @@ class ArcServerProtocol(Protocol):
         if self.world.is_archive:
             self.sendSplitServerMessage("This world is an archive, and will cease to exist once the last person leaves.")
             self.sendServerMessage(COLOUR_RED+"Staff: Please do not reboot this world.")
+        if self.world.hidden:
+            self.sendSplitServerMessage(COLOUR_GREEN+"This world is hidden, and does not show up on the world list.")
         breakable_admins = self.runHook("canbreakadmin")
         self.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.factory.server_name, world_id)), "Entering world '%s'" % world_id, 100 if breakable_admins else 0)
         self.sendLevel()
