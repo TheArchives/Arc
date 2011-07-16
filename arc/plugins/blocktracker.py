@@ -10,14 +10,14 @@ from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
-class BlockTracker(ProtocolPlugin):
-
-    hooks = {
-        "blockchange": "blockChanged"
-    }
+class BlockTrackerPlugin(ProtocolPlugin):
 
     commands = {
         "checkblock": "commandCheckBlock"
+    }
+
+    hooks = {
+        "blockchange": "blockChanged"
     }
 
     def gotClient(self):
