@@ -13,7 +13,8 @@ from arc.plugins import ProtocolPlugin
 class BlockTrackerPlugin(ProtocolPlugin):
 
     commands = {
-        "checkblock": "commandCheckBlock"
+        "checkblock": "checkBlock",
+        "checkplayer": "checkPlayer"
     }
 
     hooks = {
@@ -25,10 +26,15 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     def sendCallbackPlayer(self, data):
         if len(data) > 10:
-            data = data[:10]
-        name = data[0][3].encode("ascii", "ignore")
-        self.client.sendServerMessage("Listing last %s edits for %s..." % (len(data), name))
-        for element in data:
+            done = []
+            for i in range(10):
+                done.append(data.pop())
+            done.reverse()
+        else:
+            done = data
+        name = done[0][3].encode("ascii", "ignore")
+        self.client.sendServerMessage("Listing last %s edits for %s..." % (len(done), name))
+        for element in done:
             offset, before, after, player, date = element
             date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
             coords = self.client.world.get_coords(offset)
@@ -36,9 +42,14 @@ class BlockTrackerPlugin(ProtocolPlugin):
             
     def sendCallbackBlock(self, data):
         if len(data) > 10:
-            data = data[:10]
-        self.client.sendServerMessage("Listing last %s edits..." % len(data))
-        for element in data:
+            done = []
+            for i in range(10):
+                done.append(data.pop())
+            done.reverse()
+        else:
+            done = data
+        self.client.sendServerMessage("Listing last %s edits..." % len(done))
+        for element in done:
             offset, before, after, player, date = element
             date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
             coords = self.client.world.get_coords(offset)
@@ -55,7 +66,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username, time.mktime(time.localtime())))
             return block
         else:
-            edits = self.client.world.blocktracker.getblockedits(self.client.world.get_offset(x, y, z))
+            edits = self.client.world.blocktracker.getblockedits([self.client.world.get_offset(x, y, z)])
             edits.addCallback(self.sendCallbackBlock)
             self.isChecking = False
             block = self.client.world.blockstore.__getitem__((x, y, z))
