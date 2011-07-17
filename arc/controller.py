@@ -103,21 +103,6 @@ class ControllerProtocol(LineReceiver):
     def commandCurrency(self, data):
         self.sendJson({"currency": self.factory.currency})
 
-    def commandBDLimit(self, data):
-        self.sendJson({"bdlimit": self.factory.build_director})
-
-    def commandBALimit(self, data):
-        self.sendJson({"balimit": self.factory.build_admin})
-
-    def commandBMLimit(self, data):
-        self.sendJson({"bmlimit": self.factory.build_mod})
-
-    def commandBOPLimit(self, data):
-        self.sendJson({"boplimit": self.factory.build_op})
-
-    def commandBOLimit(self, data):
-        self.sendJson({"bolimit": self.factory.build_other})
-
     def commandIRCServer(self, data):
         if self.factory.use_irc:
             if self.factory.irc_config.get("irc", "server") == "bots.esper.net":

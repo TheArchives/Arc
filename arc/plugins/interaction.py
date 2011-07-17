@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, math, random, traceback
+import math, random, traceback
 
 from arc.constants import *
 from arc.decorators import *
@@ -23,7 +23,7 @@ class InteractionPlugin(ProtocolPlugin):
         "slap": "commandSlap",
         "punch": "commandPunch",
         "roll": "commandRoll",
-		"kill": "commandKill",
+        "kill": "commandKill",
 
         "count": "commandCount",
         "countdown": "commandCount",
@@ -44,6 +44,9 @@ class InteractionPlugin(ProtocolPlugin):
 
     def gotClient(self):
         self.num = int(0)
+        # Check with the server plugin if we have a message waiting
+        # The method will get back to you later
+        self.client.factory.serverPlugins["OfflineMessagePlugin"].checkMessage(self.client.username)
 
     def sendgo(self):
         self.client.sendPlainWorldMessage("&2[COUNTDOWN] GO!")
@@ -148,26 +151,22 @@ class InteractionPlugin(ProtocolPlugin):
                         self.client.sendWorldMessage("* %s%s punches %s in the face!" % (COLOUR_PURPLE, self.client.username, name))
                         self.client.factory.irc_relay.sendServerMessage("* %s punches %s in the face!" % (self.client.username, name))
 
-
     @config("rank", "mod")
     @username_command
     def commandKill(self, user, fromloc, overriderank, params=[]):
-        "/kill username - Mod\nKills the user."        
-        killer = self.client.username				
-        if user in ["someone"]:
-            self.client.sendServerMessage("You can't kill awesome people, sorry.")
+        "/kill username [reason] - Mod\nKills the user for reason (optional)."
+        killer = self.client.username
+        user.teleportTo(user.world.spawn[0], user.world.spawn[1], user.world.spawn[2], user.world.spawn[3])
+        if killer == user.username:
+            user.sendServerMessage("You have died.")
+            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has died" % (user.username)))
         else:
-            user.teleportTo(user.world.spawn[0], user.world.spawn[1], user.world.spawn[2], user.world.spawn[3])
-            if killer == user.username:
-                user.sendServerMessage("You have died.")
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has died" % (user.username)))
+            user.sendServerMessage("You have been killed by %s." % self.client.username)
+            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been killed by %s." % (user.username, killer)))
+            if params:
+                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
             else:
-                user.sendServerMessage("You have been killed by %s." % self.client.username)
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been killed by %s." % (user.username, killer)))
-                if params:
-                    self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
-                else:
-                    return
+                return
 
     @config("rank", "mod")
     @only_username_command
@@ -226,12 +225,9 @@ class InteractionPlugin(ProtocolPlugin):
             self.client.sendServerMessage("You must provide a username and a message.")
         else:
             try:
-                from_user = self.client.username.lower()
-                to_user = parts[1].lower()
-                mess = " ".join(parts[2:])
-                file = open('config/data/inbox.dat', 'r')
-                messages = cPickle.load(file)
-                file.close()
+                from_user = self.client.username
+                to_user = parts[1]
+                
                 if to_user in messages:
                     messages[to_user]+= "\n" + from_user + ": " + mess
                 else:
@@ -257,10 +253,7 @@ class InteractionPlugin(ProtocolPlugin):
 
     def commandClear(self,parts, fromloc, overriderank):
         "/c - Guest\nAliases: clear, clearinbox\nClears your Inbox of messages."
-        target = self.client.username.lower()
-        file = open('config/data/inbox.dat', 'r')
-        messages = cPickle.load(file)
-        file.close()
+        target = self.client.username
         if len(parts) == 2:
             target = parts[1]
         elif self.client.username.lower() not in messages:
