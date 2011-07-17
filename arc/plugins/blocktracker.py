@@ -15,6 +15,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
     commands = {
         "checkblock": "checkBlock",
         "checkplayer": "checkPlayer"
+        "restoreplayer": "restorePlayer"
     }
 
     hooks = {
@@ -23,7 +24,25 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     def gotClient(self):
         self.isChecking = False
+        self.num = 0
 
+    def sendCallbackRestorePlayer(self, data):
+        if len(data) > self.num:
+            done = []
+            for i in range(self.num):
+                done.append(data.pop())
+            done.reverse()
+        else:
+            done = data
+        name = done[0][3].encode("ascii", "ignore")
+        self.client.sendServerMessage("Reverting %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
+        for element in done:
+            offset, before, after, player, date = element
+            coords = self.client.world.get_coords(offset)
+            self.client.world[coords] = before
+        self.client.sendServerMessage("Reverted %s edits." % len(done))
+        self.num = 0
+    
     def sendCallbackPlayer(self, data):
         if len(data) > 10:
             done = []
@@ -33,7 +52,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
         else:
             done = data
         name = done[0][3].encode("ascii", "ignore")
-        self.client.sendServerMessage("Listing last %s edits for %s..." % (len(done), name))
+        self.client.sendServerMessage("Listing last %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
         for element in done:
             offset, before, after, player, date = element
             date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
@@ -48,7 +67,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             done.reverse()
         else:
             done = data
-        self.client.sendServerMessage("Listing last %s edits..." % len(done))
+        self.client.sendServerMessage("Listing last %s edits (out of %s)..." % (len(done), len(data)))
         for element in done:
             offset, before, after, player, date = element
             date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
@@ -93,3 +112,20 @@ class BlockTrackerPlugin(ProtocolPlugin):
             edits.addCallback(self.sendCallbackPlayer)
         else:
             self.client.sendServerMessage("Syntax: /checkplayer playername")
+    
+    @config("category", "build")
+    def restorePlayer(self, parts, fromloc, overriderank):
+        "/restoreplayer username n: Reverse n edits on the current world by username.
+        if len(parts) > 2:
+            try:
+                self.editnum = int(parts[2])
+            except Exception:
+                self.client.sendServerMessage("n must be a number!")
+            else:
+                if self.editnum > 0:
+                    edits = self.client.world.blocktracker.getplayeredits(parts[1])
+                    edits.addCallback(self.sendCallbackRestorePlayer)
+                else:
+                    self.client.sendServerMessage("n must be greater than 0!")
+        else:
+            self.client.sendServerMessage("Syntax: /restoreplayer playername number")
