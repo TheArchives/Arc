@@ -90,6 +90,14 @@ def main():
     formatter = logging.Formatter("%(asctime)s: %(message)s")
     fh.setFormatter(formatter)
     money_logger.addHandler(fh)
+    
+    heartbeats = factory.config.options("heartbeatnames")
+    for element in heartbeats:
+        name = factory.config.get("heartbeatnames", element)
+        port = factory.config.getint("heartbeatports", element)
+        logger.info("Starting spoofed heartbeat %s on port %s..." % (name, port))
+        reactor.listenTCP(port, factory)
+    del heartbeats
 
     try:
         reactor.run()

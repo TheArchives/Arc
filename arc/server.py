@@ -108,7 +108,14 @@ class ArcFactory(Factory):
             self.server_name = self.config.get("main", "name")
             # Salt, for the heartbeat server/verify-names
             self.salt = self.config.get("main", "salt") # Now reads config to cope with WoM's direct connect ???????
-            #self.heartbeats = self.config.options("heartbeats")
+            self.heartbeats = []
+            heartbeats = self.config.options("heartbeatnames")
+            for element in heartbeats:
+                name = self.config.get("heartbeatnames", element)
+                port = self.config.get("heartbeatports", element)
+                heartbeat = (name, port)
+                self.heartbeats.append(heartbeat)
+            
         except Exception as e:
             self.logger.error("Error parsing main.conf (%s)" % e)
             sys.exit(1)

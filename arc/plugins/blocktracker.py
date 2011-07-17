@@ -27,22 +27,28 @@ class BlockTrackerPlugin(ProtocolPlugin):
         self.num = 0
 
     def sendCallbackRestorePlayer(self, data):
+        j = len(data)
         if len(data) > self.num:
             done = []
             for i in range(self.num):
                 done.append(data.pop())
             done.reverse()
+            i = len(done)
+        elif len(data) < self.num:
+            i = len(data)
         else:
             done = data
-        self.logger.debug(str(done))
-        self.logger.debug(str(done[0]))
+            i = len(data)
+        world = self.client.world
         name = done[0][3].encode("ascii", "ignore")
-        self.client.sendServerMessage("Reverting %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
+        self.client.sendServerMessage("Reverting %s edits for %s (out of %s)..." % (i, name, j))
         for element in done:
             offset, before, after, player, date = element
-            coords = self.client.world.get_coords(offset)
-            self.client.world[coords] = before
-        self.client.sendServerMessage("Reverted %s edits." % len(done))
+            x, y, z = world.get_coords(offset)
+            world[x, y, z] = chr(before)
+            self.client.queueTask(TASK_BLOCKSET, (x, y, z, before), world=world)
+            self.client.sendBlock(x, y, z, before)
+        self.client.sendServerMessage("Reverted %s edits." % i)
         self.num = 0
     
     def sendCallbackPlayer(self, data):
@@ -53,8 +59,6 @@ class BlockTrackerPlugin(ProtocolPlugin):
             done.reverse()
         else:
             done = data
-        self.logger.debug(str(done))
-        self.logger.debug(str(done[0]))
         name = done[0][3].encode("ascii", "ignore")
         self.client.sendServerMessage("Listing last %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
         for element in done:
@@ -122,11 +126,11 @@ class BlockTrackerPlugin(ProtocolPlugin):
         "/restoreplayer username n: Reverse n edits on the current world by username."
         if len(parts) > 2:
             try:
-                self.editnum = int(parts[2])
+                self.num = int(parts[2])
             except Exception:
                 self.client.sendServerMessage("n must be a number!")
             else:
-                if self.editnum > 0:
+                if self.num > 0:
                     edits = self.client.world.blocktracker.getplayeredits(parts[1])
                     edits.addCallback(self.sendCallbackRestorePlayer)
                 else:

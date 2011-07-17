@@ -5,6 +5,7 @@
 import sys, threading, time, traceback, urllib, urllib2
 
 from twisted.internet import reactor
+from random import randint
 
 from arc.constants import *
 from arc.logger import ColouredLogger
@@ -51,23 +52,30 @@ class Heartbeat(threading.Thread):
             fh.flush()
             fh.close()
             self.factory.runServerHook("heartbeatSent")
-
-            #fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
-            #"port": CHANGETHEPORT,
-            #"users": len(self.factory.clients),
-            #"max": self.factory.max_clients,
-            #"name": "more servers here",
-            #"public": self.factory.public,
-            #"version": 7,
-            #"salt": self.factory.salt,
-            #}), 30)
-            #self.url2 = fh.read().strip()
             if not self.factory.console.is_alive():
                 self.factory.console.run()
         except urllib2.URLError as r:
             self.logger.error("Minecraft.net seems to be offline: %s" % r)
         except:
             self.logger.error(traceback.format_exc())
-        finally:
-            if not onetime:
-                reactor.callLater(60, self.get_url)
+        i = 0
+        for element in self.factory.heartbeats:
+            if i > 5:
+                break
+            try:
+                self.factory.last_heartbeat = time.time()
+                fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
+                "port": element[1],
+                "users": len(self.factory.clients),
+                "max": self.factory.max_clients,
+                "name": element[0],
+                "public": self.factory.public,
+                "version": 7,
+                "salt": self.factory.salt,
+                }), 30)
+                self.url = fh.read().strip()
+                self.logger.debug("Spoofed heartbeat: %s" % element[0])
+            except:
+                pass
+        if not onetime:
+            reactor.callLater(60, self.get_url)
