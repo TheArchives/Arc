@@ -34,8 +34,10 @@ class BlockTrackerPlugin(ProtocolPlugin):
             done.reverse()
         else:
             done = data
-        #name = done[0][3].encode("ascii", "ignore")
-        self.client.sendServerMessage("Reverting %s edits (out of %s)..." % (len(done), len(data)))
+        self.logger.debug(str(done))
+        self.logger.debug(str(done[0]))
+        name = done[0][3].encode("ascii", "ignore")
+        self.client.sendServerMessage("Reverting %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
         for element in done:
             offset, before, after, player, date = element
             coords = self.client.world.get_coords(offset)
@@ -51,6 +53,8 @@ class BlockTrackerPlugin(ProtocolPlugin):
             done.reverse()
         else:
             done = data
+        self.logger.debug(str(done))
+        self.logger.debug(str(done[0]))
         name = done[0][3].encode("ascii", "ignore")
         self.client.sendServerMessage("Listing last %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
         for element in done:
