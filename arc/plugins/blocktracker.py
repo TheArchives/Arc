@@ -115,7 +115,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
     
     @config("category", "build")
     def restorePlayer(self, parts, fromloc, overriderank):
-        "/restoreplayer username n: Reverse n edits on the current world by username.
+        "/restoreplayer username n: Reverse n edits on the current world by username."
         if len(parts) > 2:
             try:
                 self.editnum = int(parts[2])
