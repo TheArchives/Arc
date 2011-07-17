@@ -1,2 +1,2 @@
-Welcome to our server, iCraft Plus Powered
-please read the our server /rules
+We didn't edit our greeting!
+Maybe we should look at greeting.txt or something..

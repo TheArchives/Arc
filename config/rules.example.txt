@@ -1,1 +1,2 @@
-This server currently has no rules.
+Whoops! We didn't full out the rules.txt file!
+Taking a look at rules.txt seems like a good idea right now..
