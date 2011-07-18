@@ -52,7 +52,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 self.client.sendBlock(x, y, z, before)
             self.client.sendServerMessage("Reverted %s edits." % i)
             self.num = 0
-    
+
     def sendCallbackPlayer(self, data):
         if len(data) > 10:
             done = []
@@ -72,7 +72,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
                 coords = self.client.world.get_coords(offset)
                 self.client.sendServerMessage("[%s] (%s, %s, %s) %s -> %s" % (date, coords[0], coords[1], coords[2], before, after))
-            
+
     def sendCallbackBlock(self, data):
         if len(data) > 10:
             done = []
@@ -91,8 +91,8 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 offset, before, after, player, date = element
                 date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
                 coords = self.client.world.get_coords(offset)
-                self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))        
-    
+                self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))
+
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
         if not self.isChecking:
@@ -104,7 +104,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username, time.mktime(time.localtime())))
             return block
         else:
-            edits = self.client.world.blocktracker.getblockedits([self.client.world.get_offset(x, y, z)])
+            edits = self.client.world.blocktracker.getblockedits(self.client.world.get_offset(x, y, z))
             edits.addCallback(self.sendCallbackBlock)
             self.isChecking = False
             block = self.client.world.blockstore.__getitem__((x, y, z))
@@ -122,7 +122,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.isChecking = True
         else:
             self.client.sendServerMessage("Already checking for edits: Place or remove a block!")
-            
+
     @config("category", "build")
     def checkPlayer(self, parts, fromloc, overriderank):
         "/checkplayer playername: Checks a player's edits on this world."
@@ -131,7 +131,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             edits.addCallback(self.sendCallbackPlayer)
         else:
             self.client.sendServerMessage("Syntax: /checkplayer playername")
-    
+
     @config("category", "build")
     @config("rank", "mod")
     def restorePlayer(self, parts, fromloc, overriderank):

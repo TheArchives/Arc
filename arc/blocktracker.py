@@ -24,12 +24,12 @@ class Tracker(object):
 
     def add(self, data):
         """ Adds data to the tracker.
-        NOTE the format for a single data entry is this -
+        NOTE the format for a single data entry is this -s
         (matbefore,matafter,name,date) """
         self.databuffer.append(data)
         if len(self.databuffer) > self.buffersize:
             self._flush()
-            
+
     def close(self):
         """ Flushes and closes the database """
         self._flush()
@@ -49,12 +49,13 @@ class Tracker(object):
     def getblockedits(self, offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        string = "select * from history where block_offset = ?"
-        edits = self.database.runQuery(string, offset)
+        print offset
+        print type(offset)
+        edits = self.database.runQuery("select * from history where block_offset = (?)",[offset])
         return edits
 
     def getplayeredits(self, username):
         """ Gets the blocks, along with materials, that a player has edited """
         self._flush()
-        playeredits = self.database.runQuery("select * from history as history where name = (?)", [username])
+        playeredits = self.database.runQuery("select * from history as history where name like (?)", [username])
         return playeredits
