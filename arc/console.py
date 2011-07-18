@@ -77,7 +77,7 @@ class StdinPlugin(threading.Thread):
                         message = message.replace(".@", " @")
                         message = message.replace(".#", " #")
                         if message[len(message)-3] == "&":
-                            print ("You cannot use a color at the end of a message.")
+                            print("You cannot use a color at the end of a message.")
                             return
                         if message.startswith("/"):
                             message = message.split(" ")
@@ -100,105 +100,105 @@ class StdinPlugin(threading.Thread):
                                         continue
                             elif message[0] == "banb":
                                 if len(message) == 1:
-                                    print ("Please specify a username.")
+                                    print("Please specify a username.")
                                 else:
                                     username = message[1]
                                     if self.factory.isBanned(username):
-                                        print ("%s is already Banned." % username)
+                                        print("%s is already Banned." % username)
                                     else:
                                         if not len(message) > 2:
-                                            print ("Please give a reason.")
+                                            print("Please give a reason.")
                                         else:
                                             self.factory.addBan(username, " ".join(message[2:]))
                                             if username in self.factory.usernames:
                                                 ip = self.factory.usernames[username].transport.getPeer().host
                                                 self.factory.addIpBan(ip, " ".join(message[2:]))
                                                 self.factory.usernames[username].sendError("You got banned by the console: %s" % (" ".join(message[2:])))
-                                                print ("%s has been IPBanned." % ip)
-                                            print ("%s has been banned." % username)
+                                                print("%s has been IPBanned." % ip)
+                                            print("%s has been banned." % username)
                             elif message[0] == "ban":
                                 if len(message) == 1:
-                                    print ("Please specify a username.")
+                                    print("Please specify a username.")
                                 else:
                                     username = message[1]
                                     if self.factory.isBanned(username):
-                                        print ("%s is already Banned." % username)
+                                        print("%s is already Banned." % username)
                                     else:
                                         if not len(message) > 2:
-                                            print ("Please give a reason.")
+                                            print("Please give a reason.")
                                         else:
                                             self.factory.addBan(username, " ".join(message[2:]))
                                             if username in self.factory.usernames:
                                                 self.factory.usernames[username].sendError("You got banned by the console: %s" % (" ".join(message[2:])))
-                                            print ("%s has been banned." % username)
+                                            print("%s has been banned." % username)
                             elif message[0] == "ipban":
                                 if len(message) < 2:
-                                    print ("Please specify a username and the reason.")
+                                    print("Please specify a username and the reason.")
                                 else:
                                     username = message[1]
                                 if username not in self.factory.usernames:
-                                    print ("That user is not online.")
+                                    print("That user is not online.")
                                 else:
                                     ip = self.factory.usernames[username].transport.getPeer().host
                                     if self.factory.isIpBanned(ip):
-                                        print ("%s is already IPBanned." % ip)
+                                        print("%s is already IPBanned." % ip)
                                     else:
                                         self.factory.addIpBan(ip, " ".join(params))
                                         self.client.factory.usernames[username].sendError("You got IPBanned by the console: %s" % (" ".join(message[2:])))
-                                        print ("%s has been IPBanned." % ip)
+                                        print("%s has been IPBanned." % ip)
                             elif message[0] == "rank":
                                 if len(message) == 1:
-                                    print ("Please specify a username.")
+                                    print("Please specify a username.")
                                 else:
                                     try:
                                         print Rank(self, message, "console", True, self.factory)
                                     except:
-                                        print ("You must specify a rank and username.")
+                                        print("You must specify a rank and username.")
                             elif message[0] == "derank":
                                 if len(message) == 1:
-                                    print ("Please specify a username.")
+                                    print("Please specify a username.")
                                 else:
                                     try:
                                         print DeRank(self, message, "console", True, self.factory)
                                     except:
-                                        print ("You must specify a rank and username.")
+                                        print("You must specify a rank and username.")
                             elif message[0] == "spec":
                                 if len(message) == 1:
-                                    print ("Please specify a username.")
+                                    print("Please specify a username.")
                                 else:
                                     try:
                                         print Spec(self, message[1], "console", True, self.factory)
                                     except:
-                                        print ("Please specify a username.")
+                                        print("Please specify a username.")
                             elif message[0] == "despec":
                                 if len(message) == 1:
-                                    print ("Please specify a username.")
+                                    print("Please specify a username.")
                                 else:
                                     try:
                                         print DeSpec(self, message[1], "console", True, self.factory)
                                     except:
-                                        print ("Please specify a username.")
+                                        print("Please specify a username.")
                             elif message[0] == ("boot"):
                                 try:
                                     world = str(message[1]).lower()
                                 except:
-                                    print ("Please specify a worldname.")
+                                    print("Please specify a worldname.")
                                     continue
                                 self.factory.loadWorld("worlds/"+world, world)
-                                print ("World '"+world+"' booted.")
+                                print("World '"+world+"' booted.")
                             elif message[0] == ("shutdown"):
                                 try:
                                     world = str(message[1]).lower()
                                 except:
-                                    print ("Please specify a worldname.")
+                                    print("Please specify a worldname.")
                                     continue
                                 self.factory.unloadWorld(world)
-                                print ("World '"+world+"' shutdown.")
+                                print("World '"+world+"' shutdown.")
                             elif message[0] == ("new"):
                                 if len(message) == 1:
-                                    print ("Please specify a new worldname.")
+                                    print("Please specify a new worldname.")
                                 elif self.factory.world_exists(parts[1]):
-                                    print ("Worldname in use")
+                                    print("Worldname in use")
                                 else:
                                     if len(message) == 2:
                                         template = "default"
@@ -212,7 +212,7 @@ class StdinPlugin(threading.Thread):
                                         self.client.sendServerMessage("World '%s' made and booted." % world_id)
                             elif message[0] == ("me"):
                                 if len(message) == 1:
-                                    print ("Please type an action.")
+                                    print("Please type an action.")
                                 else:
                                     self.factory.queue.put((self, TASK_ACTION, (1, "&2", "Console", " ".join(message[1:]))))
                             elif message[0] == ("srb"):
@@ -226,80 +226,80 @@ class StdinPlugin(threading.Thread):
                                 else:
                                     self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, ("[Server Shutdown] See you later: %s" %(" ".join(message[1:])))))
                             elif message[0] == ("ircrehash"):
-                                print ("Rehashing the IRC Bot..")
+                                print("Rehashing the IRC Bot..")
                                 self.factory.reloadIrcBot()
                             elif message[0] == ("rehash"):
-                                print ("Rehashing the Server Configuration..")
+                                print("Rehashing the Server Configuration..")
                                 self.factory.reloadConfig()
                             elif message[0] == ("help"):
-                                print ("Whispers: @username message")
-                                print ("WorldChat: !worldname message")
-                                print ("StaffChat: #message")
-                                print ("Commands: /cmdlist")
+                                print("Whispers: @username message")
+                                print("WorldChat: !worldname message")
+                                print("StaffChat: #message")
+                                print("Commands: /cmdlist")
                             elif message[0] == ("cmdlist"):
-                                print ("about boot ban banb cmdlist cpr derank despec help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
+                                print("about boot ban banb cmdlist cpr derank despec help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
                             elif message[0] == ("about"):
-                                print ("About The Server")
-                                print ("Powered by iCraft+ %s" % (INFO_VERSION))
-                                print ("Name: "+self.factory.server_name)
+                                print("About The Server")
+                                print("Powered by Arc %s" % (INFO_VERSION))
+                                print("Name: %s" % self.factory.server_name)
                                 try:
-                                    print ("URL: "+self.factory.heartbeat.url)
+                                    print("URL: %s" % self.factory.heartbeat.url)
                                 except:
-                                    print ("URL: N/A (minecraft.net is offline)")
+                                    print("URL: N/A (minecraft.net is offline)")
                             elif message[0] == ("say"):
                                 if len(message) == 1:
-                                    print ("Please type a message.")
+                                    print("Please type a message.")
                                 else:
                                     self.factory.queue.put((self, TASK_SERVERMESSAGE, ("[MSG] "+(" ".join(message[1:])))))
                             elif message[0] == ("u"):
                                 if len(message) == 1:
-                                    print ("Please type a message.")
+                                    print("Please type a message.")
                                 else:
                                     self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, "[Urgent] "+(" ".join(message[1:]))))
                             elif message[0] == ("plr"):
                                 if len(message) == 1:
-                                    print ("Please provide a plugin name.")
+                                    print("Please provide a plugin name.")
                                 else:
                                     try:
                                         self.factory.unloadPlugin(message[1])
                                         self.factory.loadPlugin(message[1])
                                     except IOError:
-                                        print ("No such plugin '%s'." % message[1])
+                                        print("No such plugin '%s'." % message[1])
                                     else:
-                                        print ("Plugin '%s' reloaded." % message[1])
+                                        print("Plugin '%s' reloaded." % message[1])
                             elif message[0] == ("plu"):
                                 if len(message) == 1:
-                                    print ("Please provide a plugin name.")
+                                    print("Please provide a plugin name.")
                                 else:
                                     try:
                                         self.factory.unloadPlugin(message[1])
                                     except IOError:
-                                        print ("No such plugin '%s'." % message[1])
+                                        print("No such plugin '%s'." % message[1])
                                     else:
-                                        print ("Plugin '%s' unloaded." % message[1])
+                                        print("Plugin '%s' unloaded." % message[1])
                             elif message[0] == ("pll"):
                                 if len(message) == 1:
-                                    print ("Please provide a plugin name.")
+                                    print("Please provide a plugin name.")
                                 else:
                                     try:
                                         self.factory.loadPlugin(message[1])
                                     except IOError:
-                                        print ("No such plugin '%s'." % message[1])
+                                        print("No such plugin '%s'." % message[1])
                                     else:
-                                        print ("Plugin '%s' loaded." % message[1])
+                                        print("Plugin '%s' loaded." % message[1])
                             elif message[0] == "sendhb":
                                 self.factory.heartbeat.get_url(onetime=True)
                             elif message[0] == "cpr":
                                 self.factory.heartbeat.turl()
-                                print ("Heartbeat sending restarted.")
+                                print("Heartbeat sending restarted.")
                             else:
-                                print ("There is no %s command." % message[0])
+                                print("There is no %s command." % message[0])
                         elif message.startswith("@"):
                             # It's a whisper
                             try:
                                 username, text = message[1:].strip().split(" ", 1)
                             except ValueError:
-                                print ("Please include a username and a message to send.")
+                                print("Please include a username and a message to send.")
                             else:
                                 username = username.lower()
                                 if username in self.factory.usernames:
@@ -308,17 +308,17 @@ class StdinPlugin(threading.Thread):
                                     self.whisperlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | @Console to "+username+": "+text+"\n")
                                     self.whisperlog.flush()
                                 else:
-                                    print ("%s is currently offline." % username)
+                                    print("%s is currently offline." % username)
                         elif message.startswith("!"):
                             # It's a world message.
                             if len(message) == 1:
-                                print ("Please include a message to send.")
+                                print("Please include a message to send.")
                             else:
                                 try:
                                    world, out = message[1:len(message)-1].split(" ")
                                    text = COLOUR_YELLOW+"!"+COLOUR_DARKGREEN+"Console:"+COLOUR_WHITE+" "+out
                                 except ValueError:
-                                    print ("Please include a message to send.")
+                                    print("Please include a message to send.")
                                 else:
                                     if world in self.factory.worlds:
                                         self.factory.queue.put ((self.factory.worlds[world],TASK_WORLDMESSAGE,(255, self.factory.worlds[world], text),))
@@ -328,11 +328,11 @@ class StdinPlugin(threading.Thread):
                                         self.wclog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | !Console in "+str(self.factory.worlds[world].id)+": "+out+"\n")
                                         self.wclog.flush()
                                     else:
-                                        print ("That world does not exist. Try !world message")
+                                        print("That world does not exist. Try !world message")
                         elif message.startswith("#"):
                             # It's an staff-only message.
                             if len(message) <= 2:
-                                print ("Please include a message to send.")
+                                print("Please include a message to send.")
                             else:
                                 try:
                                     text = message[1:]

@@ -173,7 +173,7 @@ class ArcFactory(Factory):
                 self.ircbot = self.irc_config.getboolean("irc", "ircbot")
                 self.staffchat = self.irc_config.getboolean("irc", "staffchat")
                 self.irc_relay = ChatBotFactory(self)
-                if self.ircbot and not (self.irc_channel == "#icraft" or self.irc_channel == "#channel") and not self.irc_nick == "botname":
+                if self.ircbot and not self.irc_channel == "#channel" and not self.irc_nick == "botname":
                     reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
                 else:
                     self.logger.error("IRC Bot failed to connect, you could modify, rename or remove irc.conf")
@@ -1218,7 +1218,7 @@ class ArcFactory(Factory):
                     self.ircbot = self.irc_config.getboolean("irc", "ircbot")
                     self.staffchat = self.irc_config.getboolean("irc", "staffchat")
                     self.irc_relay = ChatBotFactory(self)
-                    if self.ircbot and not (self.irc_channel == "#icraft" or self.irc_channel == "#channel") and not self.irc_nick == "botname":
+                    if self.ircbot and not self.irc_channel == "#channel" and not self.irc_nick == "botname":
                         reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
                         self.runServerHook("IRCBotReloaded")
                     else:

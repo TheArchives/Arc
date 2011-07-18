@@ -156,17 +156,17 @@ class helpPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandAbout(self, parts, fromloc, overriderank):
         "/about - Guest\nAliases: info\nAbout the server and software."
-        self.client.sendSplitServerMessage("About The Server, powered by iCraft+ %s | Credits: /credits" % VERSION)
+        self.client.sendSplitServerMessage("About The Server, powered by Arc %s | Credits: /credits" % VERSION)
         self.client.sendSplitServerMessage("Name: %s; Owners: %s" % (self.client.factory.server_name, ", ".join(self.client.factory.owners)))
         self.client.sendSplitServerMessage(self.client.factory.server_message)
-        self.client.sendServerMessage("URL: "+self.client.factory.info_url)
+        self.client.sendServerMessage("URL: %s" % self.client.factory.info_url)
         if self.client.factory.use_irc:
             self.client.sendServerMessage("IRC: "+self.client.factory.irc_config.get("irc", "server")+" "+self.client.factory.irc_channel)
 
     @config("category", "info")
     def commandCredits(self, parts, fromloc, overriderank):
         "/credits - Guest\nCredits for the creators, devs and testers."
-        self.client.sendServerMessage("iCraft Credits")
+        self.client.sendServerMessage("Arc Credits")
         list = Credits()
         for each in list:
             self.client.sendSplitServerMessage(each)

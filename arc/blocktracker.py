@@ -6,6 +6,7 @@
 
 from os import getcwd
 from twisted.enterprise import adbapi
+
 class Tracker(object):
     """ Provides facilities for block tracking and storage. """
     def __init__(self, world, buffersize = 500, directory = getcwd()):

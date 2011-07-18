@@ -432,8 +432,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
                     self.client.sendNormalMessage(self.client.factory.usernames[user].userColour()+("%s" % (title))+parts[1]+COLOUR_YELLOW+" "+username.world.id+" | "+str(username.transport.getPeer().host))
                 else:
                     self.client.sendNormalMessage(self.client.factory.usernames[user].userColour()+("%s" % (title))+parts[1]+COLOUR_YELLOW+" "+username.world.id)
-                if user in INFO_VIPLIST:
-                    self.client.sendServerMessage("is an iCraft Developer")
                 if username.gone == 1:
                     self.client.sendNormalMessage(COLOUR_DARKPURPLE+"is currently Away")
                 if user in bank:

@@ -104,7 +104,7 @@ class BuildUtil(ProtocolPlugin):
 
     def sendAdminBlockUpdate(self):
         "Sends a packet that updates the client's admin-building ability"
-        self.client.sendPacked(TYPE_INITIAL, 6, "Admincrete Update", "Reloading the server...", self.canBreakAdminBlocks() and 100 or 0)
+        self.client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the server...", self.canBreakAdminBlocks() and 100 or 0)
 
     @config("category", "build")
     def commandBind(self, parts, fromloc, overriderank):

@@ -5,24 +5,24 @@
 import time
 
 from twisted.internet import reactor
+from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
-from arc.includes.mcbans_api import McBans
-
 class McBansPlugin(ProtocolPlugin):
-    
+
     commands = {
         "mcbans": "mcBans"
     }
-    
-    reason = ""
-    
+
+    def gotClient(self):
+        self.reason = ""
+
     @config("category", "build")
     def mcBans(self, parts, fromloc, overriderank):
-        "/mcbans: Used to interact with the MCBans API"
+        "/mcbans [command] - Guest\nUsed to interact with the MCBans API."
         if self.client.factory.serverPluginExists("McBansServerPlugin"):
             handler = self.client.factory.serverPlugins["McBansServerPlugin"].handler
             if self.client.factory.serverPlugins["McBansServerPlugin"].has_api:
@@ -110,7 +110,7 @@ class McBansPlugin(ProtocolPlugin):
                                         self.client.sendServerMessage("No reason set - try /mcbans help reason")
                                 elif type == "temp":
                                     if not self.reason is "":
-                                        if len(parts) > 5: 
+                                        if len(parts) > 5:
                                             duration = parts[4].lower()
                                             measure = str(parts[5].lower())
                                             if not (measure == "m" or measure == "h" or measure == "d"):
