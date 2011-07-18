@@ -73,7 +73,6 @@ class Heartbeat(threading.Thread):
                 "version": 7,
                 "salt": self.factory.salt,
                 }), 30)
-                self.url = fh.read().strip()
                 self.logger.debug("Spoofed heartbeat: %s" % element[0])
             except:
                 pass
