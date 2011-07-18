@@ -437,20 +437,12 @@ class BuildLibPlugin(ProtocolPlugin):
                 coordinatelist1.append((int(round(mx*t+x)),int(round(my*t+y)),int(round(mz*t+z))))
             coordinatelist2 = []
             coordinatelist2 = [coordtuple for coordtuple in coordinatelist1 if coordtuple not in coordinatelist2]
-            if self.client.isDirector() or overriderank:
-                limit = self.client.factory.build_director
-            elif self.client.isAdmin():
-                limit = self.client.factory.build_admin
-            elif self.client.isMod():
-                limit = self.client.factory.build_mod
-            elif self.client.isOp():
-                limit = self.client.factory.build_op
-            else:
-                limit = self.client.factory.build_other
+            limit = self.client.getBlbLimit()
+            if limit != -1:
             # Stop them doing silly things
-            if len(coordinatelist2) > limit:
-                self.client.sendServerMessage("Sorry, that area is too big for you to line.")
-                return
+                if len(coordinatelist2) > limit or limit == 0:
+                    self.client.sendServerMessage("Sorry, that area is too big for you to line (Limit is %s)" % limit)
+                    return
             # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
