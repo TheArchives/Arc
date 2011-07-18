@@ -347,41 +347,91 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     def commandWorlds(self, parts, fromloc, overriderank):
-        "/worlds [letter|all] - Guest\nAliases: maps\nLists available worlds - by letter, online, or all."
+        "/worlds [search tem|all] [pagenumber] - Guest\nAliases: maps\nLists available worlds - by search term, online, or all."
         if len(parts) < 2:
-            self.client.sendServerMessage("Do /worlds all for all worlds or choose a letter.")
+            self.client.sendServerMessage("Do /worlds all for all worlds or choose a search term.")
             self.client.sendServerList(["Online:"] + [id for id, world in self.client.factory.worlds.items() if self.client.canEnter(world)])
             return
         else:
             worldlist = os.listdir("worlds/")
             newworldlist = []
+            hidden = 0
             for world in worldlist:
                 if not world.startswith("."): # Hidden worlds!
                     newworldlist.append(world)
+                else:
+                    hidden = hidden + 1
             if parts[1] == 'all':
-                self.client.sendServerList(["Worlds:"] + newworldlist)
+                if len(newworldlist) > 20:
+                    done = []
+                    alldone = []
+                    for element in newworldlist:
+                        done.append(element)
+                        if len(done) == 20:
+                            alldone.append(done)
+                            done = []
+                    if len(done) > 0:
+                        alldone.append(done)
+                    pages = len(alldone)
+                    if len(parts) < 3:
+                        self.client.sendSplitServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
+                        self.client.sendServerMessage("Syntax: /worlds all pagenumber")
+                        return
+                    self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
+                    index = parts[2]
+                    if index > pages:
+                        self.client.sendServerMessage("Please specify a page number, from 1 to %s." % pages)
+                        return
+                    i = index - 1
+                    page = alldone[i]
+                    self.client.sendServerMessage("Listing page %s:" % index)
+                    self.client.sendServerList(done)
+                else:
+                    done = newworldlist
+                    if len(done) > 0:
+                        self.client.sendServerMessage("Showing %s worlds:" % len(done))
+                        self.client.sendServerList(done)
+                    else:
+                        self.client.sendServerMessage("There are no worlds to list.")
                 return
-            if len(parts[1]) != 1:
-                self.client.sendServerMessage("Only specify one starting letter per entry, not multiple")
-                return
-            if len(parts)==3:
-                if len(parts[2]) != 1:
-                    self.client.sendServerMessage("Only specify one starting letter per entry, not multiple")
-                    return
-            letter1 = ord(parts[1].lower())
-            if len(parts)==3:
-                letter2 = ord(parts[2].lower())
-            else:
-                letter2 = letter1
-            if letter1>letter2:
-                a = letter1
-                letter1 = letter2
-                letter2 = a
+            letter = parts[1].lower()
             newlist = []
             for world in newworldlist:
-                if letter1 <= ord(world[0]) <= letter2:
+                if world.lower().startswith(letter):
                     newlist.append(world)
-            self.client.sendServerList(["Worlds:"] + newlist)
+                elif letter in world.lower():
+                    newlist.append(world.replace(letter, "%s%s%s" % (COLOUR_RED, letter, COLOUR_YELLOW)))
+            if len(newlist) > 20:
+                done = []
+                alldone = []
+                for element in newlist:
+                    done.append(element)
+                    if len(done) == 20:
+                        alldone.append(done)
+                        done = []
+                if len(done) > 0:
+                    alldone.append(done)
+                pages = len(alldone)
+                if len(parts) < 3:
+                    self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds) containing %s." % (pages, hidden, letter))
+                    self.client.sendServerMessage("Syntax: /worlds letter pagenumber")
+                    return
+                self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds) containing %s." % (pages, hidden, letter))
+                index = parts[2]
+                if index > pages:
+                    self.client.sendServerMessage("Please specify a page number, from 1 to %s." % pages)
+                    return
+                i = index - 1
+                page = alldone[i]
+                self.client.sendServerMessage("Listing page %s of worlds containing %s:" % (index, letter))
+                self.client.sendServerList(done)
+            else:
+                done = newlist
+                if len(done) > 0:
+                    self.client.sendServerMessage("Showing %s worlds containing %s:" % (len(done), letter))
+                    self.client.sendServerList(done)
+                else:
+                    self.client.sendServerMessage("No worlds starting with %s" % letter)
 
     @config("category", "world")
     def commandTemplates(self, parts, fromloc, overriderank):
