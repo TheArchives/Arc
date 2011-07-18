@@ -75,6 +75,6 @@ class Heartbeat(threading.Thread):
                 }), 30)
                 self.logger.debug("Spoofed heartbeat: %s" % element[0])
             except:
-                pass
+                self.logger.warn("Unable to spoof heartbeat: %s" % element[0])
         if not onetime:
             reactor.callLater(60, self.get_url)
