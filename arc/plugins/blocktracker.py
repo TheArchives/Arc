@@ -13,9 +13,9 @@ from arc.plugins import ProtocolPlugin
 class BlockTrackerPlugin(ProtocolPlugin):
 
     commands = {
-        "checkblock": "checkBlock",
-        "checkplayer": "checkPlayer",
-        "restoreplayer": "restorePlayer"
+        "checkblock": "commandCheckBlock",
+        "checkplayer": "commandCheckPlayer",
+        "restoreplayer": "commandRestorePlayer"
     }
 
     hooks = {
@@ -52,7 +52,6 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 self.client.sendBlock(x, y, z, before)
             self.client.sendServerMessage("Reverted %s edits." % i)
             self.num = 0
-
     def sendCallbackPlayer(self, data):
         if len(data) > 10:
             done = []
@@ -66,7 +65,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
         except Exception:
             self.client.sendServerMessage("No edits could be found for that player!")
         else:
-            self.client.sendServerMessage("Listing last %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
+            self.client.sendServerMessage("Listing last %s edits for %s (out of %s)..." % (len(done), name, len(data)))
             for element in done:
                 offset, before, after, player, date = element
                 date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
@@ -115,7 +114,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             return block
 
     @config("category", "build")
-    def checkBlock(self, parts, fromloc, overriderank):
+    def commandCheckBlock(self, parts, fromloc, overriderank):
         "/checkblock: Checks the next edited block for past edits."
         if not self.isChecking:
             self.client.sendServerMessage("Checking for edits: Place or remove a block!")
@@ -124,7 +123,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Already checking for edits: Place or remove a block!")
 
     @config("category", "build")
-    def checkPlayer(self, parts, fromloc, overriderank):
+    def commandCheckPlayer(self, parts, fromloc, overriderank):
         "/checkplayer playername: Checks a player's edits on this world."
         if len(parts) > 1:
             edits = self.client.world.blocktracker.getplayeredits(parts[1])
@@ -134,7 +133,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     @config("category", "build")
     @config("rank", "mod")
-    def restorePlayer(self, parts, fromloc, overriderank):
+    def commandRestorePlayer(self, parts, fromloc, overriderank):
         "/restoreplayer username n: Reverse n edits on the current world by username."
         if len(parts) > 2:
             try:
