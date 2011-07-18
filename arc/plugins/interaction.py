@@ -8,6 +8,7 @@ from arc.constants import *
 from arc.decorators import *
 from arc.irc_client import *
 from arc.plugins import ProtocolPlugin
+#from arc.serverplugins import inbox
 
 class InteractionPlugin(ProtocolPlugin):
     "Commands for player interactions."
@@ -241,7 +242,7 @@ class InteractionPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Error sending message.")
 
     def commandCheckMessages(self, parts, fromloc, overriderank):
-        "/inbox - Guest\nChecks your Inbox of messages."
+        "/inbox [mode] - Guest\nChecks your inbox of messages.\nModes: NEW, ALL"
         file = open('config/data/inbox.dat', 'r')
         messages = cPickle.load(file)
         file.close()
@@ -250,6 +251,34 @@ class InteractionPlugin(ProtocolPlugin):
             self.client.sendServerMessage("NOTE: Might want to do /c now.")
         else:
             self.client.sendServerMessage("You do not have any messages.")
+
+    def commandCheckMessages_DOESNOTWORK(self, parts, fromloc, overriderank):
+        "/inbox [mode] - Guest\nChecks your inbox of messages.\nModes: NEW, ALL"
+        if len(parts) > 0:
+            if parts[1].lower() in ["new", "all"]:
+                selection = parts[1].lower()
+            else:
+                self.client.sendServerMessage("Mode %s not recongized. Using 'all' instead." % parts[1].lower())
+                selection = "all"
+        else:
+            selection = "all"
+        entries = self.client.factory.serverPlugins["OfflineMessageServerPlugin"].getMessages(self.client.username, "to")
+        if entries == False:
+            self.client.sendServerMessage("You do not have any messages in your inbox.")
+            return
+        else:
+            for entry in entries:
+                id, from_user, to_user, message, date, status = entry
+                if status == STATUS_UNREAD and selection in ["new", "all"]:
+                    meetCriteria = True
+                elif status == STATUS_READ and selection == "all":
+                    meetCriteria = True
+                else:
+                    meetCriteria = False
+                if meetCriteria:
+                    self.client.sendServerMessage("Message sent by %s at %s: (ID: %s)" % (from_user, date, id))
+                    self.client.sendSplitServerMessage(message)
+                    self.client.sendServerMessage("------------------")
 
     def commandClear(self,parts, fromloc, overriderank):
         "/c - Guest\nAliases: clear, clearinbox\nClears your Inbox of messages."

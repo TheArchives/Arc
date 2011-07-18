@@ -892,7 +892,7 @@ class ArcServerProtocol(Protocol):
             for line in self.factory.greeting:
                 self.sendPacked(TYPE_MESSAGE, 127, line)
             self.sent_first_welcome = True
-            self.runHook("playerjoined",self.username)
+            self.runHook("playerjoined", self.username)
             self.MessageAlert()
         else:
             self.sendPacked(TYPE_MESSAGE, 255, "You are now in world '%s'" % self.world.id)
