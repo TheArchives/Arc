@@ -100,19 +100,19 @@ class OfflineMessageServerPlugin(object):
                 result = self.database.rowcount(self.database.getmessages_from(user))
             return result
 
-    def setStatus(self, mid, status):
-        """ Set the status of a message. """
-        if status in [STATUS_UNREAD, STATUS_READ, STATUS_DELETED]:
-            
-        
-    def MessageAlert(self):
-        if os.path.exists("config/data/inbox.dat"):
-            self.messages = self.factory.messages
-            for client in self.factory.clients.values():
-                if client.username in self.messages:
-                    client.sendServerMessage("You have a message waiting in your Inbox.")
-                    client.sendServerMessage("Use /inbox to check and see.")
-                    reactor.callLater(300, self.MessageAlert)
+#    def setStatus(self, mid, status):
+#        """ Set the status of a message. """
+#        if status in [STATUS_UNREAD, STATUS_READ, STATUS_DELETED]:
+
+
+#    def MessageAlert(self):
+#        if os.path.exists("config/data/inbox.dat"):
+#            self.messages = self.factory.messages
+#            for client in self.factory.clients.values():
+#                if client.username in self.messages:
+#                    client.sendServerMessage("You have a message waiting in your Inbox.")
+#                    client.sendServerMessage("Use /inbox to check and see.")
+#                    reactor.callLater(300, self.MessageAlert)
 
     hooks = {
         }
