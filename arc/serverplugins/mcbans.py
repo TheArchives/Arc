@@ -45,7 +45,6 @@ class McBansServerPlugin():
         del config
 
     def connected(self, data):
-        self.logger.info("MCBans!")
         if self.has_api:
             client = data["client"]
             data = self.handler.connect(client.username, client.transport.getPeer().host)

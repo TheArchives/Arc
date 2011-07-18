@@ -133,6 +133,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Syntax: /checkplayer playername")
     
     @config("category", "build")
+    @config("rank", "mod")
     def restorePlayer(self, parts, fromloc, overriderank):
         "/restoreplayer username n: Reverse n edits on the current world by username."
         if len(parts) > 2:
