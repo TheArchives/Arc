@@ -349,8 +349,8 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandWorlds(self, parts, fromloc, overriderank):
         "/worlds [search tem|all] [pagenumber] - Guest\nAliases: maps\nLists available worlds - by search term, online, or all."
         if len(parts) < 2:
-            self.client.sendServerMessage("Do /worlds all for all worlds or choose a search term.")
-            self.client.sendServerList(["Online:"] + [id for id, world in self.client.factory.worlds.items() if self.client.canEnter(world)])
+            self.client.sendNormalMessage("Do /worlds all for all worlds or choose a search term.")
+            self.client.sendServerList(["Online:"] + [id for id, world in self.client.factory.worlds.items() if self.client.canEnter(world)], plain=True)
             return
         else:
             worldlist = os.listdir("worlds/")
@@ -374,23 +374,28 @@ class WorldUtilPlugin(ProtocolPlugin):
                         alldone.append(done)
                     pages = len(alldone)
                     if len(parts) < 3:
-                        self.client.sendSplitServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
+                        self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
                         self.client.sendServerMessage("Syntax: /worlds all pagenumber")
                         return
                     self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
                     index = parts[2]
-                    if index > pages:
-                        self.client.sendServerMessage("Please specify a page number, from 1 to %s." % pages)
-                        return
-                    i = index - 1
-                    page = alldone[i]
-                    self.client.sendServerMessage("Listing page %s:" % index)
-                    self.client.sendServerList(done)
+                    try:
+                        index = int(index)
+                    except:
+                        self.client.sendServerMessage("The page number must be an integer!")
+                    else:
+                        if index > pages:
+                            self.client.sendServerMessage("Please specify a page number, from 1 to %s." % pages)
+                            return
+                        i = index - 1
+                        page = alldone[i]
+                        self.client.sendServerMessage("Listing page %s of all worlds:" % index)
+                        self.client.sendServerList(page, plain=True)
                 else:
                     done = newworldlist
                     if len(done) > 0:
                         self.client.sendServerMessage("Showing %s worlds:" % len(done))
-                        self.client.sendServerList(done)
+                        self.client.sendServerList(done, plain=True)
                     else:
                         self.client.sendServerMessage("There are no worlds to list.")
                 return
@@ -398,9 +403,9 @@ class WorldUtilPlugin(ProtocolPlugin):
             newlist = []
             for world in newworldlist:
                 if world.lower().startswith(letter):
-                    newlist.append(world)
+                    newlist.append(world.replace(letter, "%s%s%s" % (COLOUR_RED, letter, COLOUR_WHITE)))
                 elif letter in world.lower():
-                    newlist.append(world.replace(letter, "%s%s%s" % (COLOUR_RED, letter, COLOUR_YELLOW)))
+                    newlist.append(world.replace(letter, "%s%s%s" % (COLOUR_RED, letter, COLOUR_WHITE)))
             if len(newlist) > 20:
                 done = []
                 alldone = []
@@ -413,23 +418,30 @@ class WorldUtilPlugin(ProtocolPlugin):
                     alldone.append(done)
                 pages = len(alldone)
                 if len(parts) < 3:
-                    self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds) containing %s." % (pages, hidden, letter))
+                    self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)" % (pages, hidden))
+                    self.client.sendServerMessage("containing %s." % letter)
                     self.client.sendServerMessage("Syntax: /worlds letter pagenumber")
                     return
-                self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds) containing %s." % (pages, hidden, letter))
+                self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)" % (pages, hidden))
+                self.client.sendServerMessage("containing %s." % letter)
                 index = parts[2]
-                if index > pages:
-                    self.client.sendServerMessage("Please specify a page number, from 1 to %s." % pages)
-                    return
-                i = index - 1
-                page = alldone[i]
-                self.client.sendServerMessage("Listing page %s of worlds containing %s:" % (index, letter))
-                self.client.sendServerList(done)
+                try:
+                    index = int(index)
+                except:
+                    self.client.sendServerMessage("The page number must be an integer!")
+                else:
+                    if index > pages:
+                        self.client.sendServerMessage("Please specify a page number, from 1 to %s." % pages)
+                        return
+                    i = index - 1
+                    page = alldone[i]
+                    self.client.sendServerMessage("Listing page %s of worlds containing %s:" % (index, letter))
+                    self.client.sendServerList(page, plain=True)
             else:
                 done = newlist
                 if len(done) > 0:
                     self.client.sendServerMessage("Showing %s worlds containing %s:" % (len(done), letter))
-                    self.client.sendServerList(done)
+                    self.client.sendServerList(done, plain=True)
                 else:
                     self.client.sendServerMessage("No worlds starting with %s" % letter)
 
