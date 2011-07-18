@@ -94,7 +94,7 @@ class World(object):
         self.save_meta()
 
     def unload(self, ASD=False):
-        if ASD:
+        if ASD: # Called by ASD
            overriden = self.factory.runServerHook("attemptASD", {"world_id": world.id})
            if not overriden: # Nope, we don't want them to ASD!
                self.ASD.kill()
