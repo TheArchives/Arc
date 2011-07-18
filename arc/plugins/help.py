@@ -161,7 +161,7 @@ class helpPlugin(ProtocolPlugin):
         self.client.sendSplitServerMessage(self.client.factory.server_message)
         self.client.sendServerMessage("URL: %s" % self.client.factory.info_url)
         if self.client.factory.use_irc:
-            self.client.sendServerMessage("IRC: "+self.client.factory.irc_config.get("irc", "server")+" "+self.client.factory.irc_channel)
+            self.client.sendServerMessage("IRC: %s %s" % (self.client.factory.irc_config.get("irc", "server"), self.client.factory.irc_channel))
 
     @config("category", "info")
     def commandCredits(self, parts, fromloc, overriderank):
@@ -174,7 +174,7 @@ class helpPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandMOTD(self, parts, fromloc, overriderank):
         "/motd - Guest\nAliases: greeting\nShows the greeting."
-        self.client.sendServerMessage("MOTD for "+self.client.factory.server_name+":")
+        self.client.sendServerMessage("MOTD for %s:" % self.client.factory.server_name)
         try:
             r = open('config/greeting.txt', 'r')
         except:
