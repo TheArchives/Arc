@@ -427,16 +427,6 @@ class BlbPlugin(ProtocolPlugin):
                 y, y2 = y2, y
             if z > z2:
                 z, z2 = z2, z
-            if self.client.isDirector() or overriderank:
-                limit = self.client.factory.build_director
-            elif self.client.isAdmin():
-                limit = self.client.factory.build_admin
-            elif self.client.isMod():
-                limit = self.client.factory.build_mod
-            elif self.client.isOp():
-                limit = self.client.factory.build_op
-            else:
-                limit = self.client.factory.build_other
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
