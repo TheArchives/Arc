@@ -28,28 +28,30 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     def sendCallbackRestorePlayer(self, data):
         j = len(data)
-        if len(data) > self.num:
+        if j > self.num:
             done = []
             for i in range(self.num):
                 done.append(data.pop())
             done.reverse()
             i = len(done)
-        elif len(data) < self.num:
-            i = len(data)
         else:
             done = data
             i = len(data)
         world = self.client.world
-        name = done[0][3].encode("ascii", "ignore")
-        self.client.sendServerMessage("Reverting %s edits for %s (out of %s)..." % (i, name, j))
-        for element in done:
-            offset, before, after, player, date = element
-            x, y, z = world.get_coords(offset)
-            world[x, y, z] = chr(before)
-            self.client.queueTask(TASK_BLOCKSET, (x, y, z, before), world=world)
-            self.client.sendBlock(x, y, z, before)
-        self.client.sendServerMessage("Reverted %s edits." % i)
-        self.num = 0
+        try:
+            name = done[0][3].encode("ascii", "ignore")
+        except Exception:
+            self.client.sendServerMessage("No edits could be found for that player!")
+        else:
+            self.client.sendServerMessage("Reverting %s edits for %s (out of %s)..." % (i, name, j))
+            for element in done:
+                offset, before, after, player, date = element
+                x, y, z = world.get_coords(offset)
+                world[x, y, z] = chr(before)
+                self.client.queueTask(TASK_BLOCKSET, (x, y, z, before), world=world)
+                self.client.sendBlock(x, y, z, before)
+            self.client.sendServerMessage("Reverted %s edits." % i)
+            self.num = 0
     
     def sendCallbackPlayer(self, data):
         if len(data) > 10:
@@ -59,13 +61,17 @@ class BlockTrackerPlugin(ProtocolPlugin):
             done.reverse()
         else:
             done = data
-        name = done[0][3].encode("ascii", "ignore")
-        self.client.sendServerMessage("Listing last %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
-        for element in done:
-            offset, before, after, player, date = element
-            date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
-            coords = self.client.world.get_coords(offset)
-            self.client.sendServerMessage("[%s] (%s, %s, %s) %s -> %s" % (date, coords[0], coords[1], coords[2], before, after))
+        try:
+            name = done[0][3].encode("ascii", "ignore")
+        except Exception:
+            self.client.sendServerMessage("No edits could be found for that player!")
+        else:
+            self.client.sendServerMessage("Listing last %s edits for %s  (out of %s)..." % (len(done), name, len(data)))
+            for element in done:
+                offset, before, after, player, date = element
+                date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
+                coords = self.client.world.get_coords(offset)
+                self.client.sendServerMessage("[%s] (%s, %s, %s) %s -> %s" % (date, coords[0], coords[1], coords[2], before, after))
             
     def sendCallbackBlock(self, data):
         if len(data) > 10:
@@ -75,12 +81,17 @@ class BlockTrackerPlugin(ProtocolPlugin):
             done.reverse()
         else:
             done = data
-        self.client.sendServerMessage("Listing last %s edits (out of %s)..." % (len(done), len(data)))
-        for element in done:
-            offset, before, after, player, date = element
-            date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
-            coords = self.client.world.get_coords(offset)
-            self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))        
+        try:
+            name = done[0][3].encode("ascii", "ignore")
+        except Exception:
+            self.client.sendServerMessage("No edits could be found for that block!")
+        else:
+            self.client.sendServerMessage("Listing last %s edits (out of %s)..." % (len(done), len(data)))
+            for element in done:
+                offset, before, after, player, date = element
+                date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
+                coords = self.client.world.get_coords(offset)
+                self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))        
     
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
