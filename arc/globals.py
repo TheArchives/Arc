@@ -247,24 +247,24 @@ def Staff(self, server=None):
         factory = server
     else:
         factory = self.client.factory
-    if len(factory.owners):
-        Temp.append (["Owners:"] + list(factory.owners))
     if len(factory.directors):
-        Temp.append (["Directors:"] + list(factory.directors))
+        Temp.append(["Directors:"] + list(factory.directors))
     if len(factory.admins):
-        Temp.append (["Admins:"] + list(factory.admins))
+        Temp.append(["Admins:"] + list(factory.admins))
     if len(factory.mods):
-        Temp.append (["Mods:"] + list(factory.mods))
+        Temp.append(["Mods:"] + list(factory.mods))
+    if len(factory.helpers):
+        Temp.append(["Helpers:"] + list(factory.helpers))
     return Temp
 
 def Credits():
     Temp = []
-    Temp.append ("Thanks to the following people for making Arc possible...")
-    Temp.append ("Mojang Specifications (Minecraft): Notch, c418, ez, jeb, kappe, mollstam...")
-    Temp.append ("Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
-    Temp.append ("Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, NotMeh, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
-    Temp.append ("Devs (blockBox): fizyplankton, tyteen4a03, UberFoX")
-    Temp.append ("Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius (Red_Link), blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
+    Temp.append("Thanks to the following people for making Arc possible...")
+    Temp.append("Mojang Specifications (Minecraft): Notch, c418, ez, jeb, kappe, mollstam...")
+    Temp.append("Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
+    Temp.append("Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, NotMeh, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
+    Temp.append("Devs (blockBox): fizyplankton, tyteen4a03, UberFoX")
+    Temp.append("Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius (Red_Link), blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
     return Temp
 
 def makefile(filename):
