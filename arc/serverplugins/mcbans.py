@@ -2,8 +2,8 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-from arc.includes.mcbans_api import McBans
 import ConfigParser
+from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
 

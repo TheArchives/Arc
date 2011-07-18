@@ -65,15 +65,14 @@ class status:
         bumax = bs.query("bumax")['bumax']
         ircserver = bs.query("ircserver")['ircserver']
         ircchannel = bs.query("ircchannel")['ircchannel']
-        owner = bs.query("owner")['owner']
+        owner = bs.query("owners")['owners']
         specs = bs.query("specs")['specs']
         worlds = sorted(bs.query("userworlds")['worlds'])
         users = bs.query("users")['users']
         directors = bs.query("directors")['directors']
         admins = bs.query("Admins")['admins']
         mods = bs.query("Mods")['mods']
-        members = bs.query("Members")['members']
-        return render.status(name, motd, public, limit, awaytime, asd, gchat, bufreq, bumax, ircserver, ircchannel, owner, specs, worlds, users, directors, admins, mods, members)
+        return render.status(name, motd, public, limit, awaytime, asd, gchat, bufreq, bumax, ircserver, ircchannel, owners, specs, worlds, users, directors, admins, mods)
 
 class css:
      def GET(self, css):

@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import math, random, traceback
+import cPickle, math, random, traceback
 
 from arc.constants import *
 from arc.decorators import *
@@ -47,7 +47,7 @@ class InteractionPlugin(ProtocolPlugin):
         self.num = int(0)
         # Check with the server plugin if we have a message waiting
         # The method will get back to you later
-        self.client.factory.serverPlugins["OfflineMessagePlugin"].checkMessage(self.client.username)
+        # self.client.factory.serverPlugins["OfflineMessagePlugin"].checkMessage(self.client.username)
 
     def sendgo(self):
         self.client.sendPlainWorldMessage("&2[COUNTDOWN] GO!")
@@ -252,33 +252,33 @@ class InteractionPlugin(ProtocolPlugin):
         else:
             self.client.sendServerMessage("You do not have any messages.")
 
-    def commandCheckMessages_DOESNOTWORK(self, parts, fromloc, overriderank):
-        "/inbox [mode] - Guest\nChecks your inbox of messages.\nModes: NEW, ALL"
-        if len(parts) > 0:
-            if parts[1].lower() in ["new", "all"]:
-                selection = parts[1].lower()
-            else:
-                self.client.sendServerMessage("Mode %s not recongized. Using 'all' instead." % parts[1].lower())
-                selection = "all"
-        else:
-            selection = "all"
-        entries = self.client.factory.serverPlugins["OfflineMessageServerPlugin"].getMessages(self.client.username, "to")
-        if entries == False:
-            self.client.sendServerMessage("You do not have any messages in your inbox.")
-            return
-        else:
-            for entry in entries:
-                id, from_user, to_user, message, date, status = entry
-                if status == STATUS_UNREAD and selection in ["new", "all"]:
-                    meetCriteria = True
-                elif status == STATUS_READ and selection == "all":
-                    meetCriteria = True
-                else:
-                    meetCriteria = False
-                if meetCriteria:
-                    self.client.sendServerMessage("Message sent by %s at %s: (ID: %s)" % (from_user, date, id))
-                    self.client.sendSplitServerMessage(message)
-                    self.client.sendServerMessage("------------------")
+#    def commandCheckMessages_DOESNOTWORK(self, parts, fromloc, overriderank):
+#        "/inbox [mode] - Guest\nChecks your inbox of messages.\nModes: NEW, ALL"
+#        if len(parts) > 0:
+#            if parts[1].lower() in ["new", "all"]:
+#                selection = parts[1].lower()
+#            else:
+#                self.client.sendServerMessage("Mode %s not recongized. Using 'all' instead." % parts[1].lower())
+#                selection = "all"
+#        else:
+#            selection = "all"
+#        entries = self.client.factory.serverPlugins["OfflineMessageServerPlugin"].getMessages(self.client.username, "to")
+#        if entries == False:
+#            self.client.sendServerMessage("You do not have any messages in your inbox.")
+#            return
+#        else:
+#            for entry in entries:
+#                id, from_user, to_user, message, date, status = entry
+#                if status == STATUS_UNREAD and selection in ["new", "all"]:
+#                    meetCriteria = True
+#                elif status == STATUS_READ and selection == "all":
+#                    meetCriteria = True
+#                else:
+#                    meetCriteria = False
+#                if meetCriteria:
+#                    self.client.sendServerMessage("Message sent by %s at %s: (ID: %s)" % (from_user, date, id))
+#                    self.client.sendSplitServerMessage(message)
+#                    self.client.sendServerMessage("------------------")
 
     def commandClear(self,parts, fromloc, overriderank):
         "/c - Guest\nAliases: clear, clearinbox\nClears your Inbox of messages."
