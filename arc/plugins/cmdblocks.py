@@ -554,21 +554,21 @@ class CommandPlugin(ProtocolPlugin):
                         return
                     if self.client.isSpectator() and func.config["rank"]:
                         return
-                    if func.config["rank"] == "owner" and not self.isOwner():
+                    if func.config["rank"] == "owner" and not self.client.isOwner():
                         return
-                    if func.config["rank"] == "director" and not self.isDirector():
+                    if func.config["rank"] == "director" and not self.client.isDirector():
                         return
-                    if func.config["rank"] == "admin" and not self.isAdmin():
+                    if func.config["rank"] == "admin" and not self.client.isAdmin():
                         return
-                    if func.config["rank"] == "mod" and not self.isMod():
+                    if func.config["rank"] == "mod" and not self.client.isMod():
                         return
-                    if func.config["rank"] == "helper" and not self.isHelper():
+                    if func.config["rank"] == "helper" and not self.client.isHelper():
                         return
-                    if func.config["rank"] == "worldowner" and not self.isWorldOwner():
+                    if func.config["rank"] == "worldowner" and not self.client.isWorldOwner():
                         return
-                    if func.config["rank"] == "op" and not self.isOp():
+                    if func.config["rank"] == "op" and not self.client.isOp():
                         return
-                    if func.config["rank"] == "builder" and not self.isBuilder():
+                    if func.config["rank"] == "builder" and not self.client.isBuilder():
                         return
             for x in parts:
                    commandtext = commandtext + " " + str(x)
@@ -697,21 +697,21 @@ class CommandPlugin(ProtocolPlugin):
                         return
                     if self.client.isSpectator() and func.config["rank"]:
                         return
-                    if func.config["rank"] == "owner" and not self.isOwner():
+                    if func.config["rank"] == "owner" and not self.client.isOwner():
                         return
-                    if func.config["rank"] == "director" and not self.isDirector():
+                    if func.config["rank"] == "director" and not self.client.isDirector():
                         return
-                    if func.config["rank"] == "admin" and not self.isAdmin():
+                    if func.config["rank"] == "admin" and not self.client.isAdmin():
                         return
-                    if func.config["rank"] == "mod" and not self.isMod():
+                    if func.config["rank"] == "mod" and not self.client.isMod():
                         return
-                    if func.config["rank"] == "helper" and not self.isHelper():
+                    if func.config["rank"] == "helper" and not self.client.isHelper():
                         return
-                    if func.config["rank"] == "worldowner" and not self.isWorldOwner():
+                    if func.config["rank"] == "worldowner" and not self.client.isWorldOwner():
                         return
-                    if func.config["rank"] == "op" and not self.isOp():
+                    if func.config["rank"] == "op" and not self.client.isOp():
                         return
-                    if func.config["rank"] == "builder" and not self.isBuilder():
+                    if func.config["rank"] == "builder" and not self.client.isBuilder():
                         return
             for x in parts:
                    commandtext = commandtext + " " + str(x)

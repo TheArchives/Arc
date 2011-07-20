@@ -267,7 +267,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @username_command
     def commandRespawn(self, user, fromloc, overriderank):
         "/respawn username - Mod\nRespawns the user."
-        if not self.isMod() and (user.world.id != self.client.world.id):
+        if not self.client.isMod() and (user.world.id != self.client.world.id):
             self.client.sendServerMessage("The user is not in your world.")
         else:
             user.respawn()

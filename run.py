@@ -37,7 +37,7 @@ def doExit():
     else:
         raw_input("\nPlease press enter to exit.")
 
-def main():  
+def main():
     global logger
 
     makefile("logs/")
@@ -73,7 +73,6 @@ def main():
     factory = ArcFactory(debug)
     try:
         factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
-        reactor.listenTCP(30000, factory)
     except CannotListenError:
         logger.critical("Something is already running on port %s" % (factory.config.getint("network", "port")))
         doExit()
@@ -90,7 +89,7 @@ def main():
     formatter = logging.Formatter("%(asctime)s: %(message)s")
     fh.setFormatter(formatter)
     money_logger.addHandler(fh)
-    
+
     heartbeats = factory.config.options("heartbeatnames")
     for element in heartbeats:
         name = factory.config.get("heartbeatnames", element)
