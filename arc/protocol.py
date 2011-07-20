@@ -550,7 +550,7 @@ class ArcServerProtocol(Protocol):
                         errorsplit = error.split("\n")
                         for element in errorsplit:  
                             if not element.strip(" ") == "":
-                                self.factory.logger.debug(element)
+                                self.factory.logger.error(element)
                 elif message.startswith("@"):
                     # It's a whisper
                     try:

@@ -488,20 +488,20 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please specify a worldname.")
         else:
             if not os.path.exists("worlds/%s" % parts[1]):
-                self.client.sendServerMessage("World %s doesnt exist." %(parts[1]))
+                self.client.sendServerMessage("World %s doesn't exist." %(parts[1]))
                 return
             if parts[1] in self.client.factory.worlds:
                 self.client.factory.unloadWorld(parts[1])
             name = parts[1]
-            extra="_0"
+            extra = "_0"
             if os.path.exists("worlds/.trash/%s" %(name)):
                 while True:
                     if os.path.exists("worlds/.trash/%s" %(name+extra)):
                         extra = "_" + str(int(extra[1:])+1)
                     else:
-                        name = name+extra
+                        name = name + extra
                         break
-            shutil.copytree("worlds/%s" %parts[1], "worlds/.trash/%s" %(name))
+            shutil.copytree("worlds/%s" % parts[1], "worlds/.trash/%s" %(name))
             shutil.rmtree("worlds/%s" % parts[1])
             self.client.sendServerMessage("World deleted as %s." %(name))
     

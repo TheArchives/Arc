@@ -116,7 +116,7 @@ class BuildLibPlugin(ProtocolPlugin):
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
-                if ((raidus * 2) ** 3 > limit) or limit == 0:
+                if ((radius * 2) ** 3 > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to sphere (Limit is %s)" % limit)
                     return
             # Draw all the blocks on, I guess
@@ -187,7 +187,7 @@ class BuildLibPlugin(ProtocolPlugin):
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
-                if ((raidus * 2) ** 3 > limit) or limit == 0:
+                if ((radius * 2) ** 3 > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to hsphere (Limit is %s)" % limit)
                     return
             # Draw all the blocks on, I guess
