@@ -252,7 +252,7 @@ class ChatBot(irc.IRCClient):
                                     self.msg(user, line)
                             elif msg_command[1] == ("cmdlist"):
                                 self.msg(self.factory.irc_channel, "07Command List")
-                                self.msg(self.factory.irc_channel, "07about cmdlist credits help roll rules staff who worlds")
+                                self.msg(self.factory.irc_channel, "07about cmdlist credits help rules staff who worlds")
                                 self.msg(self.factory.irc_channel, "07Use '$"+self.nickname+" command arguments' to do it.")
                                 self.msg(self.factory.irc_channel, "07NOTE: Admin Commands are by PMing "+self.nickname+" - only for ops.")
                             elif msg_command[1] == ("about"):
@@ -263,18 +263,6 @@ class ChatBot(irc.IRCClient):
                                 except:
                                     self.msg(self.factory.irc_channel, "07URL: N/A (minecraft.net is offline)")
                                 self.msg(self.factory.irc_channel, "07Site: "+self.factory.info_url)
-                            elif msg_command[1] == "roll":
-                                if len(msg_command) < 2:
-                                    self.msg(self.factory.irc_channel, "07Please enter a number as the maximum roll.")
-                                else:
-                                    try:
-                                        if int(msg_command[2])>100:
-                                            msg_command[2]="100"
-                                        roll = int(cmath.floor((random.random() * (int(msg_command[2]) - 1) + 1)))
-                                    except ValueError:
-                                        self.msg(self.factory.irc_channel, "07Please enter an integer as the maximum roll.")
-                                    else:
-                                        self.msg(self.factory.irc_channel, "07%s rolled a %s" % (user, roll))
                             elif msg_command[1] == "lastseen":
                                 if len(msg_command) <2:
                                     self.msg(self.factory.irc_channel, "07Please enter a username to look for.")

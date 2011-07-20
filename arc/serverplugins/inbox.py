@@ -20,7 +20,7 @@ class InboxDatabase(object):
         """ Set up database pool, buffers, and other preperations """
         self.database = adbapi.ConnectionPool('sqlite3', "%s\\..\\config\inbox.db" % (directory))
         try:
-            self.database.runOperation("CREATE TABLE inbox (id INTEGER unsigned AUTO_INCREMENT,\
+            self.d = self.database.runOperation("CREATE TABLE inbox (id INTEGER unsigned AUTO_INCREMENT,\
                 from VARCHAR(255), to VARCHAR(255), message TEXT, date DATE, status INTEGER)")
         except:
             i = 1

@@ -360,7 +360,7 @@ class WorldUtilPlugin(ProtocolPlugin):
                 if not world.startswith("."): # Hidden worlds!
                     newworldlist.append(world)
                 else:
-                    hidden = hidden + 1
+                    hidden += 1
             if parts[1] == 'all':
                 if len(newworldlist) > 20:
                     done = []

@@ -285,10 +285,10 @@ class InteractionPlugin(ProtocolPlugin):
         target = self.client.username
         if len(parts) == 2:
             target = parts[1]
-        elif self.client.username.lower() not in messages:
+        elif self.client.username.lower() not in self.client.factory.messages:
             self.client.sendServerMessage("You have no messages to clear.")
             return False
-        messages.pop(target)
+        self.client.factory.messages.pop(target)
         file = open('config/data/inbox.dat', 'w')
         cPickle.dump(messages, file)
         file.close()
