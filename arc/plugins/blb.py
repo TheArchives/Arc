@@ -102,10 +102,11 @@ class BlbPlugin(ProtocolPlugin):
                 y, y2 = y2, y
             if z > z2:
                 z, z2 = z2, z
+            realLimit = (x2 - x) * (y2 - y) * (z2 - z)
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
-                if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
+                if (realLimit > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to blb (Limit is %s)" % limit)
                     return
             world = self.client.world
@@ -137,7 +138,7 @@ class BlbPlugin(ProtocolPlugin):
                 threading.Thread(target=doBlocks).start()
                 # Now the fun part. Respawn them all!
                 for client in world.clients:
-                    self.client.queueTask(TASK_INSTANTRESPAWN, self.client.username, world=world)
+                    self.client.factory.usernames[client].sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the server...", self.canBreakAdminBlocks() and 100 or 0)
                 if fromloc == "user":
                     self.client.sendServerMessage("Your blb just completed.")
             else:
