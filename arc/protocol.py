@@ -607,7 +607,7 @@ class ArcServerProtocol(Protocol):
                             self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
             else:
                 if type == 2:
-                    logging.logger.warn("Beta client attempted to connect.")
+                    self.factory.logger.warn("Beta client attempted to connect.")
                     self.sendPacked(255, self.packString("Sorry, but this is a Classic-only server."))
                     self.transport.loseConnection()
                 else:

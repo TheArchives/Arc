@@ -374,8 +374,6 @@ class ArcFactory(Factory):
             if "archives" not in protocol_plugins:
                 self.loadPlugin('archives')
             reactor.callLater(1, self.loadArchives)
-        if self.backup_auto:
-            reactor.callLater(float(self.backup_freq * 60), self.AutoBackup)
         gc.disable()
         self.cleanGarbage()
         self.runServerHook("factoryStarted")
