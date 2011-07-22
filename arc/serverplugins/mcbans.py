@@ -93,7 +93,7 @@ class McBansServerPlugin():
             
     def banned(self, data):
         if self.has_api:
-            value = self.handler.localBan(data["username"], self.factory.clients[data["username"]].getPeer().host if data["username"] in self.factory.clients.keys() else "Local", data["reason"], "Local")
+            value = self.handler.localBan(data["username"], self.factory.clients[data["username"]].getPeer().host if data["username"] in self.factory.clients.keys() else "Offline", data["reason"], data["admin"])
             if value["result"] != u'y':
                 self.factory.logger.warn("Unable to add %s to the MCBans local ban list!")
     

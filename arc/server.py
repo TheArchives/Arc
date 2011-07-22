@@ -1050,9 +1050,9 @@ class ArcFactory(Factory):
     def isIpBanned(self, ip):
         return ip in self.ipbanned
 
-    def addBan(self, username, reason):
+    def addBan(self, username, reason, admin="Local"):
         self.banned[username.lower()] = reason
-        self.runServerHook("playerBanned", {"username": username.lower(), "reason": reason})
+        self.runServerHook("playerBanned", {"username": username.lower(), "reason": reason, "admin": admin})
 
     def removeBan(self, username):
         del self.banned[username.lower()]
