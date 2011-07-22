@@ -186,10 +186,10 @@ class BuildUtil(ProtocolPlugin):
                 self.client.sendServerMessage("'%s' is not a special block type." % name)
             else:
                 if old in self.block_overrides:
-                    del self.block_overrides[old]
+                    del self.block_overrides[ord(old)]
                     self.client.sendServerMessage("%s is back to normal." % old_name)
                 else:
-                    self.block_overrides[old] = new
+                    self.block_overrides[ord(old)] = ord(new)
                     self.client.sendServerMessage("%s will turn into %s." % (old_name, name))
 
     @config("category", "build")
