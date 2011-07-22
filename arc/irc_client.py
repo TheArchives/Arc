@@ -684,7 +684,7 @@ class ChatBotFactory(protocol.ClientFactory):
             connector.connect()
 
     def clientConnectionFailed(self, connector, reason):
-        self.instance.logger.critical("IRC connection failed: %s" % reason)
+        self.main_factory.logger.critical("IRC connection failed: %s" % reason)
         self.instance = None
 
     def sendMessage(self, username, message):
