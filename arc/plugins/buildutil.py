@@ -117,7 +117,8 @@ class BuildUtil(ProtocolPlugin):
                 self.client.sendServerMessage("All blocks are back to normal.")
                 del temp
                 return
-            self.client.sendServerMessage("Please enter two block types.")
+            else:
+                self.client.sendServerMessage("Please enter two block types.")
         elif len(parts) == 2:
             try:
                 old = ord(self.client.GetBlockValue(parts[1]))

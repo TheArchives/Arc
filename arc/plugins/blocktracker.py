@@ -52,6 +52,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 self.client.sendBlock(x, y, z, before)
             self.client.sendServerMessage("Reverted %s edits." % i)
             self.num = 0
+
     def sendCallbackPlayer(self, data):
         if len(data) > 10:
             done = []
