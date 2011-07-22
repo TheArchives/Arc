@@ -380,33 +380,37 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "/who [username] - Guest\nAliases: pinfo, users, whois\nOnline users, or user lookup."
         if len(parts) < 2:
             self.client.sendServerMessage("Do '/who username' for more info.")
-            userlist = set()
-            for user in self.client.factory.usernames:
-                if user is None:
-                    pass # To avoid NoneType error
-                else:
-                    if user in self.client.factory.spectators:
-                        user = COLOUR_BLACK + user
-                    elif user in self.client.factory.owners:
-                        user = COLOUR_DARKGREEN + user
-                    elif user in self.client.factory.directors:
-                        user = COLOUR_GREEN + user
-                    elif user in self.client.factory.admins:
-                        user = COLOUR_RED + user
-                    elif user in self.client.factory.mods:
-                        user = COLOUR_BLUE + user
-                    elif user in self.client.factory.mods:
-                        user = COLOUR_DARKBLUE + user
-                    elif user is self.client.world.owner:
-                        user = COLOUR_DARKYELLOW + user
-                    elif user in self.client.world.ops:
-                        user = COLOUR_DARKCYAN + user
-                    elif user in self.client.world.builders:
-                        user = COLOUR_CYAN + user
-                    else:
-                        user = COLOUR_WHITE + user
-                userlist.add(user)
-            self.client.sendServerList((["Players:"] + list(userlist)), plain=True)
+            self.client.sendServerMessage("Players: ")
+            for key in self.client.factory.worlds:
+                if len(self.client.factory.worlds[key].clients) > 0:
+                    theList = [(key + ": ")]
+                    for c in self.client.factory.worlds[key].clients:
+                        user = str(self.client.factory.worlds[key].clients[c].username)
+                        if user is None:
+                            pass # To avoid NoneType error
+                        else:
+                            if user in self.client.factory.spectators:
+                                user = COLOUR_BLACK + user
+                            elif user in self.client.factory.owners:
+                                user = COLOUR_DARKGREEN + user
+                            elif user in self.client.factory.directors:
+                                user = COLOUR_GREEN + user
+                            elif user in self.client.factory.admins:
+                                user = COLOUR_RED + user
+                            elif user in self.client.factory.mods:
+                                user = COLOUR_BLUE + user
+                            elif user in self.client.factory.mods:
+                                user = COLOUR_DARKBLUE + user
+                            elif user is self.client.world.owner:
+                                user = COLOUR_DARKYELLOW + user
+                            elif user in self.client.world.ops:
+                                user = COLOUR_DARKCYAN + user
+                            elif user in self.client.world.builders:
+                                user = COLOUR_CYAN + user
+                            else:
+                                user = COLOUR_WHITE + user
+                        theList.append(user)
+                    self.client.sendServerList(theList, plain=True)
         else:
             def loadBank():
                 file = open('config/data/balances.dat', 'r')
