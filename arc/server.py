@@ -701,7 +701,7 @@ class ArcFactory(Factory):
         self.worlds[world_id].flush()
         self.worlds[world_id].save_meta()
         del self.worlds[world_id]
-        world = self.worlds[world_id] =  World("worlds/%s" % world_id, world_id, factory=self)
+        world = self.worlds[world_id] = World("worlds/%s" % world_id, world_id, factory=self)
         world.source = "worlds/" + world_id
         world.clients = set()
         world.id = world_id

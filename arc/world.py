@@ -54,7 +54,6 @@ class World(object):
         self.factory = factory
         self.autoshutdown = True
         self.saving = False
-        self.users = {}
         self.global_chat = True
         self.zoned = False
         self.userzones = {}

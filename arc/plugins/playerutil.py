@@ -385,7 +385,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
                 if len(self.client.factory.worlds[key].clients) > 0:
                     theList = [(key + ": ")]
                     for c in self.client.factory.worlds[key].clients:
-                        user = self.client.factory.worlds[key].clients[c].username
+                        user = str(c.username)
                         if user is None:
                             pass # To avoid NoneType error
                         else:
