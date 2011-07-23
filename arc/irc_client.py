@@ -195,7 +195,7 @@ class ChatBot(irc.IRCClient):
         """This will get called when the bot receives a message."""
         try:
             user = user.split('!', 1)[0]
-            msg = "".join([char for char in msg if ord(char) < 128 and char != "" or "0"])
+            msg = self.factory.messagestrip(msg)
             if channel == self.nickname:
                 if not (self.nickname == user or "Serv" in user):
                     msg_command = msg.split()
