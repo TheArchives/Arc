@@ -12,7 +12,7 @@ from arc.plugins import ProtocolPlugin
 from arc.timer import ResettableTimer
 
 class CommandPlugin(ProtocolPlugin):
-    
+
     commands = {
         "cmdhelp": "commandCmdHelp",
         "cmd": "commandCommand",
@@ -28,14 +28,14 @@ class CommandPlugin(ProtocolPlugin):
         "r": "commandLastCommand",
         "lastcmd": "commandLastCommand",
     }
-    
+
     hooks = {
         "blockclick": "blockChanged",
         "newworld": "newWorld",
         "poschange": "posChanged",
         "chatmsg": "message"
     }
-    
+
     def gotClient(self):
         self.twocoordcommands = list(["blb", "bhb", "bwb", "mountain", "hill", "dune", "pit", "lake", "hole", "copy", "replace", "line"])
         self.onecoordcommands = list(["sphere", "hsphere", "paste"])
@@ -254,7 +254,7 @@ class CommandPlugin(ProtocolPlugin):
         if not self.client.isBuilder():
             self.command_cmd = None
             self.command_remove = False
-            
+
     def posChanged(self, x, y, z, h, p):
         "Hook trigger for when the user moves"
         rx = x >> 5
@@ -297,8 +297,8 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Subcategories: cmd gcmd scmd gscmd")
             elif parts[1].lower() == "functions":
                 if len(parts) > 2:
-                    if parts[2].lower() == "self":
-                        self.client.sendServerMessage("self message - Outputs a message like a msgblock.")
+                    if parts[2].lower() in ["self", "m"]:
+                        self.client.sendServerMessage("self/m message - Outputs a message like a msgblock.")
                     elif parts[2].lower() == "exit":
                         self.client.sendServerMessage("exit - Stops the cmdblock, no more commands.")
                     elif parts[2].lower() == "wait":
@@ -316,13 +316,13 @@ class CommandPlugin(ProtocolPlugin):
                 else:
                     self.client.sendServerMessage("cmdblocks Help - Functions")
                     self.client.sendSplitServerMessage("In cmdblocks there are functions, these are commands that exist only in cmdblocks and can't be done seperate.")
-                    self.client.sendSplitServerMessage("Subcategories: getblock getinput getnum getyesno exit self wait")
+                    self.client.sendSplitServerMessage("Subcategories: exit getblock getinput getnum getyesno m self wait")
             elif parts[1].lower() == "variables":
                 if len(parts) > 2:
                     if parts[2].lower() == "bank":
                         self.client.sendServerMessage("$bank - Balance of the player.")
                     elif parts[2].lower() == "block":
-                        self.client.sendServerMessage("$block(x,y,x) - Block type, as a integer, for xyz")
+                        self.client.sendSplitServerMessage("$block(x, y, z) - Block type, as a integer, for the block at x, y, z in the current world")
                     elif parts[2].lower() == "bname":
                         self.client.sendServerMessage("$bname - Returns the block num as name, can use with $block")
                     elif parts[2].lower() == "cname":
@@ -482,27 +482,24 @@ class CommandPlugin(ProtocolPlugin):
             for x in parts:
                    commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
-                if len(self.command_cmd) >= var_maxcommandsperblock:
-                        self.client.sendServerMessage("You can only use %s commands per block!" % var_maxcommandsperblock)
-                else:
-                    var_string = ""
-                    var_cmdparts = parts[1:]
-                    for index in range(len(var_cmdparts)):
-                        if index == 0:
-                            var_string = var_string + str(var_cmdparts[0])
-                        else:
-                            var_string = var_string + ' ' + str(var_cmdparts[index])
-                    self.command_cmd.append(commandtext)
-                    if len(self.command_cmd) > 1:     
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                var_string = ""
+                var_cmdparts = parts[1:]
+                for index in range(len(var_cmdparts)):
+                    if index == 0:
+                        var_string = var_string + str(var_cmdparts[0])
                     else:
-                        self.client.sendServerMessage("You are now creating a command block.")
-                        self.client.sendServerMessage("Use /cmd command again to add a command")
-                        self.client.sendSplitServerMessage("Use //cmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
-                        self.client.sendServerMessage("Type /cmd with no args to start placing the block.")
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                        var_string = var_string + ' ' + str(var_cmdparts[index])
+                self.command_cmd.append(commandtext)
+                if len(self.command_cmd) > 1:
+                    self.client.sendServerMessage("Command %s added." % var_string)
+                else:
+                    self.client.sendServerMessage("You are now creating a command block.")
+                    self.client.sendServerMessage("Use /cmd command again to add a command")
+                    self.client.sendSplitServerMessage("Use //cmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendServerMessage("Type /cmd with no args to start placing the block.")
+                    self.client.sendServerMessage("Command %s added." % var_string)
 
-    @config("rank", "mod")                    
+    @config("rank", "mod")
     def commandGuestCommand(self, parts, fromloc, permissionoverride):
         "/gcmd command [arguments] - Mod\nMakes the next block you place a guest command block."
         if len(parts) < 2:
@@ -524,7 +521,7 @@ class CommandPlugin(ProtocolPlugin):
                             parts.append(x2)
                             parts.append(y2)
                             parts.append(z2)
-                            
+
                 if parts[1] in self.onecoordcommands:
                     if len(parts) < 5:
                         if len(self.client.last_block_changes) > 1:
@@ -579,7 +576,7 @@ class CommandPlugin(ProtocolPlugin):
                     else:
                         var_string = var_string + ' ' + str(var_cmdparts[index])
                 self.command_cmd.append(commandtext)
-                if len(self.command_cmd) > 1:     
+                if len(self.command_cmd) > 1:
                     self.client.sendServerMessage("Command %s added." % var_string)
                 else:
                     self.client.sendServerMessage("You are now creating a guest command block.")
@@ -588,7 +585,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendSplitServerMessage("Use //gcmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
                     self.client.sendServerMessage("Type /gcmd with no args to start placing the block.")
                     self.client.sendServerMessage("Command %s added." % var_string)
-                        
+
     @config("rank", "builder")
     def commandSensorCommand(self, parts, fromloc, permissionoverride):
         "/scmd command [arguments] - Builder\nStarts creating a command block, or adds a command to the command\nblock. The command can be any server command. After you have\nentered all commands, type /cmd again to begin placing. Once\nplaced, the blocks will run the command when clicked as if the\none clicking had typed the commands."
@@ -623,26 +620,23 @@ class CommandPlugin(ProtocolPlugin):
             for x in parts:
                    commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
-                if len(self.command_cmd) >= var_maxcommandsperblock:
-                        self.client.sendServerMessage("You can only use %s commands per block!" % var_maxcommandsperblock)
-                else:
-                    var_string = ""
-                    var_cmdparts = parts[1:]
-                    for index in range(len(var_cmdparts)):
-                        if index == 0:
-                            var_string = var_string + str(var_cmdparts[0])
-                        else:
-                            var_string = var_string + ' ' + str(var_cmdparts[index])
-                    self.command_cmd.append(commandtext)
-                    if len(self.command_cmd) > 1:     
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                var_string = ""
+                var_cmdparts = parts[1:]
+                for index in range(len(var_cmdparts)):
+                    if index == 0:
+                        var_string = var_string + str(var_cmdparts[0])
                     else:
-                        self.client.sendServerMessage("You are now creating a sensor command block.")
-                        self.client.sendServerMessage("Use /scmd command again to add a command.")
-                        self.client.sendSplitServerMessage("Use //scmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
-                        self.client.sendServerMessage("Type /scmd with no args to start placing the block.")
-                        self.client.sendServerMessage("Command %s added." % var_string)
-                        
+                        var_string = var_string + ' ' + str(var_cmdparts[index])
+                self.command_cmd.append(commandtext)
+                if len(self.command_cmd) > 1:
+                    self.client.sendServerMessage("Command %s added." % var_string)
+                else:
+                    self.client.sendServerMessage("You are now creating a sensor command block.")
+                    self.client.sendServerMessage("Use /scmd command again to add a command.")
+                    self.client.sendSplitServerMessage("Use //scmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendServerMessage("Type /scmd with no args to start placing the block.")
+                    self.client.sendServerMessage("Command %s added." % var_string)
+
     @config("rank", "mod")
     def commandGuestSensorCommand(self, parts, fromloc, permissionoverride):
         "/gscmd command [arguments] - Mod\nMakes the next block you place a guest sensor command block."
@@ -719,7 +713,7 @@ class CommandPlugin(ProtocolPlugin):
                     else:
                         var_string = var_string + ' ' + str(var_cmdparts[index])
                 self.command_cmd.append(commandtext)
-                if len(self.command_cmd) > 1:     
+                if len(self.command_cmd) > 1:
                     self.client.sendServerMessage("Command %s added." % var_string)
                 else:
                     self.client.sendServerMessage("You are now creating a guest sensor command block.")
