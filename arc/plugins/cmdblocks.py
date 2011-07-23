@@ -11,8 +11,6 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 from arc.timer import ResettableTimer
 
-var_maxcommandsperblock = 100
-
 class CommandPlugin(ProtocolPlugin):
     
     commands = {
@@ -39,7 +37,7 @@ class CommandPlugin(ProtocolPlugin):
     }
     
     def gotClient(self):
-        self.twocoordcommands = list(["blb", "bhb", "bwb", "mountain", "hill", "dune", "pit", "lake", "hole", "copy", "replace","line"])
+        self.twocoordcommands = list(["blb", "bhb", "bwb", "mountain", "hill", "dune", "pit", "lake", "hole", "copy", "replace", "line"])
         self.onecoordcommands = list(["sphere", "hsphere", "paste"])
         self.command_remove = False
         self.last_block_position = None
@@ -61,7 +59,7 @@ class CommandPlugin(ProtocolPlugin):
         self.savedcommands = list({})
 
     def loadBank(self):
-        file = open('config/data/balances.dat', 'r')
+        file = open("config/data/balances.dat", 'r')
         bank_dic = cPickle.load(file)
         file.close()
         return bank_dic
@@ -76,14 +74,14 @@ class CommandPlugin(ProtocolPlugin):
                 cmdlist = self.cmdinfolines[index:index+10]
                 if len(cmdlist) < 10:
                     if len(cmdlist) > 0:
-                        self.client.sendServerMessage("Page %s of %s:" %(int((index+11)/10), int((len(self.cmdinfolines)/10)+1)))
+                        self.client.sendServerMessage("Page %s of %s:" % (int((index+11)/10), int((len(self.cmdinfolines)/10)+1)))
                         for x in cmdlist:
                             self.client.sendServerMessage(x)
                     self.client.sendServerMessage("Reached the end.")
                     self.infoindex = None
                     self.cmdinfolines = None
                     return True
-                self.client.sendServerMessage("Page %s of %s:" %(int((index+11)/10), int((len(self.cmdinfolines)/10)+1)))
+                self.client.sendServerMessage("Page %s of %s:" % (int((index+11)/10), int((len(self.cmdinfolines)/10)+1)))
                 for x in cmdlist:
                     self.client.sendServerMessage(x)
                 return True
@@ -95,7 +93,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.infoindex+=10
                     self.client.sendServerMessage("Reached the beginning.")
                     return
-                self.client.sendServerMessage("Page %s of %s:" %(int((self.infoindex+1)/10), int(len(self.cmdinfolist)/10)))
+                self.client.sendServerMessage("Page %s of %s:" % (int((self.infoindex+1)/10), int(len(self.cmdinfolist)/10)))
                 for x in cmdlist:
                     self.client.sendServerMessage(x)
                 return True
@@ -104,7 +102,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.cmdinfolines = None
                 return True
             else:
-                self.client.sendServerMessage("Please use next, back, or cancel.")
+                self.client.sendServerMessage("Please use 'next', 'back' or 'cancel'.")
                 return True
         if self.listeningforpay:
             if message.lower() == "y" or message.lower() == "yes":
@@ -206,7 +204,7 @@ class CommandPlugin(ProtocolPlugin):
                 reactor.callLater(0.01, self.runcommands)
                 return True
             else:
-                self.client.sendServerMessage("Please answer yes or no.")
+                self.client.sendServerMessage("Please answer 'yes' or 'no'.")
                 return True
 
     def blockChanged(self, x, y, z, block, fromloc):
@@ -222,7 +220,7 @@ class CommandPlugin(ProtocolPlugin):
                     for x in cmdlist:
                         self.client.sendServerMessage(x)
                 else:
-                    self.client.sendServerMessage("Page 1 of %s:" %int((len(cmdlist)/10)+1))
+                    self.client.sendServerMessage("Page 1 of %s:" % int((len(cmdlist)/10)+1))
                     for x in cmdlist[:9]:
                         self.client.sendServerMessage(x)
                     self.infoindex = 0
@@ -237,7 +235,7 @@ class CommandPlugin(ProtocolPlugin):
                     return False
 
                 if self.inputvar is not None or self.inputnum is not None or self.inputblock is not None or self.inputyn is not None:
-                    self.client.sendServerMessage("Please give input before using a cmdblock")
+                    self.client.sendServerMessage("Please give input before using a cmdblock.")
                     return False
                 if self.cmdinfolines is not None:
                     self.client.sendServerMessage("Please complete the cmdinfo before using a cmdblock.")
@@ -268,7 +266,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Please confirm or cancel payment before using a cmdblock.")
                     return False
                 if self.inputvar is not None or self.inputnum is not None or self.inputblock is not None or self.inputyn is not None:
-                    self.client.sendServerMessage("Please give input before using a cmdblock")
+                    self.client.sendServerMessage("Please give input before using a cmdblock.")
                     return False
                 self.runningcmdlist = list(self.client.world.get_command(rx, ry, rz))
                 self.runningsensor = True
@@ -573,26 +571,23 @@ class CommandPlugin(ProtocolPlugin):
             for x in parts:
                    commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
-                if len(self.command_cmd) >= var_maxcommandsperblock:
-                        self.client.sendServerMessage("You can only use %s commands per block!" % var_maxcommandsperblock)
-                else:
-                    var_string = ""
-                    var_cmdparts = parts[1:]
-                    for index in range(len(var_cmdparts)):
-                        if index == 0:
-                            var_string = var_string + str(var_cmdparts[0])
-                        else:
-                            var_string = var_string + ' ' + str(var_cmdparts[index])
-                    self.command_cmd.append(commandtext)
-                    if len(self.command_cmd) > 1:     
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                var_string = ""
+                var_cmdparts = parts[1:]
+                for index in range(len(var_cmdparts)):
+                    if index == 0:
+                        var_string = var_string + str(var_cmdparts[0])
                     else:
-                        self.client.sendServerMessage("You are now creating a guest command block.")
-                        self.client.sendServerMessage("WARNING: Commands on this block can be run by ANYONE")
-                        self.client.sendServerMessage("Use /gcmd command again to add a command")
-                        self.client.sendSplitServerMessage("Use //gcmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
-                        self.client.sendServerMessage("Type /gcmd with no args to start placing the block.")
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                        var_string = var_string + ' ' + str(var_cmdparts[index])
+                self.command_cmd.append(commandtext)
+                if len(self.command_cmd) > 1:     
+                    self.client.sendServerMessage("Command %s added." % var_string)
+                else:
+                    self.client.sendServerMessage("You are now creating a guest command block.")
+                    self.client.sendServerMessage("WARNING: Commands on this block can be run by ANYONE")
+                    self.client.sendServerMessage("Use /gcmd command again to add a command")
+                    self.client.sendSplitServerMessage("Use //gcmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendServerMessage("Type /gcmd with no args to start placing the block.")
+                    self.client.sendServerMessage("Command %s added." % var_string)
                         
     @config("rank", "builder")
     def commandSensorCommand(self, parts, fromloc, permissionoverride):
@@ -716,26 +711,23 @@ class CommandPlugin(ProtocolPlugin):
             for x in parts:
                    commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
-                if len(self.command_cmd) >= var_maxcommandsperblock:
-                        self.client.sendServerMessage("You can only use %s commands per block!" % var_maxcommandsperblock)
-                else:
-                    var_string = ""
-                    var_cmdparts = parts[1:]
-                    for index in range(len(var_cmdparts)):
-                        if index == 0:
-                            var_string = var_string + str(var_cmdparts[0])
-                        else:
-                            var_string = var_string + ' ' + str(var_cmdparts[index])
-                    self.command_cmd.append(commandtext)
-                    if len(self.command_cmd) > 1:     
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                var_string = ""
+                var_cmdparts = parts[1:]
+                for index in range(len(var_cmdparts)):
+                    if index == 0:
+                        var_string = var_string + str(var_cmdparts[0])
                     else:
-                        self.client.sendServerMessage("You are now creating a guest sensor command block.")
-                        self.client.sendServerMessage("WARNING: Commands on this block can be run by ANYONE.")
-                        self.client.sendServerMessage("Use /gscmd command again to add a command.")
-                        self.client.sendSplitServerMessage("Use //gscmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
-                        self.client.sendServerMessage("Type /gscmd with no args to start placing the block.")
-                        self.client.sendServerMessage("Command %s added." % var_string)
+                        var_string = var_string + ' ' + str(var_cmdparts[index])
+                self.command_cmd.append(commandtext)
+                if len(self.command_cmd) > 1:     
+                    self.client.sendServerMessage("Command %s added." % var_string)
+                else:
+                    self.client.sendServerMessage("You are now creating a guest sensor command block.")
+                    self.client.sendServerMessage("WARNING: Commands on this block can be run by ANYONE.")
+                    self.client.sendServerMessage("Use /gscmd command again to add a command.")
+                    self.client.sendSplitServerMessage("Use //gscmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendServerMessage("Type /gscmd with no args to start placing the block.")
+                    self.client.sendServerMessage("Command %s added." % var_string)
 
     @config("rank", "builder")
     def commandCommandend(self, parts, fromloc, permissionoverride):
@@ -940,14 +932,14 @@ class CommandPlugin(ProtocolPlugin):
             if thiscmd[num:(num+6)] == "$bname":
                 try:
                     blocknum = int(thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)])
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], BlockList[blocknum]) # holy crap this is complicated
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], BlockList[blocknum])
                 except:
                     self.client.sendServerMessage("$bname Syntax Error; Use: $bname(blockint)")
         if thiscmd.startswith(" if"):
             try:
                 condition = thiscmd[4:thiscmd.find(":")]
                 if (bool(eval(condition, {}, {}))) == False:
-                    runcmd=False
+                    runcmd = False
                 thiscmd = thiscmd.replace(thiscmd[:thiscmd.find(":")+1], "")
             except:
                 self.client.sendServerMessage("IF Syntax Error; Use: if \"a\"==\"b\": command")
@@ -979,8 +971,10 @@ class CommandPlugin(ProtocolPlugin):
                 self.runningcmdlist = list({})
                 self.runningsensor = False
                 return
-        # Look for command
-        if command == "self" and runcmd:
+		# Comments
+        if command == "#" and runcmd:
+            runcmd = False
+        if (command == "self" or command == "m") and runcmd:
             msg = ""
             parts.pop(0)
             msg = " ".join(parts)
@@ -1006,7 +1000,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("You must give a variable name!")
                 runcmd = False
             if runcmd:
-                if len(parts)>2:
+                if len(parts) > 2:
                     self.client.sendServerMessage("[INPUT] "+" ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting input.")
@@ -1019,7 +1013,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("You must give a variable name!")
                 runcmd = False
             if runcmd:
-                if len(parts)>2:
+                if len(parts) > 2:
                     self.client.sendServerMessage("[INPUT] "+" ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting input.")
@@ -1032,7 +1026,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("You must give a variable name!")
                 runcmd = False
             if runcmd:
-                if len(parts)>2:
+                if len(parts) > 2:
                     self.client.sendServerMessage("[BLOCK INPUT] "+" ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting block input.")
@@ -1045,7 +1039,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("You must give a variable name!")
                 runcmd = False
             if runcmd:
-                if len(parts)>2:
+                if len(parts) > 2:
                     self.client.sendServerMessage("[Y/N] "+" ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting yes/no input.")
@@ -1062,38 +1056,38 @@ class CommandPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Unknown command '%s'" % command)
                 runcmd = False
         if runcmd is True:
+           if hasattr(func, "config"):
+                if func.config["disabled"]:
+                    self.client.sendServerMessage("Command %s has been disabled by the server owners." % command)
+                    runcmd = False
             if guest is False:
-                if hasattr(func, "config"):
-                    if func.config["disabled"]:
-                        self.client.sendServerMessage("Command %s has been disabled by the server owners." % command)
-                        runcmd = False
-                    if self.client.isSpectator() and func.config["rank"]:
-                        self.client.sendServerMessage("'%s' is not available to spectators." % command)
-                        runcmd = False
-                    if func.config["rank"] == "owner" and not self.client.isOwner():
-                        self.client.sendServerMessage("'%s' is an Owner-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "director" and not self.client.isDirector():
-                        self.client.sendServerMessage("'%s' is a Director-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "admin" and not self.client.isAdmin():
-                        self.client.sendServerMessage("'%s' is an Admin-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "mod" and not self.client.isMod():
-                        self.client.sendServerMessage("'%s' is a Mod-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "helper" and not self.client.isHelper():
-                        self.client.sendServerMessage("'%s' is a Helper-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "worldowner" and not self.client.isWorldOwner():
-                        self.client.sendServerMessage("'%s' is an WorldOwner-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "op" and not self.client.isOp():
-                        self.client.sendServerMessage("'%s' is an Op-only command!" % command)
-                        runcmd = False
-                    if func.config["rank"] == "builder" and not self.client.isBuilder():
-                        self.client.sendServerMessage("'%s' is a Builder-only command!" % command)
-                        runcmd = False
+                if self.client.isSpectator() and func.config["rank"]:
+                    self.client.sendServerMessage("'%s' is not available to spectators." % command)
+                    runcmd = False
+                if func.config["rank"] == "owner" and not self.client.isOwner():
+                    self.client.sendServerMessage("'%s' is an Owner-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "director" and not self.client.isDirector():
+                    self.client.sendServerMessage("'%s' is a Director-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "admin" and not self.client.isAdmin():
+                    self.client.sendServerMessage("'%s' is an Admin-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "mod" and not self.client.isMod():
+                    self.client.sendServerMessage("'%s' is a Mod-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "helper" and not self.client.isHelper():
+                    self.client.sendServerMessage("'%s' is a Helper-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "worldowner" and not self.client.isWorldOwner():
+                    self.client.sendServerMessage("'%s' is an WorldOwner-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "op" and not self.client.isOp():
+                    self.client.sendServerMessage("'%s' is an Op-only command!" % command)
+                    runcmd = False
+                if func.config["rank"] == "builder" and not self.client.isBuilder():
+                    self.client.sendServerMessage("'%s' is a Builder-only command!" % command)
+                    runcmd = False
             try:
                 try:
                     if runcmd:
@@ -1102,7 +1096,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
                     self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                     self.client.logger.error(traceback.format_exc())
-            except Exception, e:
+            except Exception as e:
                 self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
                 self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                 self.client.logger.error(traceback.format_exc())

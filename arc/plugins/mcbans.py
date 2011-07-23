@@ -14,14 +14,14 @@ from arc.plugins import ProtocolPlugin
 class McBansPlugin(ProtocolPlugin):
 
     commands = {
-        "mcbans": "mcBans"
+        "mcbans": "commandMCBans"
     }
 
     def gotClient(self):
         self.reason = ""
 
     @config("category", "build")
-    def mcBans(self, parts, fromloc, overriderank):
+    def commandMCBans(self, parts, fromloc, overriderank):
         "/mcbans [command] - Guest\nUsed to interact with the MCBans API."
         if self.client.factory.serverPluginExists("McBansServerPlugin"):
             handler = self.client.factory.serverPlugins["McBansServerPlugin"].handler
