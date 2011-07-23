@@ -26,6 +26,7 @@ class ArcFactory(Factory):
     protocol = ArcServerProtocol
 
     def __init__(self, debug=False):
+        self.printable = string.printable + ['^']
         self.logger = ColouredLogger(debug)
         self.chatlogger = ChatLogHandler()
 
@@ -1116,7 +1117,7 @@ class ArcFactory(Factory):
             if isinstance(x, list):
                 strippedmessage = strippedmessage + self.messagestrip(x)
             elif isinstance(x, str):
-                if str(x) in string.printable:
+                if str(x) in self.printable:
                     strippedmessage = strippedmessage + str(x)
             else:
                 self.logger.error("Unknown message type passed to the message stripper.")
