@@ -2,8 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import ctypes, datetime, gc, os, platform, random, re, shutil, subprocess, sys, time, traceback, cPickle
-import string.printable
+import ctypes, datetime, gc, os, platform, random, re, shutil, subprocess, sys, time, traceback, cPickle, string
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
