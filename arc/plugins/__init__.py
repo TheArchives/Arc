@@ -115,7 +115,7 @@ def load_plugins(plugins):
             logger.error("Cannot load plugin %s." % module_name)
 
 def unload_plugin(plugin_name):
-    "Given a plugin name, reloads and re-imports its code."
+    "Given a plugin name, unloads its code."
     # Unload all its classes from our lists
     debug = (True if "--debug" in sys.argv else False)
     logger = ColouredLogger(debug)

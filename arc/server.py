@@ -371,8 +371,6 @@ class ArcFactory(Factory):
         self.world_save_stack = []
         reactor.callLater(60, self.saveWorlds)
         if self.enable_archives:
-            if "archives" not in protocol_plugins:
-                self.loadPlugin('archives')
             reactor.callLater(1, self.loadArchives)
         gc.disable()
         self.cleanGarbage()
