@@ -3,6 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import ctypes, datetime, gc, os, platform, random, re, shutil, subprocess, sys, time, traceback, cPickle
+import string.printable
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
@@ -1113,8 +1114,15 @@ class ArcFactory(Factory):
     def messagestrip(self, message):
         strippedmessage = ""
         for x in message:
-            if ord(str(x)) < 128:
-                strippedmessage = strippedmessage + str(x)
+            if isinstance(x, list):
+                strippedmessage = strippedmessage + self.messagestrip(x)
+            elif isinstance(x, str):
+                if str(x) in string.printable:
+                    strippedmessage = strippedmessage + str(x)
+            else:
+                self.logger.error("Unknown message type passed to the message stripper.")
+                self.logger.error("Data: %s" % x)
+                return "Error!"
         message = strippedmessage
         for x in self.filter:
             rep = re.compile(x[0], re.IGNORECASE)
