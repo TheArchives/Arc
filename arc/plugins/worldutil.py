@@ -34,9 +34,6 @@ class WorldUtilPlugin(ProtocolPlugin):
         "maprename": "commandRename",
         "shutdown": "commandShutdown",
         "boot": "commandBoot",
-        "worlds": "commandWorlds",
-        "maps": "commandWorlds",
-        "templates": "commandTemplates",
         "reboot": "commandReboot",
         "reload": "commandReboot",
         "create": "commandCreate",
@@ -44,6 +41,11 @@ class WorldUtilPlugin(ProtocolPlugin):
         "mapdelete": "commandDelete",
         "undelete": "commandUnDelete",
         "deleted": "commandDeleted",
+
+        "worlds": "commandWorlds",
+        "maps": "commandWorlds",
+
+        "templates": "commandTemplates",
 
         "l": "commandLoad",
         "j": "commandLoad",
@@ -126,15 +128,13 @@ class WorldUtilPlugin(ProtocolPlugin):
                 backup_number = str(int(backups[-1]))
             else:
                 backup_number = parts[2]
-            if not os.path.exists(world_dir+"backup/%s/" % backup_number):
+            if not os.path.exists(world_dir + "backup/%s/" % backup_number):
                 self.client.sendServerMessage("Backup %s does not exist." % backup_number)
             else:
-                if not os.path.exists(world_dir+"blocks.gz.new"):
-                    shutil.copy(world_dir+"backup/%s/blocks.gz" % backup_number, world_dir)
-                    try:
-                        shutil.copy(world_dir+"backup/%s/world.meta" % backup_number, world_dir)
-                    except:
-                        pass
+                if not os.path.exists(world_dir + "blocks.gz.new"):
+                    shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
+                    if os.path.exists(world_dir + "backup/%s/world.meta" % backup_number):
+                        shutil.copy((world_dir + "backup/%s/world.meta" % backup_number), world_dir)
                 else:
                     reactor.callLater(1, self.commandRestore(self, parts, fromloc, overriderank))
                 default_name = self.client.factory.default_name
