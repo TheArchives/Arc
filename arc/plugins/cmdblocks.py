@@ -1056,7 +1056,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Unknown command '%s'" % command)
                 runcmd = False
         if runcmd is True:
-           if hasattr(func, "config"):
+            if hasattr(func, "config"):
                 if func.config["disabled"]:
                     self.client.sendServerMessage("Command %s has been disabled by the server owners." % command)
                     runcmd = False
