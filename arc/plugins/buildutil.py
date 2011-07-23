@@ -43,6 +43,8 @@ class BuildUtil(ProtocolPlugin):
         "brep": "commandReplace",
         "creplace": "commandCreplace",
         "crep": "commandCreplace",
+        "replacenot": "commandReplaceNot",
+        "nrep": "commandReplaceNot",
         "fill": "commandFill",
 
         "ruler": "commandRuler",
@@ -575,6 +577,85 @@ class BuildUtil(ProtocolPlugin):
                 except StopIteration:
                     if fromloc == "user":
                         self.client.sendServerMessage("Your replace just completed.")
+                    pass
+            do_step()
+
+
+    @config("category", "build")
+    @config("rank", "builder")
+    def commandReplaceNot(self, parts, fromloc, overriderank):
+        "/replacenot blockA blockB [x y z x2 y2 z2] - Builder\nAliases: nrep\nReplaces all blocks of in this area to blockA, except for blockB."
+        if len(parts) < 9 and len(parts) != 3:
+            self.client.sendServerMessage("Please enter types (and possibly two coord triples)")
+        else:
+            blockA = self.client.GetBlockValue(parts[1])
+            blockB = self.client.GetBlockValue(parts[2])
+            if blockA == None or blockB == None:
+                return
+            # If they only provided the type argument, use the last two block places
+            if len(parts) == 3:
+                try:
+                    x, y, z = self.client.last_block_changes[0]
+                    x2, y2, z2 = self.client.last_block_changes[1]
+                except IndexError:
+                    self.client.sendServerMessage("You have not clicked two corners yet.")
+                    return
+            else:
+                try:
+                    x = int(parts[3])
+                    y = int(parts[4])
+                    z = int(parts[5])
+                    x2 = int(parts[6])
+                    y2 = int(parts[7])
+                    z2 = int(parts[8])
+                except ValueError:
+                    self.client.sendServerMessage("All coordinate parameters must be integers.")
+                    return
+            if x > x2:
+                x, x2 = x2, x
+            if y > y2:
+                y, y2 = y2, y
+            if z > z2:
+                z, z2 = z2, z
+            limit = self.client.getBlbLimit()
+            if limit != -1:
+                # Stop them doing silly things
+                if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
+                    self.client.sendServerMessage("Sorry, that area is too big for you to replacenot (Limit is %s)" % limit)
+                    return
+            # Draw all the blocks on, I guess
+            # We use a generator so we can slowly release the blocks
+            # We also keep world as a local so they can't change worlds and affect the new one
+            world = self.client.world
+            def generate_changes():
+                try:
+                    for i in range(x, x2+1):
+                        for j in range(y, y2+1):
+                            for k in range(z, z2+1):
+                                if not self.client.AllowedToBuild(i, j, k) and fromloc != "user":
+                                    return
+                                check_offset = world.blockstore.get_offset(i, j, k)
+                                block = world.blockstore.raw_blocks[check_offset]
+                                if block != blockB:
+                                    world[i, j, k] = blockA
+                                    self.client.runHook("blockchange", x, y, z, ord(block), ord(block), fromloc)
+                                    self.client.queueTask(TASK_BLOCKSET, (i, j, k, blockA), world=world)
+                                    self.client.sendBlock(i, j, k, blockA)
+                                    yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds replace error.")
+                    return
+            # Now, set up a loop delayed by the reactor
+            block_iter = iter(generate_changes())
+            def do_step():
+                # Do 10 blocks
+                try:
+                    for x in range(10):
+                        block_iter.next()
+                    reactor.callLater(0.01, do_step)
+                except StopIteration:
+                    if fromloc == "user":
+                        self.client.sendServerMessage("Your replacenot just completed.")
                     pass
             do_step()
 

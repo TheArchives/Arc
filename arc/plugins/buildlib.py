@@ -777,21 +777,21 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-                for i in range(-radius-2, radius+1):
-                    for j in range(-radius-2, radius+1):
-                        for k in range(-radius-2, radius+1):
-                            if (((i+var_x-x)**2 + (j+var_y-y)**2 + (k+var_z-z)**2)**0.5 + ((i+var_x-x2)**2 + (j+var_y-y2)**2 + (k+var_z-z2)**2)**0.5)/2 + 0.691 < radius:
-                                if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
-                                    self.client.sendServerMessage("You do not have permision to build here.")
-                                    return
-                                try:
+                try:
+                    for i in range(-radius-2, radius+1):
+                        for j in range(-radius-2, radius+1):
+                            for k in range(-radius-2, radius+1):
+                                if (((i+var_x-x)**2 + (j+var_y-y)**2 + (k+var_z-z)**2)**0.5 + ((i+var_x-x2)**2 + (j+var_y-y2)**2 + (k+var_z-z2)**2)**0.5)/2 + 0.691 < radius:
+                                    if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
+                                        self.client.sendServerMessage("You do not have permision to build here.")
+                                        return
                                     world[var_x+i, var_y+j, var_z+k] = block
-                                except AssertionError:
-                                    self.client.sendServerMessage("Out of bounds ellipsoid error.")
-                                    return
-                                self.client.queueTask(TASK_BLOCKSET, (var_x+i, var_y+j, var_z+k, block), world=world)
-                                self.client.sendBlock(var_x+i, var_y+j, var_z+k, block)
-                                yield
+                                    self.client.queueTask(TASK_BLOCKSET, (var_x+i, var_y+j, var_z+k, block), world=world)
+                                    self.client.sendBlock(var_x+i, var_y+j, var_z+k, block)
+                                    yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds ellipsoid error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():
