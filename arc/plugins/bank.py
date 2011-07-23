@@ -8,7 +8,7 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class MoneyPlugin(ProtocolPlugin):
-    
+
     commands = {
         "bank": "commandBalance",
         "balance": "commandBalance",
@@ -25,13 +25,13 @@ class MoneyPlugin(ProtocolPlugin):
         bank_dic = cPickle.load(file)
         file.close()
         return bank_dic
-    
+
     def dumpBank(self, bank_dic):
         file = open('config/data/balances.dat', 'w')
         cPickle.dump(bank_dic, file)
         file.close()
-    
-    def commandBalance(self, parts, fromloc, overriderank):    
+
+    def commandBalance(self, parts, fromloc, overriderank):
         "/bank - Guest\nAliases: balance\nFirst time: Creates you a account.\nOtherwise: Checks your balance."
         bank = self.loadBank()
         user = self.client.username.lower()
@@ -50,7 +50,7 @@ class MoneyPlugin(ProtocolPlugin):
     def commandSetAccount(self, parts, fromloc, overriderank):
         "/setbank username amount - Director\nEdits Bank Account"
         if len(parts) != 3:
-            self.client.sendServerMessage("Syntax: /setbank target amount")    
+            self.client.sendServerMessage("Syntax: /setbank target amount")
             return False
         bank = self.loadBank()
         target = parts[1]
@@ -68,7 +68,7 @@ class MoneyPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Set user balance to %d %s." % (amount, self.client.factory.currency))
         else:
             self.client.sendServerMessage("You don't have bank account, use /bank to make one!")
-            
+
     def commandPay(self, parts, fromloc, overriderank):
         "/pay username amount - Guest\nThis lets you send money to other people."
         if len(parts) != 3:
@@ -90,7 +90,7 @@ class MoneyPlugin(ProtocolPlugin):
             return False
         elif amount < 0 and not self.client.isDirector():
             self.client.sendServerMessage("Error: Amount must be positive.")
-            return False        
+            return False
         elif amount > bank[user] or amount < -(bank[target]):
             self.client.sendServerMessage("Error: Not enough %s." % self.client.factory.currency)
             return False
@@ -108,7 +108,7 @@ class MoneyPlugin(ProtocolPlugin):
     def commandRemoveAccount(self, parts, fromloc, overriderank):
         "/removebank username - Director\nRemoves Bank Account"
         if len(parts) != 2:
-            self.client.sendServerMessage("Syntax: /removebank target")    
+            self.client.sendServerMessage("Syntax: /removebank target")
             return False
         bank = self.loadBank()
         target = parts[1]

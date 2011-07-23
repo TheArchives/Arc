@@ -131,7 +131,7 @@ class Physics(Thread):
             elif block is CHR_SAND:
                 self.sand_queue.add(offset)
         if block is CHR_DIRT or block is CHR_GRASS:
-                self.grass_grow_queue.add(offset)
+            self.grass_grow_queue.add(offset)
     
     def apply_ops(self, ops):
         "Immediately applies changes to the in-memory state. Returns the changes."
@@ -399,9 +399,9 @@ class Physics(Thread):
         """
         x, y, z = self.blockstore.get_coords(offset)
         block = self.blockstore.raw_blocks[offset]
-        # Spouts produce water in finite mode
+        # Spouts produce sand in finite mode
         if block is CHR_SAND_SPOUT:
-            # If there's a gap below, produce water
+            # If there's a gap below, produce sand
             try:
                 below = self.blockstore.get_offset(x, y-1, z)
             except AssertionError:
@@ -410,7 +410,6 @@ class Physics(Thread):
                 if self.blockstore.raw_blocks[below] is CHR_AIR:
                     if block is CHR_SAND_SPOUT:
                         yield (x, y-1, z, BLOCK_SAND)      
-        yield (x, y, z, REQUEUE_FLUID)
         if block is not CHR_SAND:
             return
         # OK, so, can it drop?
