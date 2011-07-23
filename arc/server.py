@@ -26,7 +26,7 @@ class ArcFactory(Factory):
     protocol = ArcServerProtocol
 
     def __init__(self, debug=False):
-        self.printable = string.printable + ['^']
+        self.printable = string.printable + ['^' , '~']
         self.logger = ColouredLogger(debug)
         self.chatlogger = ChatLogHandler()
 
