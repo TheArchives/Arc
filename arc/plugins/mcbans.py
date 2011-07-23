@@ -88,8 +88,8 @@ class McBansPlugin(ProtocolPlugin):
                                 type = parts[3].lower()
                                 if type == "global":
                                     if not self.reason is "":
-                                        if player in self.client.factory.clients.keys():
-                                            client = self.client.factory.clients[player]
+                                        if player in self.client.factory.usernames.keys():
+                                            client = self.client.factory.usernames[player]
                                             try:
                                                 value = handler.globalBan(player, client.transport.getPeer().host, self.reason, self.client.username)
                                             except Exception as a:
