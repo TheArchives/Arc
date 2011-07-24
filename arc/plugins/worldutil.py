@@ -140,8 +140,9 @@ class WorldUtilPlugin(ProtocolPlugin):
                 default_name = self.client.factory.default_name
                 self.client.factory.unloadWorld("worlds/%s" % world_id, world_id)
                 self.client.sendServerMessage("%s has been restored to %s and booted." % (world_id, backup_number))
-                for client in self.client.factory.worlds[world_id].clients:
-                    client.changeToWorld(world_id)
+                if world_id in self.client.factory.worlds:
+                    for client in self.client.factory.worlds[world_id].clients:
+                        client.changeToWorld(world_id)
 
     @config("category", "world")
     def commandBackups(self, parts, fromloc, overriderank):
