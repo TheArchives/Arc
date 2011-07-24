@@ -169,8 +169,11 @@ class ChatBot(irc.IRCClient):
                                 self.msg(user, DeSpec(self, command[1], "irc", True, self.factory))
                         elif command[1] == ("boot"):
                             world = str(command[2]).lower()
-                            self.factory.loadWorld("worlds/"+world, world)
-                            self.msg(user,"07World '"+world+"' booted.")
+                            returned = self.factory.loadWorld("worlds/"+world, world)
+                            if returned == False:
+                                self.msg(user, "07 World %s loading failed." % world)
+                            else:
+                                self.msg(user, "07World %s booted." % world)
                         else:
                             self.msg(user, "07Sorry, "+command[1]+" is not a command!")
                     else:

@@ -184,8 +184,12 @@ class StdinPlugin(threading.Thread):
                                 except:
                                     print("Please specify a worldname.")
                                     continue
-                                self.factory.loadWorld("worlds/"+world, world)
-                                print("World '"+world+"' booted.")
+                                returned = self.factory.loadWorld("worlds/"+world, world)
+                                if returned == False:
+                                    print("World %s loading failed." % world)
+                                    continue
+                                else:
+                                    print("World '"+world+"' booted.")
                             elif message[0] == ("shutdown"):
                                 try:
                                     world = str(message[1]).lower()
@@ -206,7 +210,9 @@ class StdinPlugin(threading.Thread):
                                         template = message[2]
                                     world_id = message[1].lower()
                                     self.factory.newWorld(world_id, template)
-                                    self.factory.loadWorld("worlds/%s" % world_id, world_id)
+                                    returned = self.factory.loadWorld("worlds/%s" % world_id, world_id)
+                                    if returned == False:
+                                        print("World %s loading failed." % world_id)
                                     self.factory.worlds[world_id].all_write = False
                                     if len(message) < 4:
                                         self.client.sendServerMessage("World '%s' made and booted." % world_id)

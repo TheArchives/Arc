@@ -97,7 +97,9 @@ class JailPlugin(ProtocolPlugin):
                 return
             if self.client.world.id != self.jail_world:
                 if self.client.world.id not in self.client.factory.worlds:
-                    self.client.factory.loadWorld("worlds/%s" % self.jail_world, self.jail_world)
+                    returned = self.client.factory.loadWorld("worlds/%s" % self.jail_world, self.jail_world)
+                    if returned == False:
+                    
                 self.client.changeToWorld(self.jail_world)
             for id, zone in self.client.world.userzones.items():
                 if zone[0] == self.jail_zone:

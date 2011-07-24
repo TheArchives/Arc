@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import gzip, os, sys, traceback
+import gzip, os, shutil, sys, traceback
 
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Empty
@@ -71,8 +71,21 @@ class World(object):
         self.flush_deferred = None
         if load:
             if not os.path.isfile(self.blocks_path):
-                assert os.path.isfile(self.old_blocks_path), "No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path)
-                os.rename(self.old_blocks_path, self.blocks_path)
+                if os.path.isfile(self.old_blocks_path):
+                    os.rename(self.old_blocks_path, self.blocks_path)
+                else:
+                    # Do we have a backup around?
+                    if os.path.exists(basename+"backup/")):
+                        backups = os.listdir(world_dir+"backup/")
+                    else:
+                        raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
+                    backups.sort(lambda x, y: int(x) - int(y))
+                    backup_number = str(int(backups[-1]))
+                    # Try to copy from the latest backup.
+                    if os.path.exists(world_dir + "backup/%s/blocks.gz" % backup_number):
+                        shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
+                    else:
+                        raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
             assert os.path.isfile(self.meta_path), "No meta file: %s" % self.meta_path
             self.load_meta()
 
@@ -85,7 +98,7 @@ class World(object):
             self.blockstore.in_queue.put([TASK_PHYSICSON])
         if self._finite_water:
             self.blockstore.in_queue.put([TASK_FWATERON])
-            
+
     def stop(self):
         "Signals the BlockStore to stop."
         self.blockstore.in_queue.put([TASK_STOP])
@@ -440,17 +453,17 @@ class World(object):
 
     def add_worldban(self, name):
         self.worldbans[name.lower()] = "True"
-        
+
     def delete_worldban(self, name):
         try:
             del self.worldbans[name.lower()]
             return True
         except KeyError:
             return False
-        
+
     def isworldbanned(self, name):
         return name.lower() in self.worldbans
-        
+
     def add_command(self, x, y, z, cmd):
         offset = self.get_offset(x, y, z)
         self.commands[offset] = cmd
@@ -488,8 +501,8 @@ class World(object):
 
     def has_mine(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return offset in self.mines    
-        
+        return offset in self.mines
+
     def clear_mines(self):
         self.mines = []
 

@@ -362,7 +362,9 @@ class ArcFactory(Factory):
         self.runServerHook("heartbeatStarted")
         # Boot worlds that got loaded
         for world in self.worlds:
-            self.loadWorld("worlds/%s" % world, world)
+            returned = self.loadWorld("worlds/%s" % world, world)
+            if not returned
+                continue
         if self.backup_auto:
             reactor.callLater(float(self.backup_freq * 60), self.AutoBackup)
         # Set up tasks to run during execution
@@ -651,7 +653,11 @@ class ArcFactory(Factory):
         Loads the given world file under the given world ID, or a random one.
         Returns the ID of the new world.
         """
-        world = self.worlds[world_id] = World(filename, factory=self)
+        try:
+            world = self.worlds[world_id] = World(filename, factory=self)
+        except IOError:
+            del self.worlds[world_id]
+            return False
         world.source = filename
         world.clients = set()
         world.id = world_id
