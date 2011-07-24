@@ -145,9 +145,13 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     def commandBackups(self, parts, fromloc, overriderank):
-        "/backups - Guest\nLists all backups this world has."
-        try:
-            world_dir = ("worlds/%s/" % self.client.world.id)
+        "/backups [world] - Guest\nLists all backups this world has.\nIf world is not specified, the current world is used."
+        if len(parts) > 1:
+            world = parts[1]
+        else:
+            world = self.client.world.id
+        if os.path.exists("worlds/%s/" % world):
+            world_dir = ("worlds/%s/" % world)
             folders = os.listdir(world_dir+"backup/")
             Num_backups = list([])
             Name_backups = list([])
@@ -158,11 +162,11 @@ class WorldUtilPlugin(ProtocolPlugin):
                     Name_backups.append(x)
             Num_backups.sort(lambda x, y: int(x) - int(y))
             if Num_backups > 2:
-                self.client.sendServerList(["Backups for %s:" % self.client.world.id] + [Num_backups[0] + "-" + Num_backups[-1]] + Name_backups)
+                self.client.sendServerList(["Backups for %s:" % world] + [Num_backups[0] + "-" + Num_backups[-1]] + Name_backups)
             else:
-                self.client.sendServerList(["Backups for %s:" % self.client.world.id] + Num_backups + Name_backups)
-        except:
-            self.client.sendServerMessage("Sorry, but there are no backups for %s." % self.client.world.id)
+                self.client.sendServerList(["Backups for %s:" % world] + Num_backups + Name_backups)
+        else:
+            self.client.sendServerMessage("Sorry, but there are no backups for %s." % world)
 
     @config("category", "world")
     @config("rank", "op")
