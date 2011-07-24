@@ -75,7 +75,7 @@ class World(object):
                     os.rename(self.old_blocks_path, self.blocks_path)
                 else:
                     # Do we have a backup around?
-                    if os.path.exists(basename+"backup/")):
+                    if os.path.exists(basename+"backup/"):
                         backups = os.listdir(world_dir+"backup/")
                     else:
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
