@@ -34,6 +34,7 @@ class McBansPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("/mcbans unban [player]")
                     self.client.sendServerMessage("/mcbans ban [player] [type]")
                     self.client.sendServerMessage("/mcbans reason [reason]")
+                    self.client.sendServerMessage("/mcbans confirm [key]")
                 else:
                     selection = parts[1].lower()
                     if selection == "help":
@@ -78,6 +79,9 @@ class McBansPlugin(ProtocolPlugin):
                             elif command == "help":
                                 self.client.sendSplitServerMessage("USAGE: /mcbans help (topic)")
                                 self.client.sendSplitServerMessage("You're reading it, stupid.")
+                            elif command == "confirm":
+                                self.client.sendSplitServerMessage("USAGE: /mcbans confirm [key]")
+                                self.client.sendSplitServerMessage("Used to confirm your mcbans.com account.")
                             else:
                                 self.client.sendSplitServerMessage("'%s' is not a help topic." % command)
                                 self.client.sendSplitServerMessage("Try /mcbans help on its own.")
@@ -246,6 +250,17 @@ class McBansPlugin(ProtocolPlugin):
                                     self.client.sendServerMessage("See /mcbans help lookup")
                         else:
                             self.client.sendServerMessage("Syntax: /mcbans lookup [type] [player]")
+                    elif selection == "confirm":
+                        if len(parts) > 2:
+                            key = parts[2]
+                            data = handler.confirm(self.username, key)
+                            if data["result"] == u'y':
+                                self.client.sendServerMessage("Account confirmed. Welcome to MCBans!")
+                            else:
+                                self.client.sendServerMessage("Unable to confirm account!")
+                                self.client.sendServerMessage("Check your confirmation key.")
+                        else:
+                            self.client.sendServerMessage("Syntax: /mcbans confirm [key]")
                     else:
                         self.client.sendSplitServerMessage("'%s' is not an MCBans command." % parts[1])
                         self.client.sendSplitServerMessage("Try /mcbans help on its own.")
