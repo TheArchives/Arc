@@ -253,7 +253,7 @@ class McBansPlugin(ProtocolPlugin):
                     elif selection == "confirm":
                         if len(parts) > 2:
                             key = parts[2]
-                            data = handler.confirm(self.username, key)
+                            data = handler.confirm(self.client.username, key)
                             if data["result"] == u'y':
                                 self.client.sendServerMessage("Account confirmed. Welcome to MCBans!")
                             else:
