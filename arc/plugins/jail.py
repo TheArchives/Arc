@@ -101,6 +101,7 @@ class JailPlugin(ProtocolPlugin):
                     if returned == False:
                         # Nope, let's just kick them.
                         self.client.sendError("You were kicked: Jail")
+                        return
                 self.client.changeToWorld(self.jail_world)
             for id, zone in self.client.world.userzones.items():
                 if zone[0] == self.jail_zone:

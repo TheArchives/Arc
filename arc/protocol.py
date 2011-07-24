@@ -121,6 +121,9 @@ class ArcServerProtocol(Protocol):
     def runHook(self, hook, *args, **kwds):
         "Runs the hook 'hook'."
         for func in self.hooks.get(hook, []):
+            if hook == "blockchange":
+                self.factory.hookslog.write(str(func) + "\n")
+                self.factory.hookslog.flush()
             result = func(*args, **kwds)
             # If they return False, we can skip over and return
             if result is not None:
@@ -346,6 +349,9 @@ class ArcServerProtocol(Protocol):
                         overridden = True
                     # Call hooks
                     new_block = self.runHook("blockchange", x, y, z, block, selected_block, "user")
+                    # After the runHook iteration, insert a linebreak
+                    self.factory.hookslog.write(("=" * 30) + "\n")
+                    self.factory.hookslog.flush()
                     if new_block is False:
                         # They weren't allowed to build here!
                         self.sendBlock(x, y, z)
