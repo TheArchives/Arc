@@ -99,7 +99,8 @@ class JailPlugin(ProtocolPlugin):
                 if self.client.world.id not in self.client.factory.worlds:
                     returned = self.client.factory.loadWorld("worlds/%s" % self.jail_world, self.jail_world)
                     if returned == False:
-                    
+                        # Nope, let's just kick them.
+                        self.client.sendError("You were kicked: Jail")
                 self.client.changeToWorld(self.jail_world)
             for id, zone in self.client.world.userzones.items():
                 if zone[0] == self.jail_zone:

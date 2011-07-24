@@ -363,7 +363,7 @@ class ArcFactory(Factory):
         # Boot worlds that got loaded
         for world in self.worlds:
             returned = self.loadWorld("worlds/%s" % world, world)
-            if not returned
+            if not returned:
                 continue
         if self.backup_auto:
             reactor.callLater(float(self.backup_freq * 60), self.AutoBackup)
