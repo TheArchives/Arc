@@ -574,7 +574,9 @@ class WorldUtilPlugin(ProtocolPlugin):
         if world_id not in self.client.factory.worlds:
             self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
             try:
-                self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
+                returned = self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
+                if not returned:
+                    self.client.sendServerMessage("World %s loading failed." % world_id)
             except AssertionError:
                 self.client.sendServerMessage("There is no world by that name.")
                 return

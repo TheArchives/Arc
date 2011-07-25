@@ -235,7 +235,7 @@ class ArcServerProtocol(Protocol):
         if not world.private and (self.username.lower() not in world.worldbans):
             return True
         else:
-            return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or self.isWorldOwner() or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
+            return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or (self.username.lower() == world.owner) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
 
     def dataReceived(self, data):
         "Called when data is received over the socket."
