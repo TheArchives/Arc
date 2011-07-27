@@ -34,25 +34,10 @@ var_unbreakables = ['\x07', '*', ')', '.', '1']
 var_childrenentities = ["testarrow", "paintball", "cannonball"]
 unselectableentities = ["testarrow", "paintball", "cannonball", "bckchngdetector", "entity1", "passiveblob", "petblob", "smoke", "rain", "testarrow"]
 
-# Work in progress
-class EntityMetaclass(type):
-
-    """
-    A metaclass which registers any subclasses of Entities.
-    """
-
-    def __new__(cls, name, bases, dct):
-        # Supercall
-        new_cls = type.__new__(cls, name, bases, dct)
-        logger = logging.getLogger("Entities")
-        pass
-
 class BaseEntity(object):
     """
     Parent object all entities inherit from.
     """
-    
-    metaclass = EntityMetaclass
 
     def __init__(self):
         pass
