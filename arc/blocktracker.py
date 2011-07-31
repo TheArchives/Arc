@@ -15,8 +15,10 @@ class Tracker(object):
         self.databuffer = list()
         self.buffersize = buffersize
         try:
-            self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
-            matafter INTEGER, name VARCHAR(50), date DATE)')
+            self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")
+            if len(self.exists) == 0:
+                self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
+                matafter INTEGER, name VARCHAR(50), date DATE)')
         except:
             i = 1
         finally:
@@ -44,7 +46,7 @@ class Tracker(object):
 
     def _executemany(self, cursor, dbbuffer):
         """ Work around for the absence of an executemany in adbapi """
-        cursor.executemany("insert or replace into history values (?,?,?,?,?)", dbbuffer)
+        cursor.executemany("INSERT OR REPLACE INTO history VALUES (?,?,?,?,?)", dbbuffer)
         return None
 
     def getblockedits(self, offset):
@@ -52,11 +54,11 @@ class Tracker(object):
         self._flush()
         print offset
         print type(offset)
-        edits = self.database.runQuery("select * from history where block_offset = (?)",[offset])
+        edits = self.database.runQuery("SELECT * FROM history WHERE block_offset = (?)",[offset])
         return edits
 
     def getplayeredits(self, username):
         """ Gets the blocks, along with materials, that a player has edited """
         self._flush()
-        playeredits = self.database.runQuery("select * from history as history where name like (?)", [username])
+        playeredits = self.database.runQuery("SELECT * FROM history AS history WHERE name LIKE (?)", [username])
         return playeredits

@@ -9,12 +9,12 @@ class TemplateServerPlugin():
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
-        
+
     def onLastseen(self, data):
         self.logger.info("Player %s had lastseen set at %s" % (data["username"], data["time"]))
-        
+
     hooks = {
         "lastseenRecorded": onLastseen
     }
-        
+
 serverPlugin = TemplateServerPlugin
