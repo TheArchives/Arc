@@ -10,10 +10,10 @@ from threading import Thread
 
 class Tracker(Thread):
     """ Provides facilities for block tracking and storage. """
-    def __init__(self, world, buffersize = 500, directory = getcwd()):
+    def __init__(self, world, buffersize=500, directory=getcwd()):
         """ Set up database pool, buffers, and other preperations """
         Thread.__init__(self)
-        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', cp_min=1, cp_max=1, check_same_thread=False)
+        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
         try:
