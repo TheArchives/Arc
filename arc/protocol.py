@@ -546,7 +546,7 @@ class ArcServerProtocol(Protocol):
                             else:
                                 self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
                     # Log it as a command
-                    self.factory.logger.command("(%s) %s" % self.username, " ".join(parts))
+                    self.factory.logger.command("(%s) %s" % (self.username, " ".join(parts)))
                     try:
                         func(parts, "user", False) # fromloc is user, overriderank is false
                     except Exception as e:
