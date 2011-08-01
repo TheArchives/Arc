@@ -2,6 +2,8 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
+# The Arc package can be found at http://archivesmc.com
+
 import urllib, urllib2
 try:
     import json
@@ -10,7 +12,7 @@ except ImportError:
 
 class McBans():
     def __init__(self, apikey):
-        self.url = "http://72.10.39.172/v2" # No trailing "/"!
+        self.url = "http://api.mcbans.com/v2" # No trailing "/"!
         self.key = apikey
 
     def _request(self, data):
@@ -30,6 +32,16 @@ class McBans():
 
     def disconnect(self, player):
         data = {"player": player, "exec": "playerDisconnect"}
+        values = self._request(data)
+        return values # {'result': 'y'}
+        
+    def callBack(self, maxPlayers, playerList, version):
+        done = ""
+        if isinstance(playerList, list):
+            done = ",".join(playerList)
+        else:
+            done = playerList
+        data = {"maxPlayers": maxPlayers, "playerList": done, "version": version, "exec": "callBack"}
         values = self._request(data)
         return values # {'result': 'y'}
 

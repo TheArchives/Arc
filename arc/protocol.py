@@ -535,7 +535,7 @@ class ArcServerProtocol(Protocol):
                             self.factory.logger.info("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
                     else:
                         self.factory.logger.info("%s just used '%s'" % (self.username, " ".join(parts)))
-                    # Log it in IRC, if enabled. (Disabled for now)
+                    # Log it in IRC, if enabled.
                     if self.factory.irc_relay:
                         if self.factory.irc_cmdlogs:
                             if hasattr(func, "config"):
@@ -545,6 +545,8 @@ class ArcServerProtocol(Protocol):
                                     self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
                             else:
                                 self.factory.irc_relay.sendServerMessage("%s just used: %s" % (self.username, " ".join(parts)))
+                    # Log it as a command
+                    self.factory.logger.command("(%s) %s" % self.username, " ".join(parts))
                     try:
                         func(parts, "user", False) # fromloc is user, overriderank is false
                     except Exception as e:

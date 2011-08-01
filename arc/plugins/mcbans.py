@@ -103,7 +103,7 @@ class McBansPlugin(ProtocolPlugin):
                                                 if value["result"] == u'y':
                                                     self.client.sendServerMessage("Player %s has been globally banned." % player)
                                                     self.client.sendServerMessage("Reason: %s" % self.reason)
-                                                    client.sendError("[MCBans] Global ban: %s" % reason)
+                                                    client.sendError("[MCBans] Global ban: %s" % self.reason)
                                                     self.reason = ""
                                                 else:
                                                     self.client.sendServerMessage("Unable to ban %s globally." % player)

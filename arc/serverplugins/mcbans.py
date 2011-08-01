@@ -102,6 +102,17 @@ class McBansServerPlugin():
             value = self.handler.unban(data["username"], "Local")
             if value["result"] != u'y':
                 self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
+                
+    def callback(self, data):
+        if self.has_api:
+            version = "Arc v" + VERSION
+            maxplayers = self.factory.max_clients
+            playerlist = []
+            for element in self.factory.usernames.items():
+                playerlist.append(element)
+            done = ",".join(playerlist)
+            value = self.handler.callback(maxplayers, playerlist, version)
+            
             
     name = "McBansServerPlugin"
 

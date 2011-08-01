@@ -58,6 +58,7 @@ class ColouredLogger(object):
             self.warnlog = "logs/levels/warn.log"
             self.criticallog = "logs/levels/critical.log"
             self.debuglog = "logs/levels/debug.log"
+            self.commandlog = "logs/commands.log"
         except Exception as a:
             pass
         try:
@@ -170,6 +171,15 @@ class ColouredLogger(object):
         done = "&f" + atime + status + data
         self.log(done)
         self.log(done, self.criticallog)
+        self.stdout(done)
+        
+    def command(self, data):
+        "CRITICAL level output"
+        atime = time.strftime("%d %b (%H:%M:%S)")
+        status = " - %sCOMMAND&f - " % (Fore.MAGENTA + Back.RESET + Style.BRIGHT)
+        done = "&f" + atime + status + data
+        self.log(done)
+        self.log(done, self.commandlog)
         self.stdout(done)
 
     def debug(self, data):
