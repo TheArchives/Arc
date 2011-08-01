@@ -98,6 +98,8 @@ class ColouredLogger(object):
                 "\x01" + "d": Fore.MAGENTA + Back.WHITE + Style.NORMAL,  # Magenta, light, inverse
                 "\x01" + "e": Fore.YELLOW + Back.WHITE + Style.NORMAL,   # Yellow, light, inverse
                 "\x01" + "f": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. White on white?
+                # Extra colours which don't exist ingame
+                "\x01" + "g": Fore.MAGENTA + Back.RESET + Style.BRIGHT,  # Magenta, bright
             }
         except:
             pass
@@ -176,7 +178,7 @@ class ColouredLogger(object):
     def command(self, data):
         "CRITICAL level output"
         atime = time.strftime("%d %b (%H:%M:%S)")
-        status = " - %sCOMMAND&f - " % (Fore.MAGENTA + Back.RESET + Style.BRIGHT)
+        status = " - " + "\x01" + "g" + "COMMAND&f - "
         done = "&f" + atime + status + data
         self.log(done)
         self.log(done, self.commandlog)
