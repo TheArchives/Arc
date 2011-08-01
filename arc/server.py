@@ -656,7 +656,6 @@ class ArcFactory(Factory):
         try:
             world = self.worlds[world_id] = World(filename, factory=self)
         except IOError:
-            del self.worlds[world_id]
             return False
         world.source = filename
         world.clients = set()
