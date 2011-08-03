@@ -1060,7 +1060,6 @@ class ArcServerProtocol(Protocol):
                 if client.username in self.messages:
                     client.sendServerMessage("You have a message waiting in your Inbox.")
                     client.sendServerMessage("Use /inbox to check and see.")
-                    reactor.callLater(300, self.MessageAlert)
 
     def getBlbLimit(self, factor=1):
         """Fetches BLB Limit, and returns limit multiplied by a factor. 0 is returned if blb is disabled for that usergroup, and -1 for no limit."""
