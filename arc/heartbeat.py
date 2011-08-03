@@ -58,10 +58,7 @@ class Heartbeat(threading.Thread):
             self.logger.error("Minecraft.net seems to be offline: %s" % r)
         except:
             self.logger.error(traceback.format_exc())
-        i = 0
         for element in self.factory.heartbeats:
-            if i > 5:
-                break
             try:
                 self.factory.last_heartbeat = time.time()
                 fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
