@@ -8,27 +8,11 @@ from arc.logger import ColouredLogger
 class ServerPlugin(object):
     """
     Parent object all server plugins inherit from.
-    TODO: Make use of PluginMetaclass to register ServerPlugin to factory.
     """
 
     def __init__(self, factory):
         # Store the factory
         self.factory = factory
         self.logger = ColouredLogger(debug)
-        # Register our hooks
-        if hasattr(self, "hooks"):
-            for name, fname in self.hooks.items():
-                try:
-                    self.factory.registerHook(name, getattr(self, fname))
-                except AttributeError:
-                    # Nope, can't find the method for that hook. Return error
-                    self.logger.error("Cannot find hook code for %s." % fname)
         # Call clean setup method
         self.gotServer()
-
-debug = (True if "--debug" in sys.argv else False)
-logger = ColouredLogger()
-logger.debug("Imported arc/serverplugins/ folder.")
-del logger
-del ColouredLogger
-del sys
