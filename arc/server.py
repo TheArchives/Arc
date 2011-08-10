@@ -657,14 +657,17 @@ class ArcFactory(Factory):
             world = self.worlds[world_id] = World(filename, factory=self)
         except IOError:
             return False
-        world.source = filename
-        world.clients = set()
-        world.id = world_id
-        world.factory = self
-        world.start()
-        self.logger.info("World '%s' Booted." % world_id)
-        self.runServerHook("worldLoaded", {"world_id": world_id})
-        return world_id
+        except Exception as e:
+            raise e
+        else:
+            world.source = filename
+            world.clients = set()
+            world.id = world_id
+            world.factory = self
+            world.start()
+            self.logger.info("World '%s' Booted." % world_id)
+            self.runServerHook("worldLoaded", {"world_id": world_id})
+            return world_id
 
     def unloadWorld(self, world_id, ASD=False):
         """
@@ -705,14 +708,20 @@ class ArcFactory(Factory):
         self.worlds[world_id].flush()
         self.worlds[world_id].save_meta()
         del self.worlds[world_id]
-        world = self.worlds[world_id] = World("worlds/%s" % world_id, world_id, factory=self)
-        world.source = "worlds/" + world_id
-        world.clients = set()
-        world.id = world_id
-        world.factory = self
-        world.start()
-        self.logger.info("Rebooted %s" % world_id)
-        self.runServerHook("worldRebooted", {"world_id": world_id})
+        try:
+            world = self.worlds[world_id] = World(filename, factory=self)
+        except IOError:
+            return False
+        except Exception as e:
+            raise e
+        else:
+            world.source = filename
+            world.clients = set()
+            world.id = world_id
+            world.factory = self
+            world.start()
+            self.logger.info("Rebooted %s" % world_id)
+            self.runServerHook("worldRebooted", {"world_id": world_id})
 
     def publicWorlds(self):
         """
