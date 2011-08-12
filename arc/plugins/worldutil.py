@@ -587,8 +587,6 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
             try:
                 returned = self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-                if not returned:
-                    self.client.sendServerMessage("World %s loading failed." % world_id)
             except Exception as e:
                 self.client.factory.logger.error(e)
                 import traceback
@@ -596,15 +594,19 @@ class WorldUtilPlugin(ProtocolPlugin):
                 del traceback
                 self.client.sendServerMessage("There is no world by that name.")
                 return
-        world = self.client.factory.worlds[world_id]
-        if not self.client.canEnter(world):
-            if world.private:
-                self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
-                return
-            else:
-                self.client.sendServerMessage("You're WorldBanned from '%s'; so you're not allowed in." % world_id)
-                return
-        self.client.changeToWorld(world_id)
+        try:
+            world = self.client.factory.worlds[world_id]
+        except KeyError:
+            self.client.sendServerMessage("There is no world by that name.")
+        else:
+            if not self.client.canEnter(world):
+                if world.private:
+                    self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
+                    return
+                else:
+                    self.client.sendServerMessage("You're WorldBanned from '%s'; so you're not allowed in." % world_id)
+                    return
+            self.client.changeToWorld(world_id)
 
     def commandHome(self, parts, fromloc, overriderank):
         "/home - Guest\nTakes you home, where else?"
