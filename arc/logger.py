@@ -44,6 +44,7 @@ class ColouredLogger(object):
         "\x01" + "d": "",
         "\x01" + "e": "",
         "\x01" + "f": "",
+        "\x01" + "g": "",
     }
 
     nocol = cols
