@@ -587,11 +587,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
             try:
                 returned = self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-            except Exception as e:
-                self.client.factory.logger.error(e)
-                import traceback
-                self.client.factory.logger.error(traceback.format_exc())
-                del traceback
+            except KeyError:
                 self.client.sendServerMessage("There is no world by that name.")
                 return
         try:
