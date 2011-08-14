@@ -133,7 +133,6 @@ class ArcFactory(Factory):
             self.default_name = self.options_config.get("worlds", "default_name")
             self.default_backup = self.options_config.get("worlds", "default_backup")
             self.asd_delay = self.options_config.getint("worlds", "asd_delay")
-            self.gchat = self.options_config.getboolean("worlds", "gchat")
         except Exception as e:
             self.logger.error("Error parsing options.conf (%s)" % e)
             sys.exit(1)
@@ -616,9 +615,9 @@ class ArcFactory(Factory):
             return self.worlds(user.world.id)
         new_world = self.worlds[worldid]
         try:
-            self.logger.info("%s is joining world %s" %(user.username, new_world.basename))
+            self.logger.info("%s is joining world %s" % (user.username, new_world.basename))
         except:
-            self.logger.info("%s is joining world %s" %(user.transport.getPeer().host, new_world.basename))
+            self.logger.info("%s is joining world %s" % (user.transport.getPeer().host, new_world.basename))
         if hasattr(user, "world") and user.world:
             self.leaveWorld(user.world, user)
         user.world = new_world
@@ -653,21 +652,15 @@ class ArcFactory(Factory):
         Loads the given world file under the given world ID, or a random one.
         Returns the ID of the new world.
         """
-        try:
-            world = self.worlds[world_id] = World(filename, factory=self)
-        except IOError:
-            return False
-        except Exception as e:
-            raise e
-        else:
-            world.source = filename
-            world.clients = set()
-            world.id = world_id
-            world.factory = self
-            world.start()
-            self.logger.info("World '%s' Booted." % world_id)
-            self.runServerHook("worldLoaded", {"world_id": world_id})
-            return world_id
+        world = self.worlds[world_id] = World(filename, factory=self)
+        world.source = filename
+        world.clients = set()
+        world.id = world_id
+        world.factory = self
+        world.start()
+        self.logger.info("World '%s' Booted." % world_id)
+        self.runServerHook("worldLoaded", {"world_id": world_id})
+        return world_id
 
     def unloadWorld(self, world_id, ASD=False):
         """
@@ -681,7 +674,8 @@ class ArcFactory(Factory):
         except KeyError:
             return
         # Devs should check this on input level
-        assert world_id != self.default_name
+        if world_id == self.default_name:
+            raise ValueError
         if not self.worlds[world_id].ASD == None:
             self.worlds[world_id].ASD.kill()
             self.worlds[world_id].ASD = None
@@ -689,7 +683,7 @@ class ArcFactory(Factory):
             client.changeToWorld(self.default_name)
             client.sendServerMessage("World '%s' has been Shutdown." % world_id)
         self.worlds[world_id].stop()
-        self.saveWorld(world_id,True)
+        self.saveWorld(world_id, True)
         self.logger.info("World '%s' Shutdown." % world_id)
         self.runServerHook("worldUnloaded", {"world_id": world_id})
 
@@ -703,25 +697,19 @@ class ArcFactory(Factory):
                 client.changeToWorld(self.default_backup)
             else:
                 client.changeToWorld(self.default_name)
-            client.sendServerMessage("%s has been Rebooted" % world_id)
+            client.sendServerMessage("%s has been Rebooted." % world_id)
         self.worlds[world_id].stop()
         self.worlds[world_id].flush()
         self.worlds[world_id].save_meta()
         del self.worlds[world_id]
-        try:
-            world = self.worlds[world_id] = World(filename, factory=self)
-        except IOError:
-            return False
-        except Exception as e:
-            raise e
-        else:
-            world.source = filename
-            world.clients = set()
-            world.id = world_id
-            world.factory = self
-            world.start()
-            self.logger.info("Rebooted %s" % world_id)
-            self.runServerHook("worldRebooted", {"world_id": world_id})
+        world = self.worlds[world_id] = World(filename, factory=self)
+        world.source = filename
+        world.clients = set()
+        world.id = world_id
+        world.factory = self
+        world.start()
+        self.logger.info("Rebooted %s" % world_id)
+        self.runServerHook("worldRebooted", {"world_id": world_id})
 
     def publicWorlds(self):
         """
@@ -1163,64 +1151,6 @@ class ArcFactory(Factory):
         reactor.callLater(300, self.loadArchives)
         self.runServerHook("archivesLoaded", {"number": len(self.archives)})
 
-    def getMemoryUsage(self):
-        """
-        Attempts to retrieve memory usage. Works on Windows and unix like operating systems.
-        Returns a float representing how many MB is in use.
-        """
-        if platform.system() == "Windows":
-            return self._getMemoryUsageWin32()
-        else:
-            result = self._getMemoryUsageUnix()
-            if int(result) == 0:
-                result = self._getMemoryUsageLinux()
-            return result
-
-    def _getMemoryUsageLinux(self):
-        "Gets the memory usage, linux style."
-        try:
-            with open("/proc/%d/status" % os.getpid()) as f:
-                for line in f.readlines():
-                    tokens = line.split()
-                    if tokens[0] == "VmSize:":
-                        return float(tokens[1]) / 1024.0
-        except:
-            return 0.0
-
-    def _getMemoryUsageUnix(self):
-        "Gets the memory usage, UNIX style."
-        try:
-            proc = subprocess.Popen(["ps", "-o", "vsize", "-p", str(os.getpid())], stdout=subprocess.PIPE)
-            return float(proc.communicate()[0].split()[1]) / 1024.0
-        except:
-            return 0.0
-
-    def _getMemoryUsageWin32(self):
-        "Gets the memory usage, Win32 style."
-        class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
-            _fields_ = [('cb', ctypes.c_ulong),
-                        ('PageFaultCount', ctypes.c_ulong),
-                        ('PeakWorkingSetSize', ctypes.c_size_t),
-                        ('WorkingSetSize', ctypes.c_size_t),
-                        ('QuotaPeakPagedPoolUsage', ctypes.c_size_t),
-                        ('QuotaPagedPoolUsage', ctypes.c_size_t),
-                        ('QuotaPeakNonPagedPoolUsage', ctypes.c_size_t),
-                        ('QuotaNonPagedPoolUsage', ctypes.c_size_t),
-                        ('PagefileUsage', ctypes.c_size_t),
-                        ('PeakPagefileUsage', ctypes.c_size_t),
-                        ('PrivateUsage', ctypes.c_size_t),
-                       ]
-
-        mem_struct = PROCESS_MEMORY_COUNTERS_EX()
-        ret = ctypes.windll.psapi.GetProcessMemoryInfo(
-                    ctypes.windll.kernel32.GetCurrentProcess(),
-                    ctypes.byref(mem_struct),
-                    ctypes.sizeof(mem_struct)
-                    )
-        if not ret:
-            return 0
-        return mem_struct.PrivateUsage / 1024.0 / 1024.0
-
     def reloadIrcBot(self):
         if (self.irc_relay):
             try:
@@ -1258,7 +1188,6 @@ class ArcFactory(Factory):
             self.physics_limit = self.options_config.getint("worlds", "physics_limit")
             self.default_backup = self.options_config.get("worlds", "default_backup")
             self.asd_delay = self.options_config.getint("worlds", "asd_delay")
-            self.gchat = self.options_config.getboolean("worlds", "gchat")
             self.grief_blocks = self.ploptions_config.getint("antigrief", "blocks")
             self.grief_time = self.ploptions_config.getint("antigrief", "time")
             self.backup_freq = self.ploptions_config.getint("backups", "backup_freq")

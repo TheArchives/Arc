@@ -329,14 +329,10 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please specify a worldname.")
         else:
             if parts[1] in self.client.factory.worlds:
-                returned = self.client.factory.rebootWorld(parts[1])
-                if not returned:
-                    self.client.sendServerMessage("World %s rebooting failed. World has been shut down." % parts[1])
-                    return
-                else:
-                    self.client.sendServerMessage("World %s rebooted." % parts[1])
+                self.client.factory.rebootWorld(parts[1])
+                self.client.sendServerMessage("World %s rebooted." % parts[1])
             else:
-                self.client.sendServerMessage("World '%s' is not booted." % parts[1])
+                self.client.sendServerMessage("World '%s' isn't booted." % parts[1])
 
     @config("category", "world")
     @config("rank", "mod")
@@ -349,17 +345,9 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("World '%s' already exists!" % parts[1])
             else:
                 try:
-                    returned = self.client.factory.loadWorld("worlds/%s" % parts[1], parts[1])
-                    if not returned:
-                        self.client.sendServerMessage("World %s booting failed." % parts[1])
-                        return
-                    else:
-                        self.client.sendServerMessage("World '%s' booted." % parts[1])
-                except Exception as e:
-                    self.client.factory.logger.error(e)
-                    import traceback
-                    self.client.factory.logger.error(traceback.format_exc())
-                    del traceback
+                    self.client.factory.loadWorld("worlds/%s" % parts[1], parts[1])
+                    self.client.sendServerMessage("World '%s' booted." % parts[1])
+                except AssertionError:
                     self.client.sendServerMessage("There is no world by that name.")
 
     @config("category", "world")
@@ -586,7 +574,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         if world_id not in self.client.factory.worlds:
             self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
             try:
-                returned = self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
+                self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             except KeyError:
                 self.client.sendServerMessage("There is no world by that name.")
                 return

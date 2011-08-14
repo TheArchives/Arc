@@ -55,9 +55,7 @@ class BuyPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Paid %s for the world." % amount)
             world_id = parts[1].lower()
             self.client.factory.newWorld(world_id, template)
-            returned = self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-            if returned == False:
-                self.client.sendServerMessage("World %s loading failed, please contact the staff." % world_id)
+            self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             self.client.factory.worlds[world_id].all_write = False
             if len(parts) < 4:
                 self.client.sendServerMessage("World '%s' made and booted." % world_id)

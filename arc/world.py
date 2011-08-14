@@ -54,7 +54,6 @@ class World(object):
         self.factory = factory
         self.autoshutdown = True
         self.saving = False
-        self.global_chat = True
         self.zoned = False
         self.userzones = {}
         self.rankzones = {}
@@ -86,7 +85,8 @@ class World(object):
                         shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
                     else:
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
-            assert os.path.isfile(self.meta_path), "No meta file: %s" % self.meta_path
+            if not os.path.isfile(self.meta_path):
+                raise IOError("No meta file: %s" % self.meta_path)
             self.load_meta()
 
     def start(self):
@@ -224,11 +224,6 @@ class World(object):
                 self.finite_water = config.getboolean("display", "finite_water")
             else:
                 self.finite_water = False
-        if config.has_section("chat"):
-            if config.has_option("chat", "global_chat"):
-                self.global_chat = config.getboolean("chat", "global_chat")
-            else:
-                self.global_chat = True
         self.teleports = {}
         if config.has_section("teleports"):
             for option in config.options("teleports"):
@@ -268,26 +263,26 @@ class World(object):
                 destination = [x.strip() for x in config.get("userzones", option).split(",")]
                 coords = map(int, destination[1:7])
                 users = map(str, destination[7:])
-                i=1
+                i = 1
                 while True:
                     if not i in self.userzones:
                         self.userzones[i] = destination[:1] + coords + users
                         break
                     else:
-                        i+=1
+                        i += 1
         self.rankzones = {}
         if config.has_section("rankzones"):
             for option in config.options("rankzones"):
                 user = option
                 destination = [x.strip() for x in config.get("rankzones", option).split(",")]
                 coords = map(int, destination[1:7])
-                i=1
+                i = 1
                 while True:
                     if not i in self.rankzones:
                         self.rankzones[i] = destination[:1] + coords + destination[7:]
                         break
                     else:
-                        i+=1
+                        i += 1
         self.entitylist = []
         if config.has_section("entitylist"):
             for option in config.options("entitylist"):
@@ -305,6 +300,7 @@ class World(object):
                             elif entry[i] == "True":
                                 entry[i] = True
                     self.entitylist.append([entry[0],(entry[1],entry[2],entry[3])] + entry[4:])
+        self.factory.runServerHook("onWorldMetaLoaded", {"world_id": self.id, "config": config})
 
     @property
     def store_raw_blocks(self):
@@ -314,7 +310,7 @@ class World(object):
         self.factory.saving = False
 
     def flush(self):
-        self.blockstore.in_queue.put([TASK_FLUSH,self.saved])
+        self.blockstore.in_queue.put([TASK_FLUSH, self.saved])
 
     def save_meta(self):
         config = ConfigParser()
@@ -362,8 +358,6 @@ class World(object):
         # Store teleports
         for offset, dest in self.teleports.items():
             config.set("teleports", str(offset), ", ".join(map(str, dest)))
-        # Store chat settings
-        config.set("chat", "global_chat", str(self.global_chat))
         # Store messages
         for offset, msg in self.messages.items():
             config.set("messages", str(offset), msg)

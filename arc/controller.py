@@ -85,9 +85,6 @@ class ControllerProtocol(LineReceiver):
     def commandASD(self, data):
         self.sendJson({"asd": self.factory.asd_delay})
 
-    def commandGChat(self, data):
-        self.sendJson({"gchat": self.factory.gchat})
-
     def commandBUFreq(self, data):
         if self.factory.backup_auto:
             self.sendJson({"bufreq": self.factory.backup_freq})
