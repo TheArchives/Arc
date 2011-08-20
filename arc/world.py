@@ -35,7 +35,6 @@ class World(object):
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")
-        self.blocktracker = Tracker("blocks", directory=basename)
         # Other settings
         self.owner = "N/A"
         self.ops = set()
@@ -74,7 +73,6 @@ class World(object):
                     try:
                         os.rename(self.old_blocks_path, self.blocks_path)
                     except Exception as e:
-                        self.stop(ignoremeta=True)
                         self.factory.logger.error(e)
                         self.factory.logger.error(traceback.format_exc())
                 else:
@@ -82,7 +80,6 @@ class World(object):
                     if os.path.exists(basename+"backup/"):
                         backups = os.listdir(world_dir+"backup/")
                     else:
-                        self.stop(ignoremeta=True)
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
                     backups.sort(lambda x, y: int(x) - int(y))
                     backup_number = str(int(backups[-1]))
@@ -90,7 +87,6 @@ class World(object):
                     if os.path.exists(world_dir + "backup/%s/blocks.gz" % backup_number):
                         shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
                     else:
-                        self.stop(ignoremeta=True)
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
             if not os.path.isfile(self.meta_path):
                 self.stop(ignoremeta=True)
@@ -99,6 +95,7 @@ class World(object):
 
     def start(self):
         "Starts up this World; we spawn a BlockStore, and run it."
+        self.blocktracker = Tracker("blocks", directory=basename)
         self.blockstore = BlockStore(self.blocks_path, self.x, self.y, self.z)
         self.blockstore.start()
         # If physics is on, turn it on
@@ -107,13 +104,12 @@ class World(object):
         if self._finite_water:
             self.blockstore.in_queue.put([TASK_FWATERON])
 
-    def stop(self, ignoremeta=False):
+    def stop(self):
         "Signals the BlockStore to stop."
         self.blockstore.in_queue.put([TASK_STOP])
         self.blocktracker.close()
         del self.blocktracker
-        if not ignoremeta:
-            self.save_meta()
+        self.save_meta()
 
     def unload(self, ASD=False):
         if ASD: # Called by ASD
