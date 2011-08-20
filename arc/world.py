@@ -71,12 +71,18 @@ class World(object):
         if load:
             if not os.path.isfile(self.blocks_path):
                 if os.path.isfile(self.old_blocks_path):
-                    os.rename(self.old_blocks_path, self.blocks_path)
+                    try:
+                        os.rename(self.old_blocks_path, self.blocks_path)
+                    except Exception as e:
+                        self.stop(ignoremeta=True)
+                        self.factory.logger.error(e)
+                        self.factory.logger.error(traceback.format_exc())
                 else:
                     # Do we have a backup around?
                     if os.path.exists(basename+"backup/"):
                         backups = os.listdir(world_dir+"backup/")
                     else:
+                        self.stop(ignoremeta=True)
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
                     backups.sort(lambda x, y: int(x) - int(y))
                     backup_number = str(int(backups[-1]))
@@ -84,8 +90,10 @@ class World(object):
                     if os.path.exists(world_dir + "backup/%s/blocks.gz" % backup_number):
                         shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
                     else:
+                        self.stop(ignoremeta=True)
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
             if not os.path.isfile(self.meta_path):
+                self.stop(ignoremeta=True)
                 raise IOError("No meta file: %s" % self.meta_path)
             self.load_meta()
 
@@ -99,11 +107,13 @@ class World(object):
         if self._finite_water:
             self.blockstore.in_queue.put([TASK_FWATERON])
 
-    def stop(self):
+    def stop(self, ignoremeta=False):
         "Signals the BlockStore to stop."
         self.blockstore.in_queue.put([TASK_STOP])
         self.blocktracker.close()
-        self.save_meta()
+        del self.blocktracker
+        if not ignoremeta:
+            self.save_meta()
 
     def unload(self, ASD=False):
         if ASD: # Called by ASD
