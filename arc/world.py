@@ -95,7 +95,7 @@ class World(object):
 
     def start(self):
         "Starts up this World; we spawn a BlockStore, and run it."
-        self.blocktracker = Tracker("blocks", directory=basename)
+        self.blocktracker = Tracker("blocks", directory=self.basename)
         self.blockstore = BlockStore(self.blocks_path, self.x, self.y, self.z)
         self.blockstore.start()
         # If physics is on, turn it on
