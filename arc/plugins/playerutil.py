@@ -47,6 +47,8 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "goto": "commandCoord",
         "tp": "commandTeleport",
         "teleport": "commandTeleport",
+        
+        "tpp": "commandTeleProtect",
 
         "who": "commandWho",
         "whois": "commandWho",
@@ -321,6 +323,19 @@ class PlayerUtilPlugin(ProtocolPlugin):
         else:
             self.flying = False
             self.client.sendServerMessage("You are no longer flying.")
+            
+    @config("category", "player")
+    @on_off_command
+    def commandTeleProtect(self, onoff, fromloc, overriderank):
+        "/tpp on|off - Guest\nEnables or disables teleport protection\n(Stops non-admins from teleporting to you.)"
+        if onoff == "on":
+            self.client.tpprotect = True
+            self.client.data.set("misc", "tpprotect", "true")
+            self.client.sendServerMessage("Teleport protection is now on.")
+        else:
+            self.client.tpprotect = False
+            self.client.data.set("misc", "tpprotect", "false")
+            self.client.sendServerMessage("Teleport protection is now off.")
 
     @config("category", "world")
     def commandCoord(self, parts, fromloc, overriderank):
@@ -349,6 +364,10 @@ class PlayerUtilPlugin(ProtocolPlugin):
         x = user.x >> 5
         y = user.y >> 5
         z = user.z >> 5
+        if user.tpprotect and not self.client.isAdmin():
+            self.client.sendServerMessage("This user has teleport protection enabled.")
+            self.client.sendServerMessage("You are unable to teleport to them.")
+            return
         if user.world == self.client.world:
             self.client.teleportTo(x, y, z)
         else:
