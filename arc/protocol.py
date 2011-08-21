@@ -35,6 +35,7 @@ class ArcServerProtocol(Protocol):
         self.hooks = {}
         self.commands = {}
         self.plugins = []
+        self.settings = {}
         for plugin in protocol_plugins:
             try:
                 self.plugins.append(plugin(self))
@@ -303,7 +304,7 @@ class ArcServerProtocol(Protocol):
                 reactor.callLater(0.1, self.sendLevel)
                 reactor.callLater(1, self.sendKeepAlive)
                 self.data = PlayerData(self) # Create a player data object
-                self.tpprotect = self.data.bool("misc", "tpprotect") # Get their teleport protection setting
+                self.settings["tpprotect"] = self.data.bool("misc", "tpprotect") # Get their teleport protection setting
                 self.factory.runServerHook("onPlayerConnect", {"client": self}) # Run the player connect hook
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts

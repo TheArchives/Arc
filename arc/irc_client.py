@@ -100,17 +100,18 @@ class ChatBot(irc.IRCClient):
                                     self.adlog = open("logs/world.log", "a")
                                     self.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #" + command[0] + ": "+text+"\n")
                                     self.adlog.flush()
-                    elif command[1] in self.ocommands and len(command) > 1:
-                        if command[1] == ("help"):
+                    elif command[1].lower() in self.ocommands and len(command) > 1:
+                        theCommand = command[1].lower()
+                        if theCommand == ("help"):
                             self.msg(user, "07Admin Help")
                             self.msg(user, "07Commands: Use 'cmdlist'")
                             if self.factory.staffchat:
                                 self.msg(user, "07StaffChat: Use '#message'")
-                        elif command[1] == ("cmdlist"):
+                        elif theCommand == ("cmdlist"):
                             self.msg(user, "07Here are your Admin Commands:")
                             self.msg(user, "07ban banned banreason boot derank kick rank shutdown spec")
                             self.msg(user, "07Use 'command arguments' to do it.")
-                        elif command[1] == ("banreason"):
+                        elif theCommand == ("banreason"):
                             if len(command) == 3:
                                 username = command[2]
                                 if not self.factory.isBanned(username):
@@ -119,9 +120,9 @@ class ChatBot(irc.IRCClient):
                                     self.msg(user,"07Reason: %s" % self.factory.banReason(username))
                             else:
                                 self.msg(user,"07You must provide a name.")
-                        elif command[1] == ("banned"):
+                        elif theCommand == ("banned"):
                             self.msg(user,  ", ".join(self.factory.banned))
-                        elif command[1] == ("kick"):
+                        elif theCommand == ("kick"):
                             user = command[2]
                             for client in self.factory.clients.values():
                                 if client.username.lower() == user.lower():
@@ -129,7 +130,7 @@ class ChatBot(irc.IRCClient):
                                     self.msg(user, "07"+str(command[2])+" has been kicked from the server.")
                                     return
                             self.msg(user, "07"+str(command[2])+" is not online.")
-                        elif command[1] == ("ban"):
+                        elif theCommand == ("ban"):
                             if command > 3:
                                 if self.factory.isBanned(command[2]):
                                     self.msg(user,"07%s is already Banned." % command[2])
@@ -140,34 +141,34 @@ class ChatBot(irc.IRCClient):
                                     self.msg(user,"07%s has been Banned for %s." % (command[2]," ".join(command[3:])))
                             else:
                                 self.msg(user,"07Please give a username and reason.")
-                        elif command[1] == ("shutdown"):
+                        elif theCommand == ("shutdown"):
                             world = str(command[2]).lower()
                             if world in self.factory.worlds:
                                 self.factory.unloadWorld(world)
                                 self.msg(user, "07World '"+world+"' shutdown.")
                             else:
                                 self.msg(user, "07World '"+world+"' is not loaded.")
-                        elif command[1] == ("rank"):
+                        elif theCommand == ("rank"):
                             if not len(command) > 2:
                                 self.msg(user, "07You must provide a username.")
                             else:
                                 self.msg(user, Rank(self, command[1:] + [user], "irc", True, self.factory))
-                        elif command[1] == ("derank"):
+                        elif theCommand == ("derank"):
                             if not len(command) > 2:
                                 self.msg(user, "07You must provide a username.")
                             else:
                                 self.msg(user, DeRank(self, command[1:] + [user], "irc", True, self.factory))
-                        elif command[1] == ("spec"):
+                        elif theCommand == ("spec"):
                             if not len(command) > 2:
                                 self.msg(user, "07You must provide a username.")
                             else:
                                 self.msg(user, Spec(self, command[1], "irc", True, self.factory))
-                        elif msg_command[1] == "despec":
+                        elif theCommand == "despec":
                             if not len(command) > 2:
                                 self.msg(user, "07You must provide a username.")
                             else:
                                 self.msg(user, DeSpec(self, command[1], "irc", True, self.factory))
-                        elif command[1] == ("boot"):
+                        elif theCommand == ("boot"):
                             world = str(command[2]).lower()
                             returned = self.factory.loadWorld("worlds/"+world, world)
                             if returned == False:
@@ -175,16 +176,16 @@ class ChatBot(irc.IRCClient):
                             else:
                                 self.msg(user, "07World %s booted." % world)
                         else:
-                            self.msg(user, "07Sorry, "+command[1]+" is not a command!")
+                            self.msg(user, "07Sorry, %s is not a command!" % theCommand)
                     else:
-                        self.msg(user, "07%s is not a command!" % command[1] )
+                        self.msg(user, "07%s is not a command!" % theCommand)
                 else:
                     self.msg(user,"07You must provide a valid command to use the IRC bot." )
             else:
                 if command[1].startswith("#"):
                     if self.factory.staffchat:
                         self.msg(user, "07You must be an op to use StaffChat.")
-                elif command[1] in self.ocommands:
+                elif command[1].lower() in self.ocommands:
                     self.msg(user, "07You must be an op to use %s." %command[1])
                 else:
                     self.msg( user, "07%s is not a command!" % command[1] )
