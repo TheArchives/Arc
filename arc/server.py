@@ -576,7 +576,7 @@ class ArcFactory(Factory):
             else:
                 reactor.callLater(1, self.saveWorlds)
 
-    def saveWorld(self, world_id,shutdown = False):
+    def saveWorld(self, world_id, shutdown=False):
         value = self.runServerHook("worldSaving", {"world_id": world_id, "shutdown": shutdown})
         if not value:
             return
