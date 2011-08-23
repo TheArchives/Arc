@@ -69,32 +69,32 @@ class World(object):
         self.flush_deferred = None
         self._loadWorld(load)
 
-    def _loadWorld(self, load)
+    def _loadWorld(self, load):
         if load:
-        if not os.path.isfile(self.blocks_path):
-            if os.path.isfile(self.old_blocks_path):
-                try:
-                    os.rename(self.old_blocks_path, self.blocks_path)
-                except Exception as e:
-                    self.factory.logger.error(e)
-                    self.factory.logger.error(traceback.format_exc())
+            if not os.path.isfile(self.blocks_path):
+                if os.path.isfile(self.old_blocks_path):
+                    try:
+                        os.rename(self.old_blocks_path, self.blocks_path)
+                    except Exception as e:
+                        self.factory.logger.error(e)
+                        self.factory.logger.error(traceback.format_exc())
+                else:
+                    # Do we have a backup around?
+                    if os.path.exists(basename+"backup/"):
+                        backups = os.listdir(world_dir+"backup/")
+                    else:
+                        raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
+                    backups.sort(lambda x, y: int(x) - int(y))
+                    backup_number = str(int(backups[-1]))
+                    # Try to copy from the latest backup.
+                    if os.path.exists(world_dir + "backup/%s/blocks.gz" % backup_number):
+                        shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
+                    else:
+                        raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
+            elif not os.path.isfile(self.meta_path):
+                raise IOError("No meta file: %s" % self.meta_path)
             else:
-                # Do we have a backup around?
-                if os.path.exists(basename+"backup/"):
-                    backups = os.listdir(world_dir+"backup/")
-                else:
-                    raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
-                backups.sort(lambda x, y: int(x) - int(y))
-                backup_number = str(int(backups[-1]))
-                # Try to copy from the latest backup.
-                if os.path.exists(world_dir + "backup/%s/blocks.gz" % backup_number):
-                    shutil.copy((world_dir + "backup/%s/blocks.gz" % backup_number), world_dir)
-                else:
-                    raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))
-        elif not os.path.isfile(self.meta_path):
-            raise IOError("No meta file: %s" % self.meta_path)
-        else:
-            self.load_meta()
+                self.load_meta()
 
     def start(self):
         "Starts up this World; we spawn a BlockStore, and run it."
