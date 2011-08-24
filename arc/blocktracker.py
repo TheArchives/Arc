@@ -16,15 +16,11 @@ class Tracker(Thread):
         self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
-        try:
-            self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")
-            if len(self.exists) == 0:
-                self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
-                matafter INTEGER, name VARCHAR(50), date DATE)')
-        except:
-            i = 1
-        finally:
-            self.run = True
+        self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")
+        if len(self.exists) == 0:
+            self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
+            matafter INTEGER, name VARCHAR(50), date DATE)')
+        self.run = True
         #TODO - Pragma statements
 
     def add(self, data):

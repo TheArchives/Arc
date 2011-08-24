@@ -39,6 +39,8 @@ class ModUtilPlugin(ProtocolPlugin):
         "defreeze": "commandUnFreeze",
         "unstop": "commandUnFreeze",
 
+        "hide": "commandHide",
+
         "overload": "commandOverload",
         "send": "commandSend",
 
