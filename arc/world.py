@@ -110,9 +110,12 @@ class World(object):
     def stop(self):
         "Signals the BlockStore to stop."
         self.blockstore.in_queue.put([TASK_STOP])
-        self.blocktracker.close()
-        del self.blocktracker
         self.save_meta()
+        try:
+            self.blocktracker.close()
+            del self.blocktracker
+        except AttributeError:
+            pass
 
     def unload(self, ASD=False):
         if ASD: # Called by ASD
