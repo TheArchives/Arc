@@ -342,16 +342,17 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please specify a worldname.")
         else:
             if parts[1] in self.client.factory.worlds:
-                self.client.sendServerMessage("World '%s' already exists!" % parts[1])
+                self.client.sendServerMessage("World '%s' already booted." % parts[1])
+            elif not os.path.exists("worlds/%s" % parts[1]):
+                self.client.sendServerMessage("There is no world by that name.")
+                return
             else:
                 try:
                     self.client.factory.loadWorld("worlds/%s" % parts[1], parts[1])
-                    self.client.sendServerMessage("World '%s' booted." % parts[1])
                 except IOError:
-                    if os.path.exists("worlds/%s" % parts[1]):
-                        self.client.sendServerMessage("World files missing, the world cannot be loaded.")
-                    else:
-                        self.client.sendServerMessage("There is no world by that name.")
+                    self.client.sendServerMessage("World files missing, the world cannot be loaded.")
+                else:
+                    self.client.sendServerMessage("World '%s' booted." % parts[1])
 
     @config("category", "world")
     def commandWorlds(self, parts, fromloc, overriderank):
@@ -576,14 +577,13 @@ class WorldUtilPlugin(ProtocolPlugin):
         world_id = world_id.replace("/", "/backup/")
         if world_id not in self.client.factory.worlds:
             self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
+            if not os.path.exists("worlds/%s" % parts[1]):
+                self.client.sendServerMessage("There is no world by that name.")
+                return
             try:
                 self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             except IOError:
-                if os.path.exists("worlds/%s" % parts[1]):
-                    self.client.sendServerMessage("World files missing, the world cannot be loaded.")
-                else:
-                    self.client.sendServerMessage("There is no world by that name.")
-                return
+                self.client.sendServerMessage("World files missing, the world cannot be loaded.")
         try:
             world = self.client.factory.worlds[world_id]
         except KeyError:
