@@ -80,7 +80,7 @@ class World(object):
                         self.factory.logger.error(traceback.format_exc())
                 else:
                     # Do we have a backup around?
-                    if os.path.exists(basename+"backup/"):
+                    if os.path.exists(self.basename+"backup/"):
                         backups = os.listdir(world_dir+"backup/")
                     else:
                         raise IOError("No blocks file: %s or %s" % (self.blocks_path, self.old_blocks_path))

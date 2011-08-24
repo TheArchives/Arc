@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import os, shutil
+import os, random, shutil
 
 from twisted.internet import reactor
 
@@ -54,6 +54,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         "map": "commandLoad",
 
         "home": "commandHome",
+        "random": "commandRandom",
 
         "status": "commandStatus",
         "mapinfo": "commandStatus",
@@ -677,3 +678,18 @@ class WorldUtilPlugin(ProtocolPlugin):
         h = self.client.h
         p = self.client.p
         self.client.sendServerMessage("You are at %s, %s, %s [h%s, p%s]" % (x, y, z, h, p))
+
+    def commandRandom(self, parts):
+        "/random - Takes you to a random world."
+        # Get all public worlds
+        target_worlds = list(self.client.factory.publicWorlds())
+        # Try excluding us (we may not be public)
+        try:
+            target_worlds.remove(self.client.world.id)
+        except ValueError:
+            pass
+        # Anything left?
+        if not target_worlds:
+            self.client.sendServerMessage("There is only one world, and you're in it.")
+        else:
+            self.client.changeToWorld(random.choice(target_worlds))
