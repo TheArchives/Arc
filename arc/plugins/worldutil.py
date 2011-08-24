@@ -578,7 +578,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         world_id = world_id.replace("/", "/backup/")
         if world_id not in self.client.factory.worlds:
             self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
-            if not os.path.exists("worlds/%s" % parts[1]):
+            if not os.path.exists("worlds/%s" % world_id):
                 self.client.sendServerMessage("There is no world by that name.")
                 return
             try:
