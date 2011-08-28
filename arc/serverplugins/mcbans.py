@@ -123,7 +123,7 @@ class McBansServerPlugin():
                 
     def callback(self):
         if self.has_api:
-            version = "Arc v" + VERSION
+            version = "9.0.0.1"
             maxplayers = self.factory.max_clients
             playerlist = []
             for element in self.factory.usernames.items():
