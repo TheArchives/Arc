@@ -87,7 +87,7 @@ class McBansServerPlugin():
                     else:
                         self.logger.info("[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (client.username, data["playerRep"]))
             else:
-                self.factory.logger.error("MCBans error: %s" % error)
+                self.factory.logger.error("MCBans error: %s" % str(error))
 
     def disconnected(self, data):
         if self.has_api:
@@ -97,7 +97,7 @@ class McBansServerPlugin():
         except:
             pass
         else:
-            self.factory.logger.error("MCBans error: %s" % error)
+            self.factory.logger.error("MCBans error: %s" % str(error))
             
     def banned(self, data):
         if self.has_api:
@@ -108,7 +108,7 @@ class McBansServerPlugin():
                 if value["result"] != u'y':
                     self.factory.logger.warn("Unable to add %s to the MCBans local ban list!")
             else:
-                self.factory.logger.error("MCBans error: %s" % error)
+                self.factory.logger.error("MCBans error: %s" % str(error))
     
     def unbanned(self, data):
         if self.has_api:
@@ -119,7 +119,7 @@ class McBansServerPlugin():
                 if value["result"] != u'y':
                     self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
             else:
-                self.factory.logger.error("MCBans error: %s" % error)
+                self.factory.logger.error("MCBans error: %s" % str(error))
                 
     def callback(self):
         if self.has_api:
@@ -135,7 +135,7 @@ class McBansServerPlugin():
             except:
                 pass
             else:
-                self.factory.logger.error("MCBans error: %s" % error)
+                self.factory.logger.error("MCBans error: %s" % str(error))
             
     name = "McBansServerPlugin"
 
