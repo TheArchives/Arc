@@ -72,7 +72,7 @@ class Tracker(Thread):
             block = ""
         theQuery = "SELECT * FROM history AS history WHERE name LIKE (?)" + (filter_query if filter_query != "" else "")
         if blocktype != "all":
-            if filter == "all"
+            if filter == "all":
                 playeredits = self.database.runQuery(theQuery, [username], block, block)
             else:
                 playeredits = self.database.runQuery(theQuery, [username], block)
