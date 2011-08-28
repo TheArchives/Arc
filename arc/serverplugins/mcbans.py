@@ -129,7 +129,7 @@ class McBansServerPlugin():
             for element in self.factory.usernames.items():
                 playerlist.append(element)
             done = ",".join(playerlist)
-            value = self.handler.callback(maxplayers, playerlist, version)
+            value = self.handler.callBack(maxplayers, playerlist, version)
             try:
                 error = value["error"]
             except:
