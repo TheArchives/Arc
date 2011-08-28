@@ -121,7 +121,7 @@ class McBansServerPlugin():
             else:
                 self.factory.logger.error("MCBans error: %s" % error)
                 
-    def callback(self, data):
+    def callback(self):
         if self.has_api:
             version = "Arc v" + VERSION
             maxplayers = self.factory.max_clients
