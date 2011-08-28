@@ -6,9 +6,8 @@ class TemplateServerPlugin():
 
     name = "TemplatePlugin"
 
-    def __init__(self, factory):
-        self.factory = factory
-        self.logger = factory.logger
+    def gotServer(self): # Optional Method
+        i = 1
 
     def onLastseen(self, data):
         self.logger.info("Player %s had lastseen set at %s" % (data["username"], data["time"]))

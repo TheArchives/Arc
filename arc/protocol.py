@@ -13,8 +13,6 @@ from arc.irc_client import ChatBotFactory
 from arc.plugins import protocol_plugins
 from arc.playerdata import *
 
-import logging
-
 class ArcServerProtocol(Protocol):
     """
     Main protocol class for communicating with clients.

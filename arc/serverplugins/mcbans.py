@@ -9,9 +9,7 @@ from arc.constants import *
 
 class McBansServerPlugin():
 
-    def __init__(self, factory):
-        self.factory = factory
-        self.logger = factory.logger
+    def gotServer(self):
         self.logger.debug("[&1MCBans&f] Reading in API Key..")
         config = ConfigParser.RawConfigParser()
         try:

@@ -269,6 +269,10 @@ class ArcFactory(Factory):
                     try:
                         mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self) # Grab the actual plugin class
                         name = mod.name # What's the name?
+                        mod.factory = self
+                        mod.logger = self.logger
+                        if hasattr(mod, "gotServer"):
+                            mod.gotServer()
                     except Exception as a:
                         self.logger.error("Unable to load server plugin from %s" % (element+".py"))
                         self.logger.error("Error: %s" % a)

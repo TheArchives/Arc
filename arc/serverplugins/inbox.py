@@ -57,9 +57,7 @@ class OfflineMessageServerPlugin(object):
 
     name = "OfflineMessagePlugin"
 
-    def __init__(self, factory):
-        self.factory = factory
-        self.logger = factory.logger
+    def gotServer(self):
         self.database = InboxDatabase()
 
     def getMessages(self, user, way):

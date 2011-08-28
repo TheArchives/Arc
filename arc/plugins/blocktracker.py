@@ -116,7 +116,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     @config("category", "build")
     def commandCheckBlock(self, parts, fromloc, overriderank):
-        "/checkblock: Checks the next edited block for past edits."
+        "/checkblock - Guest\nChecks the next edited block for past edits"
         if not self.isChecking:
             self.client.sendServerMessage("Checking for edits: Place or remove a block!")
             self.isChecking = True
@@ -125,9 +125,24 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     @config("category", "build")
     def commandCheckPlayer(self, parts, fromloc, overriderank):
-        "/checkplayer playername: Checks a player's edits on this world."
+        "/checkplayer playername [before|after] [blocktype] - Guest\nChecks a player's edits on this world.\nSpecify 'before' and 'after' with the block type to show edits about that type of block only."
         if len(parts) > 1:
-            edits = self.client.world.blocktracker.getplayeredits(parts[1])
+            if len(parts) == 2:
+                self.client.sendServerMessage("You need to specify the block type to view, or specify 'all'.")
+                return
+            if len(parts) == 3:
+                if parts[2].lower() not in ["all", "before", "after"]:
+                    self.client.sendServerMessage("Please specify 'before', 'after' or 'all'.")
+                    return
+                else:
+                    filter = parts[2].lower()
+                block = self.client.GetBlockValue(parts[3])
+                if block == None:
+                    return
+            else:
+                filter = "all"
+                block = "all"
+            edits = self.client.world.blocktracker.getplayeredits(parts[1], filter, block)
             edits.addCallback(self.sendCallbackPlayer)
         else:
             self.client.sendServerMessage("Syntax: /checkplayer playername")
@@ -135,7 +150,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
     @config("category", "build")
     @config("rank", "mod")
     def commandRestorePlayer(self, parts, fromloc, overriderank):
-        "/restoreplayer username n: Reverse n edits on the current world by username."
+        "/restoreplayer username n - Mod\n: Reverse n edits on the current world by username."
         if len(parts) > 2:
             try:
                 self.num = int(parts[2])

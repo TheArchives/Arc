@@ -9,10 +9,6 @@ class BlbManagerServerPlugin():
     """
 
     name = "BlbManagerPlugin"
-
-    def __init__(self, factory):
-        self.factory = factory
-        self.logger = factory.logger
  
     def acceptChangeset(self, client, changeset):
         """ Accepts a changeset. 

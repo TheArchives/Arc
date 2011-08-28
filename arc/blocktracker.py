@@ -16,10 +16,10 @@ class Tracker(Thread):
         self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
-        self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")
-        if len(self.exists) == 0:
-            self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
-            matafter INTEGER, name VARCHAR(50), date DATE)')
+        #self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")
+        #if len(self.exists) == 0: # This code raises an AttributeError
+        self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
+        matafter INTEGER, name VARCHAR(50), date DATE)')
         self.run = True
         #TODO - Pragma statements
 
@@ -50,13 +50,32 @@ class Tracker(Thread):
     def getblockedits(self, offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        print offset
-        print type(offset)
+        #print offset
+        #print type(offset)
         edits = self.database.runQuery("SELECT * FROM history WHERE block_offset = (?)",[offset])
         return edits
 
-    def getplayeredits(self, username):
+    def getplayeredits(self, username, filter="all", blocktype="all"):
         """ Gets the blocks, along with materials, that a player has edited """
         self._flush()
-        playeredits = self.database.runQuery("SELECT * FROM history AS history WHERE name LIKE (?)", [username])
+        if filter == "before":
+            filter_query = "AND matbefore=?"
+        elif filter == "after":
+            filter_query = "AND matafter=?"
+        elif blocktype != "all" and filter == "all":
+            filter_query = "AND (matbefore=? OR matafter=?)"
+        else:
+            filter_query = ""
+        if blocktype != "all":
+            block = blocktype
+        else:
+            block = ""
+        theQuery = "SELECT * FROM history AS history WHERE name LIKE (?)" + (filter_query if filter_query != "" else "")
+        if blocktype != "all":
+            if filter == "all"
+                playeredits = self.database.runQuery(theQuery, [username], block, block)
+            else:
+                playeredits = self.database.runQuery(theQuery, [username], block)
+        else:
+            playeredits = self.database.runQuery(theQuery, [username])
         return playeredits

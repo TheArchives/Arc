@@ -9,10 +9,6 @@ except ImportError:
 
 class SystemInfoServerPlugin():
 
-    def __init__(self, factory):
-        self.factory = factory
-        self.logger = factory.logger
-
     def calculateSystemUsage(self):
         cpuall = psutil.cpu_percent(interval=0)
         cores = len(psutil.cpu_percent(interval=0, percpu=True))
