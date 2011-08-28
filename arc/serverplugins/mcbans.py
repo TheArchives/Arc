@@ -117,7 +117,7 @@ class McBansServerPlugin():
                 error = value["error"]
             except:
                 if value["result"] != u'y':
-                self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
+                    self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
             else:
                 self.factory.logger.error("MCBans error: %s" % error)
                 

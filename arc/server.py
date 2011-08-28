@@ -267,7 +267,7 @@ class ArcFactory(Factory):
                     continue
                 else:
                     try:
-                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self) # Grab the actual plugin class
+                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin() # Grab the actual plugin class
                         name = mod.name # What's the name?
                         mod.factory = self
                         mod.logger = self.logger
