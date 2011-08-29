@@ -587,6 +587,10 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("That world is broken. Please report!")
                 self.client.logger.error("World %s is broken!" % world_id)
                 self.client.logger.error("Error: %s" % e)
+                try:
+                    self.client.logger.debug("File: %s" % inspect.getfile(self))
+                except:
+                    pass
                 return
         try:
             world = self.client.factory.worlds[world_id]

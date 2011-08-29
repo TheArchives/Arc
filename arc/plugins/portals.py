@@ -72,7 +72,11 @@ class PortalPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("This world is broken. Please report!")
                         self.client.logger.error("World %s is broken!" % world_id)
                         self.client.logger.error("Error: %s" % e)
-                    return
+                        try:
+                            self.client.logger.debug("File: %s" % inspect.getfile(self))
+                        except:
+                            pass
+                        return
                 world = self.client.factory.worlds[world_id]
                 if not self.client.canEnter(world):
                     if world.private:
