@@ -126,9 +126,8 @@ class McBansServerPlugin():
             version = "9.0.0.1"
             maxplayers = self.factory.max_clients
             playerlist = []
-            for element in self.factory.usernames.items():
+            for element in self.factory.usernames.keys():
                 playerlist.append(element)
-            done = ",".join(playerlist)
             value = self.handler.callBack(maxplayers, playerlist, version)
             try:
                 error = value["error"]
