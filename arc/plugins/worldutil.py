@@ -583,8 +583,11 @@ class WorldUtilPlugin(ProtocolPlugin):
                 return
             try:
                 self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-            except IOError:
-                self.client.sendServerMessage("World files missing, the world cannot be loaded.")
+            except IOError as e:
+                self.client.sendServerMessage("That world is broken. Please report!")
+                self.client.logger.error("World %s is broken!" % world_id)
+                self.client.logger.error("Error: %s" % e)
+                return
         try:
             world = self.client.factory.worlds[world_id]
         except KeyError:
