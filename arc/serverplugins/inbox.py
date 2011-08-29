@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-from os import getcwd
+from os import getcwd, path
 
 from twisted.enterprise import adbapi
 
@@ -18,7 +18,7 @@ class InboxDatabase(object):
     """ Provides facilities for inbox accessing storage. """
     def __init__(self, buffersize=500, directory=getcwd()):
         """ Set up database pool, buffers, and other preperations """
-        self.database = adbapi.ConnectionPool('sqlite3', "%s\\..\\config\inbox.db" % (directory))
+        self.database = adbapi.ConnectionPool('sqlite3', path.join("config", "data", "inbox.db"), check_same_thread=False)
         try:
             self.d = self.database.runOperation("CREATE TABLE inbox (id INTEGER unsigned AUTO_INCREMENT,\
                 from VARCHAR(255), to VARCHAR(255), message TEXT, date DATE, status INTEGER)")

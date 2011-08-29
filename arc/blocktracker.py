@@ -4,16 +4,17 @@
 
 # This blocktracker was written by Clay Sweetser, AKA Varriount (clay.sweetser@gmail.com)
 
-from os import getcwd
-from twisted.enterprise import adbapi
+from os import getcwd, path
 from threading import Thread
+
+from twisted.enterprise import adbapi
 
 class Tracker(Thread):
     """ Provides facilities for block tracking and storage. """
     def __init__(self, world, buffersize=500, directory=getcwd()):
         """ Set up database pool, buffers, and other preperations """
         Thread.__init__(self)
-        self.database = adbapi.ConnectionPool('sqlite3', directory+'\\'+world+'.db', check_same_thread=False)
+        self.database = adbapi.ConnectionPool('sqlite3', path.join(directory, world+'.db'), check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
         #self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")

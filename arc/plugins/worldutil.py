@@ -308,7 +308,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             else:
                 self.client.factory.renameWorld(old_worldid, new_worldid)
                 self.client.sendServerMessage("World '%s' renamed to '%s'." % (old_worldid, new_worldid))
-    
+
     @config("category", "world")
     @config("rank", "mod")
     def commandShutdown(self, parts, fromloc, overriderank):
@@ -489,7 +489,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             self.client.factory.worlds[world_id].all_write = False
             self.client.sendServerMessage("World '%s' made and booted." % world_id)
-    
+
     @config("category", "world")
     @config("rank", "admin")
     def commandDelete(self, parts, fromloc, overriderank):
@@ -514,7 +514,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             shutil.copytree("worlds/%s" % parts[1], "worlds/.trash/%s" %(name))
             shutil.rmtree("worlds/%s" % parts[1])
             self.client.sendServerMessage("World deleted as %s." %(name))
-    
+
     @config("category", "world")
     @config("rank", "admin")
     def commandUnDelete(self, parts, fromloc, overriderank):
@@ -636,7 +636,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("This world has no builders.")
         else:
             self.client.sendServerList(["Builders for %s:" % self.client.world.id] + list(self.client.world.builders))
-            
+
     @config("category", "info")
     def commandWorldStaff(self, parts, byuser, rankoverride):
         "/worldstaff - Guest\nLists this world's builders, ops and the world owner.."
@@ -664,7 +664,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerList(["Ops:"] + list(self.client.world.ops))
         if self.client.world.builders:
             self.client.sendServerList(["Builders:"] + list(self.client.world.builders))
-  
+
     @config("category", "world")
     @config("rank", "op")
     def commandSetspawn(self, parts, fromloc, overriderank):
@@ -675,7 +675,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         h = int(self.client.h * (360/255.0))
         self.client.world.spawn = (x, y, z, h)
         self.client.sendServerMessage("Set spawn point to %s, %s, %s" % (x, y, z))
-    
+
     @config("category", "info")
     def commandWhere(self, parts, fromloc, overriderank):
         "/where - Guest\nReturns your current coordinates."

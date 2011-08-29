@@ -3,6 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import ConfigParser
+
 from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
@@ -98,7 +99,7 @@ class McBansServerPlugin():
             pass
         else:
             self.factory.logger.error("MCBans error: %s" % str(error))
-            
+
     def banned(self, data):
         if self.has_api:
             value = self.handler.localBan(data["username"], self.factory.clients[data["username"]].getPeer().host if data["username"] in self.factory.clients.keys() else "Offline", data["reason"], data["admin"])
@@ -109,7 +110,7 @@ class McBansServerPlugin():
                     self.factory.logger.warn("Unable to add %s to the MCBans local ban list!")
             else:
                 self.factory.logger.error("MCBans error: %s" % str(error))
-    
+
     def unbanned(self, data):
         if self.has_api:
             value = self.handler.unban(data["username"], "Local")
@@ -120,7 +121,7 @@ class McBansServerPlugin():
                     self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
             else:
                 self.factory.logger.error("MCBans error: %s" % str(error))
-                
+
     def callback(self):
         if self.has_api:
             version = "9.0.0.1"
@@ -128,7 +129,8 @@ class McBansServerPlugin():
             playerlist = []
             for element in self.factory.usernames.keys():
                 playerlist.append(element)
-            value = self.handler.callBack(maxplayers, playerlist, version)
+            done = ",".join(playerlist)
+            value = self.handler.callBack(maxplayers, done, version)
             try:
                 error = value["error"]
             except:
