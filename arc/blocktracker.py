@@ -58,13 +58,15 @@ class Tracker(Thread):
 
     def getplayeredits(self, username, filter="all", blocktype="all"):
         """ Gets the blocks, along with materials, that a player has edited """
+        # Note: The advanced filtering doesn't work right now, but the old /checkplayer still works.
+        # Need to find out why. -tyteen
         self._flush()
         if filter == "before":
-            filter_query = "AND matbefore=?"
+            filter_query = "AND matbefore=(?)"
         elif filter == "after":
-            filter_query = "AND matafter=?"
+            filter_query = "AND matafter=(?)"
         elif blocktype != "all" and filter == "all":
-            filter_query = "AND (matbefore=? OR matafter=?)"
+            filter_query = "AND (matbefore=(?) OR matafter=(?))"
         else:
             filter_query = ""
         if blocktype != "all":
@@ -74,9 +76,9 @@ class Tracker(Thread):
         theQuery = "SELECT * FROM history AS history WHERE name LIKE (?)" + (filter_query if filter_query != "" else "")
         if blocktype != "all":
             if filter == "all":
-                playeredits = self.database.runQuery(theQuery, [username], block, block)
+                playeredits = self.database.runQuery(theQuery, [username], [block], [block])
             else:
-                playeredits = self.database.runQuery(theQuery, [username], block)
+                playeredits = self.database.runQuery(theQuery, [username], [block])
         else:
             playeredits = self.database.runQuery(theQuery, [username])
         return playeredits
