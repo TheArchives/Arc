@@ -79,6 +79,8 @@ class Tracker(Thread):
                 playeredits = self.database.runQuery(theQuery, [username], [block], [block])
             else:
                 playeredits = self.database.runQuery(theQuery, [username], [block])
+                print filter, theQuery, username, block
         else:
+            print theQuery, username, block
             playeredits = self.database.runQuery(theQuery, [username])
         return playeredits
