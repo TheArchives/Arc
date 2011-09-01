@@ -47,7 +47,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "goto": "commandCoord",
         "tp": "commandTeleport",
         "teleport": "commandTeleport",
-        
+
         "tpp": "commandTeleProtect",
 
         "who": "commandWho",
@@ -323,7 +323,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         else:
             self.flying = False
             self.client.sendServerMessage("You are no longer flying.")
-            
+
     @config("category", "player")
     @on_off_command
     def commandTeleProtect(self, onoff, fromloc, overriderank):
