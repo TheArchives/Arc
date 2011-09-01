@@ -25,16 +25,16 @@ class BlockStore(Thread):
         Thread.__init__(self)
         self.x, self.y, self.z = sx, sy, sz
         self.blocks_path = blocks_path
+        self.world_name = os.path.basename(os.path.dirname(blocks_path))
         self.in_queue = Queue()
         self.out_queue = Queue()
-        self.saving = False
         self.logger = ColouredLogger()
 
     def run(self):
         # Initialise variables
         self.physics = False
         self.physics_engine = Physics(self)
-        self.raw_blocks = None
+        self.raw_blocks = None # Read this from any thread but please update through TASK_BLOCKSET so queued_blocks is updated
         self.running = True
         self.unflooding = False
         self.finite_water = False
@@ -55,37 +55,40 @@ class BlockStore(Thread):
                 elif task[0] is TASK_BLOCKSET:
                     try:
                         self[task[1]] = task[2]
+                        if len(task) == 4 and task[3] == True:
+                            # Tells the server to update the given block for clients.
+                            self.out_queue.put([TASK_BLOCKSET, (task[1][0], task[1][1], task[1][2], task[2])])
                     except AssertionError:
-                        self.logger.warning("Tried to set a block at %s in %s!" % (task[1], self.blocks_path))
+                        self.logger.warning("Tried to set a block at %s in %s!" % (task[1], self.world_name))
                 # Asking for a block?
                 elif task[0] is TASK_BLOCKGET:
                     self.out_queue.put([TASK_BLOCKGET, task[1], self[task[1]]])
                 # Perhaps physics was enabled?
                 elif task[0] is TASK_PHYSICSOFF:
-                    self.logger.debug("Disabling physics on '%s'..." % self.blocks_path)
+                    self.logger.debug("Disabling physics on '%s'..." % self.world_name)
                     self.disable_physics()
                 # Or disabled?
                 elif task[0] is TASK_PHYSICSON:
-                    self.logger.debug("Enabling physics on '%s'..." % self.blocks_path)
+                    self.logger.debug("Enabling physics on '%s'..." % self.world_name)
                     self.enable_physics()
                 # I can haz finite water tiem?
                 elif task[0] is TASK_FWATERON:
-                    self.logger.debug("Enabling finite water on '%s'..." % self.blocks_path)
+                    self.logger.debug("Enabling finite water on '%s'..." % self.world_name)
                     self.finite_water = True
                 # Noes, no more finite water.
                 elif task[0] is TASK_FWATEROFF:
-                    self.logger.debug("Disabling finite water on '%s'..." % self.blocks_path)
+                    self.logger.debug("Disabling finite water on '%s'..." % self.world_name)
                     self.finite_water = False
                 # Do they need to do a Moses?
                 elif task[0] is TASK_UNFLOOD:
-                    self.logger.debug("Unflood started on '%s'..." % self.blocks_path)
+                    self.logger.debug("Unflood started on '%s'..." % self.world_name)
                     self.unflooding = True
                 # Perhaps that's it, and we need to stop?
                 elif task[0] is TASK_STOP:
-                    self.logger.debug("Stopping block store '%s'..." % self.blocks_path)
+                    self.logger.debug("Stopping block store '%s'..." % self.world_name)
                     self.physics_engine.stop()
                     self.flush()
-                    self.logger.debug("Stopped block store '%s'." % self.blocks_path)
+                    self.logger.debug("Stopped block store '%s'." % self.world_name)
                     return
                 # ???
                 else:
@@ -95,7 +98,6 @@ class BlockStore(Thread):
 
     def enable_physics(self):
         "Turns on physics"
-        self.flush()
         self.physics = True
 
     def disable_physics(self):
@@ -138,10 +140,6 @@ class BlockStore(Thread):
         "Sends a message out to admins about this World."
         self.out_queue.put([TASK_ADMINMESSAGE, message])
 
-    def send_block(self, x, y, z):
-        "Tells the server to update the given block for clients."
-        self.out_queue.put([TASK_BLOCKSET, (x, y, z, self[x, y, z])])
-
     def __setitem__(self, (x, y, z), block):
         "Set a block in this level to the given value."
         assert isinstance(block, str) and len(block) == 1
@@ -154,7 +152,7 @@ class BlockStore(Thread):
         # Ask the physics engine if they'd like a look at that
         self.physics_engine.handle_change(offset, block)
 
-    def __getitem__(self, (x, y, z)):
+    def __getitem__(self, (x, y, z)):   # TODO ditch this because can read raw_blocks
         "Return the value at position x, y, z - possibly not efficiently."
         offset = self.get_offset(x, y, z)
         try:
@@ -175,65 +173,56 @@ class BlockStore(Thread):
         Flushes queued blocks into the .gz file.
         Needed before sending gzipped block data to clients.
         """
-        # Don't flush if there's nothing to do
-        if not self.saving:
-            try:
-                if not self.queued_blocks:
-                    return
-                self.logger.debug("Flushing %s..." % self.blocks_path)
-                # Open the old and the new file
-                if os.path.exists(self.blocks_path + ".new"):
-                    os.remove(self.blocks_path + ".new")
-                gz = gzip.GzipFile(self.blocks_path)
-                new_gz = gzip.GzipFile(self.blocks_path + ".new", 'wb', compresslevel=4)
-                # Copy over the size header
-                new_gz.write(gz.read(4))
-                # Order the blocks we're going to write
-                ordered_blocks = sorted(self.queued_blocks.items())
-                # Start writing out the blocks in chunks, replacing as we go.
-                chunk_size = 1024
+        try:
+            if not self.queued_blocks:  # Don't flush if there's nothing to do
+                return
+
+            self.logger.debug("Flushing %s..." % self.world_name)
+            # Open the old and the new file
+            if os.path.exists(self.blocks_path + ".new"):
+                os.remove(self.blocks_path + ".new")
+            gz = gzip.GzipFile(self.blocks_path)
+            new_gz = gzip.GzipFile(self.blocks_path + ".new", 'wb', compresslevel=4)
+            # Copy over the size header
+            new_gz.write(gz.read(4))
+            # Order the blocks we're going to write
+            ordered_blocks = sorted(self.queued_blocks.items())
+            # Start writing out the blocks in chunks, replacing as we go.
+            chunk_size = 1024
+            chunk = list(gz.read(chunk_size))
+            pos = 0
+            blocks_pos = 0
+            chunk_end = len(chunk)
+            while chunk:
+                while blocks_pos < len(ordered_blocks) and ordered_blocks[blocks_pos][0] < chunk_end:
+                    offset, value = ordered_blocks[blocks_pos]
+                    chunk[offset - pos] = value
+                    blocks_pos += 1
+                chunk_str = "".join(chunk)
+                new_gz.write(chunk_str)
+                pos += len(chunk)
                 chunk = list(gz.read(chunk_size))
-                pos = 0
-                blocks_pos = 0
-                chunk_end = len(chunk)
-                while chunk:
-                    while blocks_pos < len(ordered_blocks) and ordered_blocks[blocks_pos][0] < chunk_end:
-                        offset, value = ordered_blocks[blocks_pos]
-                        chunk[offset - pos] = value
-                        blocks_pos += 1
-                    chunk_str = "".join(chunk)
-                    new_gz.write(chunk_str)
-                    pos += len(chunk)
-                    chunk = list(gz.read(chunk_size))
-                    chunk_end = pos + len(chunk)
-                # Safety first. If this isn't true, there's a bug.
-                assert blocks_pos == len(ordered_blocks)
-                new_gz.flush()
-                os.fsync(new_gz.fileno())
-                # OK, close up shop.
-                gz.close()
-                new_gz.close()
-                # Make a backup of the old level and put the new one in place
-                if os.path.exists(self.blocks_path + ".old"):
-                    os.remove(self.blocks_path + ".old")
-                os.rename(self.blocks_path, self.blocks_path + ".old")
-                os.rename(self.blocks_path + ".new", self.blocks_path)
-                self.queued_blocks = {}
-            except Exception as a:
-                self.logger.error("Problem saving world %s" %self.blocks_path)
-                self.logger.error("Error: %s" % a)
-                self.saving = True
-                reactor.callLater(3, self.flush)
-        else:
-            try:
-                if os.path.exists(self.blocks_path + ".old"):
-                    os.remove(self.blocks_path + ".old")
-                os.rename(self.blocks_path, self.blocks_path + ".old")
-                os.rename(self.blocks_path + ".new", self.blocks_path)
-                self.saving = False
-            except:
-                self.saving = True
-                reactor.callLater(3, self.flush)
+                chunk_end = pos + len(chunk)
+            # Safety first. If this isn't true, there's a bug.
+            assert blocks_pos == len(ordered_blocks)
+            new_gz.flush()
+            os.fsync(new_gz.fileno())
+            # OK, close up shop.
+            gz.close()
+            new_gz.close()
+
+            # Make a backup of the old level and put the new one in place
+            if os.path.exists(self.blocks_path + ".old"):
+                os.remove(self.blocks_path + ".old")
+            os.rename(self.blocks_path, self.blocks_path + ".old")
+            os.rename(self.blocks_path + ".new", self.blocks_path)
+
+            self.logger.info("World '%s' has been saved with %d changes." % 
+                    (self.world_name, len(self.queued_blocks)))
+            self.queued_blocks = {}
+        except Exception as a:
+            self.logger.error("Problem saving world %s" % self.world_name)
+            self.logger.error("Error: %s" % a)
 
     @classmethod
     def create_new(cls, blocks_path, sx, sy, sz, levels):
