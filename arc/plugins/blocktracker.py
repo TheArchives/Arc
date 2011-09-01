@@ -125,8 +125,8 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     @config("category", "build")
     def commandCheckPlayer(self, parts, fromloc, overriderank):
-        "/checkplayer playername [before|after] [blocktype] - Guest\nChecks a player's edits on this world.\nSpecify 'before' and 'after' with the block type to show edits about that type of block only."
-        if len(parts) > 1:
+        "/checkplayer playername [before|after|all] [blocktype] - Guest\nChecks a player's edits on this world.\nSpecify 'before' and 'after' with the block type to show edits\nabout that type of block only."
+        if len(parts) >= 1:
             if len(parts) == 2:
                 self.client.sendServerMessage("You need to specify the block type to view, or specify 'all'.")
                 return
@@ -145,7 +145,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             edits = self.client.world.blocktracker.getplayeredits(parts[1], filter, block)
             edits.addCallback(self.sendCallbackPlayer)
         else:
-            self.client.sendServerMessage("Syntax: /checkplayer playername")
+            self.client.sendServerMessage("Syntax: /checkplayer playername [before|after] [blocktype]")
 
     @config("category", "build")
     @config("rank", "mod")
