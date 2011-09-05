@@ -1,5 +1,5 @@
 @ECHO off
 TITLE Arc
 
-C:\Python26\python.exe run.py --debug
+python run.py --debug
 PAUSE

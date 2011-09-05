@@ -9,10 +9,10 @@ if "%debug%"=="Y" goto debug
 if "%debug%"=="n" goto nodebug
 if "%debug%"=="N" goto nodebug
 :debug
-C:\Python26\python.exe run.py --debug
+python run.py --debug
 goto quit
 :nodebug
-C:\Python26\python.exe run.py
+python run.py
 goto quit
 :quit
 PAUSE
