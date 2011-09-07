@@ -94,9 +94,9 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 coords = self.client.world.get_coords(offset)
                 self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))
 
-    def blockChanged(self, x, y, z, block, selected_block, fromloc):
+    def blockDetected(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
-        if not self.isChecking:
+        if not self.isChecking: # Only add this block entry if we are not checking a block
             before_block = self.client.world.blockstore.__getitem__((x, y, z))
             if before_block == u'':
                 before_block = 0
@@ -104,16 +104,17 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 before_block = ord(before_block)
             self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username, time.mktime(time.localtime())))
 
-    def blockDetected(self, x, y, z, block, selected_block, fromloc):
-        edits = self.client.world.blocktracker.getblockedits(self.client.world.get_offset(x, y, z))
-        edits.addCallback(self.sendCallbackBlock)
-        self.isChecking = False
-        block = self.client.world.blockstore.__getitem__((x, y, z))
-        if block == u'':
-            block = 0
-        else:
-            block = ord(block)
-        return block
+    def blockChanged(self, x, y, z, block, selected_block, fromloc):
+        if self.isChecking:
+            edits = self.client.world.blocktracker.getblockedits(self.client.world.get_offset(x, y, z))
+            edits.addCallback(self.sendCallbackBlock)
+            self.isChecking = False
+            block = self.client.world.blockstore.__getitem__((x, y, z))
+            if block == u'':
+                block = 0
+            else:
+                block = ord(block)
+            return block
 
     @config("category", "build")
     def commandCheckBlock(self, parts, fromloc, overriderank):
