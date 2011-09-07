@@ -306,5 +306,12 @@ def invertDict(OldDict):
             NewDict[OldDict[key]] = key
     return NewDict
 
+def appendToKeys(theDict, phrase):
+    finalDict = dict()
+    for key in theDict.keys():
+        for value in theDict.values():
+            finalDict[phrase+key] = value
+    return finalDict
+
 def recursive_default():
     return defaultdict(recursive_default)

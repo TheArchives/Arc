@@ -87,7 +87,7 @@ TYPE_FORMATS = {
     TYPE_PLAYERDIR: Format("bbb"),
     TYPE_PLAYERLEAVE: Format("b"),
     TYPE_MESSAGE: Format("bs"),
-    TYPE_ERROR: Format("s"),
+    TYPE_ERROR: Format("s")
 }
 
 TASK_BLOCKSET = 1

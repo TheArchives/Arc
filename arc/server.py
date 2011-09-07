@@ -36,7 +36,6 @@ class ArcFactory(Factory):
         self.serverHooks = {}
         self.loadServerPlugins()
         self.logger.info("Loaded server plugins.")
-        self.hookslog = open("logs/hooks.log", "a")
         # Initialise internal datastructures
         self.worlds = {}
         self.owners = set()
