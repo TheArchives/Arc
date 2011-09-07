@@ -94,7 +94,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 coords = self.client.world.get_coords(offset)
                 self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))
 
-    def blockDetected(self, x, y, z, block, selected_block, fromloc):
+    def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
         if not self.isChecking:
             before_block = self.client.world.blockstore.__getitem__((x, y, z))
@@ -104,7 +104,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 before_block = ord(before_block)
             self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username, time.mktime(time.localtime())))
 
-    def blockChanged(self, x, y, z, block, selected_block, fromloc):
+    def blockDetected(self, x, y, z, block, selected_block, fromloc):
         edits = self.client.world.blocktracker.getblockedits(self.client.world.get_offset(x, y, z))
         edits.addCallback(self.sendCallbackBlock)
         self.isChecking = False
