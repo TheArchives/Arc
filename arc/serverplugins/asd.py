@@ -11,6 +11,13 @@ class AutoShutdownServerPlugin():
 
     name = "AutoShutdownPlugin"
 
+    def gotServer(self):
+        self.loop = LoopingCall(self.checkWorlds) # TODO: Register this loop into the central loop-de-loop directory
+        self.times = defaultdict(int)
+
+    def runLoop(self):
+        self.loop.start(60) # Check worlds every minute
+        
     def checkWorlds(self):
         # Check the worlds
         if self.factory.worlds.keys() != list("default"): # We don't care about default :P
@@ -20,13 +27,6 @@ class AutoShutdownServerPlugin():
                         self.factory.unloadWorld(world)
                     else:
                         self.times[world] += 1
-
-    def gotServer(self):
-        self.loop = LoopingCall(checkWorlds) # TODO: Register this loop into the central loop-de-loop directory
-        self.times = defaultdict(int)
-
-    def runLoop(self):
-        self.loop.start(60) # Check worlds every minute
 
     hooks = {
         "configLoaded": runLoop
