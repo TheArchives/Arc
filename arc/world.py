@@ -64,7 +64,6 @@ class World(object):
         self.entities_epicentity = []
         # Dict of deferreds to call when a block is gotten.
         self.blockgets = {}
-        self.ASD = None
         # Current deferred to call after a flush is complete
         self.flush_deferred = None
         self._loadWorld(load)
@@ -116,15 +115,6 @@ class World(object):
             del self.blocktracker
         except AttributeError:
             pass
-
-    def unload(self, ASD=False):
-        if ASD: # Called by ASD
-           overriden = self.factory.runServerHook("attemptASD", {"world_id": world.id})
-           if not overriden: # Nope, we don't want them to ASD!
-               self.ASD.kill()
-               self.ASD = None
-               return
-        self.factory.unloadWorld(self.id, ASD=True)
 
     def read_queue(self):
         "Reads messages from the BlockStore and acts on them."

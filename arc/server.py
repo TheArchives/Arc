@@ -210,7 +210,7 @@ class ArcFactory(Factory):
         except Exception as e:
             print ("Error parsing plugins.conf: %s" % e)
             sys.exit(1)
-        self.runServerHook("dataLoaded")
+        self.runServerHook("configLoaded")
         self.logger.info("Loading plugins...")
         load_plugins(plugins)
         self.runServerHook("pluginsLoaded")
@@ -625,30 +625,14 @@ class ArcFactory(Factory):
             self.leaveWorld(user.world, user)
         user.world = new_world
         new_world.clients.add(user)
-        if not worldid == self.default_name and not new_world.ASD == None:
-            new_world.ASD.kill()
-            new_world.ASD = None
         self.runServerHook("worldJoined", {"world_id": worldid, "client": user})
         return new_world
 
     def leaveWorld(self, world, user):
         world.clients.remove(user)
         self.runServerHook("worldLeft", {"world_id": world.id, "client": user})
-        if world.autoshutdown and len(world.clients) < 1:
-            if world.basename == ("worlds/" + self.default_name):
-                return
-            else:
-                if not self.asd_delay == 0:
-                    try:
-                        world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload, ASD=True)
-                    except Exception:
-                        world.ASD = ResettableTimer(self.asd_delay*60, 1 , world.unload)
-                else:
-                    try:
-                        world.ASD = ResettableTimer(30, 1, world.unload, ASD=True)
-                    except Exception:
-                        world.ASD = ResettableTimer(30, 1, world.unload)
-                world.ASD.start()
+        if world.is_archive and not world.clients:
+            self.unloadWorld(world.id)
 
     def loadWorld(self, filename, world_id):
         """
@@ -665,23 +649,13 @@ class ArcFactory(Factory):
         self.runServerHook("worldLoaded", {"world_id": world_id})
         return world_id
 
-    def unloadWorld(self, world_id, ASD=False):
+    def unloadWorld(self, world_id):
         """
         Unloads the given world ID.
         """
-        try:
-            if ASD and len(self.worlds[world_id].clients) > 0:
-                self.worlds[world_id].ASD.kill()
-                self.worlds[world_id].ASD = None
-                return
-        except KeyError:
-            return
         # Devs should check this on input level
         if world_id == self.default_name:
             raise ValueError
-        if not self.worlds[world_id].ASD == None:
-            self.worlds[world_id].ASD.kill()
-            self.worlds[world_id].ASD = None
         for client in list(list(self.worlds[world_id].clients))[:]:
             client.changeToWorld(self.default_name)
             client.sendServerMessage("World '%s' has been Shutdown." % world_id)
