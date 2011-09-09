@@ -12,7 +12,7 @@ class AutoShutdownServerPlugin():
     name = "AutoShutdownPlugin"
 
     def gotServer(self):
-        self.loop = LoopingCall(checkWorld) # TODO: Register this loop into the central loop-de-loop directory
+        self.loop = LoopingCall(checkWorlds) # TODO: Register this loop into the central loop-de-loop directory
         self.times = defaultdict(int)
 
     def runLoop(self):
