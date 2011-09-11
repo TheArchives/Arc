@@ -15,7 +15,10 @@ class BlockTrackerPlugin(ProtocolPlugin):
     commands = {
         "checkblock": "commandCheckBlock",
         "checkplayer": "commandCheckPlayer",
-        "restoreplayer": "commandRestorePlayer"
+        "restoreplayer": "commandRestorePlayer",
+        "cb": "commandCheckBlock",
+        "cp": "commandCheckPlayer",
+        "rp": "commandRestorePlayer"
     }
 
     hooks = {
