@@ -26,10 +26,16 @@ class BlockTrackerPlugin(ProtocolPlugin):
     def gotClient(self):
         self.isChecking = False
         self.num = 0
+        
 
     def sendCallbackRestorePlayer(self, data):
         j = len(data)
-        if j > self.num:
+        if self.num is "all":
+            done = []
+            for i in range(999999999999999):
+                done.append(data.pop())
+            i = len(done)
+        elif j > self.num:
             done = []
             for i in range(self.num):
                 done.append(data.pop())
@@ -154,15 +160,20 @@ class BlockTrackerPlugin(ProtocolPlugin):
     def commandRestorePlayer(self, parts, fromloc, overriderank):
         "/restoreplayer username n - Mod\n: Reverse n edits on the current world by username."
         if len(parts) > 2:
-            try:
-                self.num = int(parts[2])
-            except Exception:
-                self.client.sendServerMessage("n must be a number!")
-            else:
-                if self.num > 0:
-                    edits = self.client.world.blocktracker.getplayeredits(parts[1])
-                    edits.addCallback(self.sendCallbackRestorePlayer)
+            if parts[2] != "all":
+                try:
+                    self.num = int(parts[2])
+                except Exception:
+                    self.client.sendServerMessage("n must be a number or \"all\"!")
                 else:
-                    self.client.sendServerMessage("n must be greater than 0!")
+                    if self.num > 0:
+                        edits = self.client.world.blocktracker.getplayeredits(parts[1])
+                        edits.addCallback(self.sendCallbackRestorePlayer)
+                    else:
+                        self.client.sendServerMessage("n must be greater than 0!")
+            else:
+                self.num = "all"
+                edits = self.client.world.blocktracker.getplayeredits(parts[1])
+                edits.addCallback(self.sendCallbackRestorePlayer)
         else:
-            self.client.sendServerMessage("Syntax: /restoreplayer playername number")
+            self.client.sendServerMessage("Syntax: /restoreplayer playername number|all")
