@@ -30,13 +30,12 @@ class BlockTrackerPlugin(ProtocolPlugin):
 
     def sendCallbackRestorePlayer(self, data):
         j = len(data)
+        done = []
         if self.num is "all":
-            done = []
-            for i in range(999999999999999):
+            for i in range(j):
                 done.append(data.pop())
             i = len(done)
         elif j > self.num:
-            done = []
             for i in range(self.num):
                 done.append(data.pop())
             done.reverse()
