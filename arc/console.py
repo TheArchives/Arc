@@ -184,9 +184,10 @@ class StdinPlugin(threading.Thread):
                                 except:
                                     print("Please specify a worldname.")
                                     continue
-                                returned = self.factory.loadWorld("worlds/"+world, world)
-                                if returned == False:
-                                    print("World %s loading failed." % world)
+                                try:
+                                    self.factory.loadWorld("worlds/"+world, world)
+                                except IOError:
+                                    print("Either world %s doesn't exist, or is broken." % world)
                                     continue
                                 else:
                                     print("World '"+world+"' booted.")
