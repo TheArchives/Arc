@@ -2,6 +2,8 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
+import inspect
+
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
@@ -65,9 +67,6 @@ class PortalPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
                     try:
                         self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-                    except AssertionError:
-                        self.client.sendServerMessage("There is no world by that name.")
-                        return
                     except IOError as e:
                         self.client.sendServerMessage("This world is broken. Please report!")
                         self.client.logger.error("World %s is broken!" % world_id)

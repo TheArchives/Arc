@@ -20,11 +20,12 @@ class AutoShutdownServerPlugin():
 
     def checkWorlds(self):
         # Check the worlds
-        if self.factory.worlds.keys() != list("default"): # We don't care about default :P
+        if self.factory.worlds.keys() != ["default"]: # We don't care about default :P
             for world in self.factory.worlds.keys():
                 if self.factory.worlds[world].autoshutdown:
-                    if self.times[world] >= self.factory.asd_delay and not self.factory.worlds[world]:
+                    if self.times[world] >= self.factory.asd_delay:
                         self.factory.unloadWorld(world)
+                        self.times[world] = 0
                     else:
                         self.times[world] += 1
 

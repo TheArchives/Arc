@@ -595,8 +595,9 @@ class ArcFactory(Factory):
             else:
                 self.save_count += 1
             if shutdown: del self.worlds[world_id]
-        except:
-            self.logger.info("Error saving %s" % world_id)
+        except Exception as e:
+            self.logger.error("Error saving world %s." % world_id)
+            self.logger.error("Error: %s" % e)
         self.runServerHook("worldSaved", {"world_id": world_id, "shutdown": shutdown})
 
     def claimId(self, client):
@@ -639,6 +640,9 @@ class ArcFactory(Factory):
         Loads the given world file under the given world ID, or a random one.
         Returns the ID of the new world.
         """
+        # Check if the world actually exists
+        if not (os.path.isfile("%s/blocks.gz" % filename) or os.path.isfile("%s/blocks.gz.old" % filename)):
+            raise IOError
         world = self.worlds[world_id] = World(filename, factory=self)
         world.source = filename
         world.clients = set()
