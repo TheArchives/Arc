@@ -124,6 +124,7 @@ class ArcFactory(Factory):
             sys.exit(1)
         try:
             self.duplicate_logins = self.options_config.getboolean("options", "duplicate_logins")
+            self.wom_heartbeat = self.options_config.getboolean("options", "wom_heartbeat")
             self.info_url = self.options_config.get("options", "info_url")
             self.away_kick = self.options_config.getboolean("options", "away_kick")
             self.away_time = self.options_config.getint("options", "away_time")

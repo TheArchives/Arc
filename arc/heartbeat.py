@@ -36,7 +36,7 @@ class Heartbeat(threading.Thread):
     def get_url(self, onetime=False):
         try:
             self.factory.last_heartbeat = time.time()
-            fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
+            fh = urllib2.urlopen(("http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"), urllib.urlencode({
             "port": self.factory.config.getint("network", "port"),
             "users": len(self.factory.clients),
             "max": self.factory.max_clients,
@@ -61,7 +61,7 @@ class Heartbeat(threading.Thread):
         for element in self.factory.heartbeats:
             try:
                 self.factory.last_heartbeat = time.time()
-                fh = urllib2.urlopen("http://www.minecraft.net/heartbeat.jsp", urllib.urlencode({
+                fh = urllib2.urlopen(("http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"), urllib.urlencode({
                 "port": element[1],
                 "users": len(self.factory.clients),
                 "max": self.factory.max_clients,
@@ -74,4 +74,4 @@ class Heartbeat(threading.Thread):
             except:
                 self.logger.warn("Unable to spoof heartbeat: %s" % element[0])
         if not onetime:
-            reactor.callLater(60, self.get_url)
+            reactor.callLater(45, self.get_url)
