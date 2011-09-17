@@ -27,7 +27,7 @@ class Heartbeat(object):
         self.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
         self.hbdata = ""
         self.buildHeartbeatData()
-        self.loop = LoopingCall(self.get_url)
+        self.loop = LoopingCall(self.sendHeartbeat)
         self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
         self.factory.runServerHook("heartbeatBuilt")
 
