@@ -29,6 +29,7 @@ class Heartbeat(object):
         self.buildHeartbeatData()
         self.loop = LoopingCall(self.sendHeartbeat)
         self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
+        self.logger.info("Heartbeat sending process initiated.")
         self.factory.runServerHook("heartbeatBuilt")
 
     def buildHeartbeatData(self):

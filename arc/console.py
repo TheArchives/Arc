@@ -4,6 +4,7 @@
 
 import datetime, sys, threading, time, traceback
 
+from twisted.internet.task import LoopingCall
 from arc.constants import *
 from arc.globals import *
 from arc.logger import ColouredLogger
@@ -295,9 +296,13 @@ class StdinPlugin(threading.Thread):
                                     else:
                                         print("Plugin '%s' loaded." % message[1])
                             elif message[0] == "sendhb":
+                                print("Sending heartbeat...")
                                 self.factory.heartbeat.sendHeartbeat()
                             elif message[0] == "cpr":
-                                self.factory.heartbeat.turl()
+                                self.factory.heartbeat.loop.stop()
+                                del self.factory.heartbeat.loop
+                                self.factory.heartbeat.loop = LoopingCall(self.factory.heartbeat.sendHeartbeat)
+                                self.factory.heartbeat.loop.start(25)
                                 print("Heartbeat sending restarted.")
                             else:
                                 print("There is no %s command." % message[0])
