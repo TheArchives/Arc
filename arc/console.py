@@ -251,7 +251,7 @@ class StdinPlugin(threading.Thread):
                                 print("Name: %s" % self.factory.server_name)
                                 try:
                                     print("URL: %s" % self.factory.heartbeat.url)
-                                except:
+                                except AttributeError:
                                     print("URL: N/A (minecraft.net is offline)")
                             elif message[0] == ("say"):
                                 if len(message) == 1:
@@ -295,7 +295,7 @@ class StdinPlugin(threading.Thread):
                                     else:
                                         print("Plugin '%s' loaded." % message[1])
                             elif message[0] == "sendhb":
-                                self.factory.heartbeat.get_url(onetime=True)
+                                self.factory.heartbeat.sendHeartbeat()
                             elif message[0] == "cpr":
                                 self.factory.heartbeat.turl()
                                 print("Heartbeat sending restarted.")

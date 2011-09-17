@@ -5,7 +5,8 @@
 import sys, threading, time, traceback, urllib, urllib2
 
 from twisted.internet import reactor
-from random import randint
+from twisted.internet.task import LoopingCall
+from twisted.web.client import getPage
 
 from arc.constants import *
 from arc.logger import ColouredLogger
@@ -14,7 +15,7 @@ import logging
 
 debug = (True if "--debug" in sys.argv else False)
 
-class Heartbeat(threading.Thread):
+class Heartbeat(object):
     """
     Deals with registering with the Minecraft main server every so often.
     The Salt is also used to help verify users' identities.
@@ -23,20 +24,16 @@ class Heartbeat(threading.Thread):
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
+        self.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
+        self.hbdata = ""
+        self.buildHeartbeatData()
+        self.loop = LoopingCall(self.get_url)
+        self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
         self.factory.runServerHook("heartbeatBuilt")
-        self.turl()
 
-    def turl(self):
-        try:
-            threading.Thread(target=self.get_url).start()
-        except:
-            self.logger.error(traceback.format_exc())
-            reactor.callLater(1, self.turl)
-
-    def get_url(self, onetime=False):
-        try:
-            self.factory.last_heartbeat = time.time()
-            fh = urllib2.urlopen(("http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"), urllib.urlencode({
+    def buildHeartbeatData(self):
+        # To be extended
+        self.hbdata = urllib.urlencode({
             "port": self.factory.config.getint("network", "port"),
             "users": len(self.factory.clients),
             "max": self.factory.max_clients,
@@ -44,34 +41,33 @@ class Heartbeat(threading.Thread):
             "public": self.factory.public,
             "version": 7,
             "salt": self.factory.salt,
-            }), 30)
-            self.url = fh.read().strip()
-            self.logger.info("Heartbeat Sent. Your URL (saved to docs/SERVERURL): %s" % self.url)
-            fh = open('config/data/SERVERURL', 'w')
-            fh.write(self.url)
-            fh.flush()
-            fh.close()
-            self.factory.runServerHook("heartbeatSent")
-            if not self.factory.console.is_alive():
-                self.factory.console.run()
-        except urllib2.URLError as r:
-            self.logger.error("Minecraft.net seems to be offline: %s" % r)
+            })
+
+    def sendHeartbeat(self):
+        try:
+            d = getPage(self.hburl, method="POST", postdata=self.hbdata, timeout=30)
         except:
             self.logger.error(traceback.format_exc())
-        for element in self.factory.heartbeats:
-            try:
+            self.factory.last_heartbeat = time.time()
+        else:
+            for element in self.factory.heartbeats:
+                spoofdata = urllib.urlencode({
+                    "port": element[1],
+                    "users": len(self.factory.clients),
+                    "max": self.factory.max_clients,
+                    "name": element[0],
+                    "public": self.factory.public,
+                    "version": 7,
+                    "salt": self.factory.salt,
+                    })
                 self.factory.last_heartbeat = time.time()
-                fh = urllib2.urlopen(("http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"), urllib.urlencode({
-                "port": element[1],
-                "users": len(self.factory.clients),
-                "max": self.factory.max_clients,
-                "name": element[0],
-                "public": self.factory.public,
-                "version": 7,
-                "salt": self.factory.salt,
-                }), 30)
-                self.logger.debug("Spoofed heartbeat: %s" % element[0])
-            except:
-                self.logger.warn("Unable to spoof heartbeat: %s" % element[0])
-        if not onetime:
-            reactor.callLater(45, self.get_url)
+                getPage(self.hburl, method="POST", postdata=self.hbdata, timeout=30)
+
+    def heartbeatSentCallback(self, result):
+        self.url = result
+        self.logger.info("Heartbeat Sent. URL (saved to docs/SERVERURL): %s" % self.url)
+        fh = open('config/data/SERVERURL', 'w')
+        fh.write(self.url)
+        fh.flush()
+        fh.close()
+        self.factory.runServerHook("heartbeatSent")
