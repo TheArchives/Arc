@@ -8,6 +8,7 @@ from arc.constants import *
 from arc.decorators import *
 from arc.irc_client import *
 from arc.plugins import ProtocolPlugin
+from arc.timer import ResettableTimer
 #from arc.serverplugins import inbox
 
 class InteractionPlugin(ProtocolPlugin):

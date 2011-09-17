@@ -61,7 +61,6 @@ class Physics(Thread):
     Given a BlockStore, works out what needs doing (water, grass etc.)
     and send the changes back to the BlockStore.
     """
-    #LAG_INTERVAL = 60 # How long between "ack we're lagging" messages
 
     def __init__(self, blockstore):
         Thread.__init__(self)
@@ -96,8 +95,8 @@ class Physics(Thread):
                                 break
                     else:
                         # Unflooding complete.
-                        self.blockstore.unflooding = false
-                        self.blockstore.world_message(colour_yellow + "unflooding complete.")
+                        self.blockstore.unflooding = False
+                        self.blockstore.world_message(colour_yellow + "Unflooding complete.")
                         self.changed.clear()
                         self.working = set()
                 else:
@@ -295,8 +294,8 @@ class Physics(Thread):
                     left_offset = self.blockstore.get_offset(x, ny+1, nz)
                     right_offset = self.blockstore.get_offset(nx, ny+1, z)
                     if self.blockstore.raw_blocks[above_offset] == CHR_AIR and \
-                    (self.blockstore.raw_blocks[left_offset] == CHR_AIR or \
-                    self.blockstore.raw_blocks[right_offset] == CHR_AIR):
+                        (self.blockstore.raw_blocks[left_offset] == CHR_AIR or \
+                        self.blockstore.raw_blocks[right_offset] == CHR_AIR):
                         # Air? Fall.
                         if self.blockstore.raw_blocks[new_offset] == CHR_AIR:
                             self.set_block((nx, ny, nz), ord(block))
