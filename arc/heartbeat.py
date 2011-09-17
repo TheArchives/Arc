@@ -47,6 +47,7 @@ class Heartbeat(object):
     def sendHeartbeat(self):
         try:
             d = getPage(self.hburl, method="POST", postdata=self.hbdata, timeout=30)
+            d.addCallback(self.heartbeatSentCallback)
         except:
             self.logger.error(traceback.format_exc())
             self.factory.last_heartbeat = time.time()
