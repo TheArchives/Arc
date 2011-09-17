@@ -30,8 +30,8 @@ class GreiferDetectorPlugin(ProtocolPlugin):
                 username = self.client.username
                 def griefcheck():
                     if self.var_blockchcount >= self.client.factory.grief_blocks:
-                        self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, "Possible grief behavior was detected;", False))))
-                        self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, "World: "+worldname+" | User: "+username, False))))
+                        self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, "Possible grief behavior was detected;")), False))))
+                        self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, "World: "+worldname+" | User: "+username)), False))))
                         self.client.logger.warning("%s was detected as a possible griefer in world %s." % (username, worldname))
                         self.client.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #Console ALERT: Possible grief behavior was detected; World: "+worldname+" | User: "+username+"\n")
                         self.client.adlog.flush()
