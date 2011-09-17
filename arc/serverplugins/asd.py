@@ -22,12 +22,16 @@ class AutoShutdownServerPlugin():
         # Check the worlds
         if self.factory.worlds.keys() != ["default"]: # We don't care about default :P
             for world in self.factory.worlds.keys():
-                if self.factory.worlds[world].autoshutdown:
+                if self.factory.worlds[world].clients.keys() != []:
                     if self.times[world] >= self.factory.asd_delay:
                         self.factory.unloadWorld(world)
                         self.times[world] = 0
                     else:
                         self.times[world] += 1
+                else:
+                    # Somebody's inside, reset the timer
+                    # Workaround
+                    self.times[world] = 0
 
     hooks = {
         "configLoaded": runLoop
