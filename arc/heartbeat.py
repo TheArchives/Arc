@@ -46,7 +46,7 @@ class Heartbeat(object):
 
     def sendHeartbeat(self):
         try:
-            d = getPage(self.hburl, method="POST", postdata=self.hbdata, timeout=30)
+            d = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
             d.addCallback(self.heartbeatSentCallback)
         except:
             self.logger.error(traceback.format_exc())
@@ -63,7 +63,7 @@ class Heartbeat(object):
                     "salt": self.factory.salt,
                     })
                 self.factory.last_heartbeat = time.time()
-                getPage(self.hburl, method="POST", postdata=self.hbdata, timeout=30)
+                getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
 
     def heartbeatSentCallback(self, result):
         self.url = result
