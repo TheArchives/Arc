@@ -69,8 +69,8 @@ class Heartbeat(object):
                         })
                     self.factory.last_heartbeat = time.time()
                     d[element] = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-                    d.addCallback(self.heartbeatSendCallback, element)
-                    d.addErrback(self.heartbeatFailedCallback, element)
+                    d[element].addCallback(self.heartbeatSendCallback, element)
+                    d[element].addErrback(self.heartbeatFailedCallback, element)
 
     def heartbeatSentCallback(self, result, id):
         if id == 0:

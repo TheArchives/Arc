@@ -16,7 +16,7 @@ class AutoShutdownServerPlugin():
         self.times = defaultdict(int)
 
     def runLoop(self):
-        self.loop.start(60) # Check worlds every minute
+        self.loop.start(60, now=False) # Check worlds every minute
 
     def checkWorlds(self):
         # Check the worlds

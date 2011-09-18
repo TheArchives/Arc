@@ -115,7 +115,6 @@ class ArcFactory(Factory):
                 name = self.config.get("heartbeatnames", element)
                 port = self.config.get("heartbeatports", element)
                 self.heartbeats[id] = (name, port)
-                self.heartbeats.append(heartbeat)
             
         except Exception as e:
             self.logger.error("Error parsing main.conf (%s)" % e)
