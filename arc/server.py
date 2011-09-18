@@ -114,7 +114,7 @@ class ArcFactory(Factory):
                 id = element
                 name = self.config.get("heartbeatnames", element)
                 port = self.config.get("heartbeatports", element)
-                heartbeat[id] = (name, port)
+                self.heartbeats[id] = (name, port)
                 self.heartbeats.append(heartbeat)
             
         except Exception as e:
