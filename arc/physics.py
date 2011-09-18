@@ -96,7 +96,7 @@ class Physics(Thread):
                     else:
                         # Unflooding complete.
                         self.blockstore.unflooding = False
-                        self.blockstore.world_message(colour_yellow + "Unflooding complete.")
+                        self.blockstore.world_message(COLOUR_YELLOW + "Unflooding complete.")
                         self.changed.clear()
                         self.working = set()
                 else:
