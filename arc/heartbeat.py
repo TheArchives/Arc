@@ -6,6 +6,7 @@ import sys, threading, time, traceback, urllib
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
+from twisted.web import error as twistedError
 from twisted.web.client import getPage
 
 from arc.constants import *
@@ -26,6 +27,7 @@ class Heartbeat(object):
         self.logger = factory.logger
         self.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
         self.hbdata = ""
+        self.hbservers = dict()
         self.buildHeartbeatData()
         self.loop = LoopingCall(self.sendHeartbeat)
         self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
@@ -45,31 +47,49 @@ class Heartbeat(object):
             })
 
     def sendHeartbeat(self):
+        d = dict()
         try:
-            d = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-            d.addCallback(self.heartbeatSentCallback)
+            d[0] = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+            d[0].addCallback(self.heartbeatSentCallback, 0)
+            d[0].addErrback(self.heartbeatFailedCallback, 0)
         except:
             self.logger.error(traceback.format_exc())
             self.factory.last_heartbeat = time.time()
         else:
             for element in self.factory.heartbeats:
-                spoofdata = urllib.urlencode({
-                    "port": element[1],
-                    "users": len(self.factory.clients),
-                    "max": self.factory.max_clients,
-                    "name": element[0],
-                    "public": self.factory.public,
-                    "version": 7,
-                    "salt": self.factory.salt,
-                    })
-                self.factory.last_heartbeat = time.time()
-                getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+                for valueset in self.factory.heartbeats.values():
+                    spoofdata = urllib.urlencode({
+                        "port": valueset[1],
+                        "users": len(self.factory.clients),
+                        "max": self.factory.max_clients,
+                        "name": valueset[0],
+                        "public": self.factory.public,
+                        "version": 7,
+                        "salt": self.factory.salt,
+                        })
+                    self.factory.last_heartbeat = time.time()
+                    d[element] = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+                    d.addCallback(self.heartbeatSendCallback, element)
+                    d.addErrback(self.heartbeatFailedCallback, element)
 
-    def heartbeatSentCallback(self, result):
-        self.url = result
-        self.logger.info("Heartbeat Sent. URL (saved to docs/SERVERURL): %s" % self.url)
-        fh = open('config/data/SERVERURL', 'w')
-        fh.write(self.url)
-        fh.flush()
-        fh.close()
-        self.factory.runServerHook("heartbeatSent")
+    def heartbeatSentCallback(self, result, id):
+        if id == 0:
+            self.url = result
+            self.logger.info("Heartbeat Sent. URL (saved to docs/SERVERURL): %s" % self.url)
+            fh = open('config/data/SERVERURL', 'w')
+            fh.write(self.url)
+            fh.flush()
+            fh.close()
+            self.factory.runServerHook("heartbeatSent")
+        else:
+            self.logger.info("Spoof heartbeat for %s sent." % self.factory.heartbeats[id])
+
+    def heartbeatFailedCallback(self, err, id):
+        if isinstance(err, twistedError.Error):
+            if id == 0:
+                self.logger.error("Heartbeat failed to send. Error:")
+            else:
+                self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % self.factory.heartbeats[id])
+            self.logger.error(str(err))
+        else:
+            raise err

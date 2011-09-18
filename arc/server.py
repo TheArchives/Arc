@@ -108,12 +108,13 @@ class ArcFactory(Factory):
             self.server_name = self.config.get("main", "name")
             # Salt, for the heartbeat server/verify-names
             self.salt = self.config.get("main", "salt") # Now reads config to cope with WoM's direct connect ???????
-            self.heartbeats = []
+            self.heartbeats = dict()
             heartbeats = self.config.options("heartbeatnames")
             for element in heartbeats:
+                id = element
                 name = self.config.get("heartbeatnames", element)
                 port = self.config.get("heartbeatports", element)
-                heartbeat = (name, port)
+                heartbeat[id] = (name, port)
                 self.heartbeats.append(heartbeat)
             
         except Exception as e:
