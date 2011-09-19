@@ -7,7 +7,7 @@ from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
 from twisted.internet.protocol import Factory
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 
 from arc.console import StdinPlugin
 from arc.constants import *
@@ -37,6 +37,7 @@ class ArcFactory(Factory):
         self.loadServerPlugins()
         self.logger.info("Loaded server plugins.")
         # Initialise internal datastructures
+        self.loops = {}
         self.worlds = {}
         self.owners = set()
         self.directors = set()
@@ -240,7 +241,7 @@ class ArcFactory(Factory):
         self.adlog = open("logs/server.log", "a")
 
     def loadServerPlugins(self, something=None):
-        "Used to load up all the server plugins. Might get a bit complicated though."
+        "Used to load up all the server plugins."
         files = []
         self.serverHooks = {} # Clear the list of hooks
         self.logger.debug("Listing server plugins..")
@@ -369,46 +370,29 @@ class ArcFactory(Factory):
             if not returned:
                 continue
         if self.backup_auto:
-            reactor.callLater(float(self.backup_freq * 60), self.AutoBackup)
+            self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
+            self.loops["autobackup"].start(float(self.backup_freq * 60), now=False)
         # Set up tasks to run during execution
-        reactor.callLater(0.1, self.sendMessages)
-        reactor.callLater(1, self.printInfo)
+        self.loops["sendmessages"] = task.LoopingCall(self.sendMessages)
+        self.loops["sendmessages"].start(0.1)
+        self.loops["printinfo"] = task.LoopingCall(self.printInfo)
+        self.loops["printinfo"].start(60)
         # Initial startup is instant, but it updates every 10 minutes.
         self.world_save_stack = []
-        reactor.callLater(60, self.saveWorlds)
+        self.loops["saveworlds"] = task.LoopingCall(self.saveWorlds)
+        self.loops["saveworlds"].start(60, now=False)
         if self.enable_archives:
-            reactor.callLater(1, self.loadArchives)
+            self.loops["loadarchives"] = task.LoopingCall(self.loadArchives)
+            self.loops["loadarchives"].start(300)
         gc.disable()
-        self.cleanGarbage()
+        self.loops["cleangarbage"] = task.LoopingCall(self.cleanGarbage)
+        self.loops["cleangarbage"].start(60*15)
         self.runServerHook("factoryStarted")
-
-    def registerHook(self, hook, func):
-        "Registers func as something to be run for hook 'hook'."
-        if hook not in self.hooks:
-            self.serverHooks[hook] = []
-        self.serverHooks[hook].append(func)
-
-    def unregisterHook(self, hook, func):
-        "Unregisters func from hook 'hook'."
-        try:
-            self.serverHooks[hook].remove(func)
-        except (KeyError, ValueError):
-            self.logger.warn("Hook '%s' is not registered to %s." % (hook, func))
-
-    def runHook(self, hook, *args, **kwds):
-        "Runs the hook 'hook'."
-        for func in self.hooks.get(hook, []):
-            result = func(*args, **kwds)
-            # If they return False, we can skip over and return
-            if result is not None:
-                return result
-        return None
 
     def cleanGarbage(self):
         count = gc.collect()
         self.logger.info("%i garbage objects collected, %i were uncollected." % (count, len(gc.garbage)))
-        reactor.callLater(60*15, self.cleanGarbage)
-        self.runServerHook({"collected": count, "uncollected": len(gc.garbage)})
+        self.runServerHook("garbageCollected", {"collected": count, "uncollected": len(gc.garbage)})
 
     def loadMeta(self):
         "Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"
@@ -550,7 +534,6 @@ class ArcFactory(Factory):
         if (time.time() - self.last_heartbeat) > 180:
             self.heartbeat = None
             self.heartbeat = Heartbeat(self)
-        reactor.callLater(60, self.printInfo)
 
     def loadArchive(self, filename):
         "Boots an archive given a filename. Returns the new world ID."
@@ -569,16 +552,19 @@ class ArcFactory(Factory):
 
     def saveWorlds(self):
         "Saves the worlds, one at a time, with a 1 second delay."
+        self._saveWorlds()
+
+    def _saveWorlds(self):
+        "Handles actual saving process."
         if not self.saving:
             if not self.world_save_stack:
                 self.world_save_stack = list(self.worlds)
             key = self.world_save_stack.pop()
             self.saveWorld(key)
             if not self.world_save_stack:
-                reactor.callLater(60, self.saveWorlds)
                 self.saveMeta()
             else:
-                reactor.callLater(1, self.saveWorlds)
+                reactor.callLater(1, self._saveWorlds)
 
     def saveWorld(self, world_id, shutdown=False):
         value = self.runServerHook("worldSaving", {"world_id": world_id, "shutdown": shutdown})
@@ -741,7 +727,7 @@ class ArcFactory(Factory):
     def sendMessages(self):
         "Sends all queued messages, and lets worlds recieve theirs."
         try:
-            while True:
+            while True: # I don't get this line? -tyteen
                 # Get the next task
                 source_client, task, data = self.queue.get_nowait()
                 try:
@@ -964,15 +950,13 @@ class ArcFactory(Factory):
                             self.chatlog.flush()
                             if self.irc_relay and world:
                                 self.irc_relay.sendAction("", message)
-                except Exception, e:
+                except Exception as e:
                     self.logger.error(traceback.format_exc())
         except Empty:
             pass
         # OK, now, for every world, let them read their queues
         for world in self.worlds.values():
             world.read_queue()
-        # Come back soon!
-        reactor.callLater(0.1, self.sendMessages)
 
     def newWorld(self, new_name, template="default", client=None):
         "Creates a new world from some template."
@@ -1059,11 +1043,10 @@ class ArcFactory(Factory):
         "Says if the world exists (even if unbooted)"
         return os.path.isdir("worlds/%s/" % world_id)
 
+    # The following code should be replaced by a server plugin
     def AutoBackup(self):
         for world in self.worlds:
             self.Backup(world)
-        if self.backup_auto:
-            reactor.callLater(float(self.backup_freq * 60), self.AutoBackup)
 
     def Backup(self, world_id):
         world_dir = ("worlds/%s/" % world_id)
@@ -1123,14 +1106,13 @@ class ArcFactory(Factory):
                         when = match.groups()[0]
                         try:
                             when = datetime.datetime.strptime(when, "%Y/%m/%d %H:%M:%S")
-                        except ValueError, e:
-                            self.logger.warning("Bad archive filename %s" % subfilename)
+                        except ValueError as e:
+                            self.logger.warning("Bad archive filename %s." % subfilename)
                             continue
                         if name not in self.archives:
                             self.archives[name] = {}
                         self.archives[name][when] = "%s/%s" % (name, subfilename)
         self.logger.info("Loaded %s discrete archives." % len(self.archives))
-        reactor.callLater(300, self.loadArchives)
         self.runServerHook("archivesLoaded", {"number": len(self.archives)})
 
     def reloadIrcBot(self):
@@ -1191,7 +1173,8 @@ class ArcFactory(Factory):
                 self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
                 self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
             if self.backup_auto:
-                reactor.callLater(float(self.backup_freq * 60),self.AutoBackup)
+                self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
+                self.loops["autobackup"].start(float(self.backup_freq * 60), now=False)
             self.runServerHook("configReloaded", {"success": True})
             return True
         except:
