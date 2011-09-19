@@ -835,9 +835,10 @@ class ArcFactory(Factory):
                             for client in world.clients:
                                 if client != source_client:
                                     client.sendNewPlayer(*data)
-                                sendmessage = self.runHook("changeworld", source_client)
-                                if sendmessage:
-                                    client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
+                                # g: look at these lines and tell me what they do
+                                #sendmessage = self.runHook("worldChanged", source_client)
+                                #if sendmessage:
+                                client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
                     # Someone left!
                     elif task is TASK_PLAYERLEAVE:
                         self.runServerHook("onPlayerLeave", {"client": source_client})

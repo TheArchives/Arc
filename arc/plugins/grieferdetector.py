@@ -4,7 +4,7 @@
 
 import datetime
 
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 
 from arc.constants import *
 from arc.decorators import *
