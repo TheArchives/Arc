@@ -132,7 +132,10 @@ class ModUtilPlugin(ProtocolPlugin):
     def commandBanish(self, user, fromloc, overriderank):
         "/worldkick username - Op\nAliases: banish\nBanishes the user to the default world."
         if user.isWorldOwner() and not self.client.isMod():
-            self.client.sendServerMessage("You can't WorldKick the world owner!")
+            if user.isMod():
+                self.client.sendServerMessage("You can't WorldKick a staff!")
+            else:
+                self.client.sendServerMessage("You can't WorldKick the world owner!")
             return
         else:
             if user.world == self.client.world:
@@ -222,15 +225,33 @@ class ModUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "admin")
-    @only_username_command
-    def commandBanBoth(self, username, fromloc, overriderank, params=[]):
+    def commandBanBoth(self, username, fromloc, overriderank):
         "/banb username reason - Admin\nName and IP ban a user from this server."
-        if not params:
-            self.client.sendServerMessage("Please give a reason.")
+        if len(parts) <= 2:
+            self.client.sendServerMessage("Please specify a username and a reason.")
+            return
+        username = parts[1]
+        # Region ban
+        if self.client.factory.isBanned(username):
+            self.client.sendServerMessage("%s is already banned." % username)
+            return
         else:
-            if username in self.client.factory.usernames:
-                self.commandIpban(["/banb", username] + params, fromloc, overriderank)
-            self.commandBan(["/banb", username] + params, fromloc, overriderank)
+            self.client.factory.addBan(username, " ".join(parts[2:]), self.client.username)
+            self.client.sendServerMessage("Player %s banned. Continuing to IPBan..." % username)
+        # Region IPBan
+        if parts[1] not in self.client.factory.usernames:
+            self.client.sendServerMessage("User not online, cannot IPBan.")
+            return
+        ip = self.client.factory.usernames[username].transport.getPeer().host
+        if self.client.factory.isIpBanned(ip):
+            self.client.sendServerMessage("%s is already IPBanned." % ip)
+            return
+        else:
+            self.client.sendServerMessage("%s has been IPBanned." % ip)
+            self.client.factory.addIpBan(ip, " ".join(parts[2:]))
+        # Follow-up action
+        if username in self.client.factory.usernames:
+            self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
 
     @config("category", "player")
     @config("rank", "admin")
@@ -249,24 +270,25 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("%s has been banned for %s." % (username, " ".join(parts[2:])))
 
     @config("category", "player")
-    @config("rank", "director")
-    @only_username_command
-    def commandIpban(self, username, fromloc, overriderank, params=[]):
-        "/ipban username reason - Director\nBan a user's IP from this server."
-        try:
-            ip = self.client.factory.usernames[username].transport.getPeer().host
-            if self.client.factory.isIpBanned(ip):
-                self.client.sendServerMessage("%s is already IPBanned." % ip)
-            else:
-                if not params:
-                    self.client.sendServerMessage("Please give a reason.")
-                else:
-                    self.client.sendServerMessage("%s has been IPBanned." % ip)
-                    self.client.factory.addIpBan(ip, " ".join(params))
-                    if username in self.client.factory.usernames:
-                        self.client.factory.usernames[username].sendError("You got Banned!")
-        except:
+    @config("rank", "admin")
+    def commandIpban(self, parts, fromloc, overriderank):
+        "/ipban username reason - Admin\nBan a user's IP from this server."
+        if parts[1] not in self.client.factory.usernames:
             self.client.sendServerMessage("Sorry, that user is not online.")
+            return
+        username = parts[1]
+        ip = self.client.factory.usernames[username].transport.getPeer().host
+        if self.client.factory.isIpBanned(ip):
+            self.client.sendServerMessage("%s is already IPBanned." % ip)
+        else:
+            if len(parts) <= 2:
+                self.client.sendServerMessage("Please specify a username and a reason.")
+                return
+            else:
+                self.client.sendServerMessage("%s has been IPBanned." % ip)
+                self.client.factory.addIpBan(ip, " ".join(parts[2:]))
+                if username in self.client.factory.usernames:
+                    self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
 
     @config("category", "player")
     @config("rank", "admin")
@@ -367,7 +389,7 @@ class ModUtilPlugin(ProtocolPlugin):
         elif username not in self.client.factory.usernames:
             self.client.sendServerMessage("User %s is not online." % username)
             return
-        elif self.client.factory.usernames[username].isMod():
+        elif self.client.factory.usernames[username].isMod() and not self.client.isMod():
             self.client.sendServerMessage("You cannot send staff!")
             return
         else:

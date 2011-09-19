@@ -28,7 +28,6 @@ class Heartbeat(object):
         self.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
         self.hbdata = ""
         self.hbservers = dict()
-        self.buildHeartbeatData()
         self.loop = LoopingCall(self.sendHeartbeat)
         self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
         self.logger.info("Heartbeat sending process initiated.")
@@ -36,7 +35,7 @@ class Heartbeat(object):
 
     def buildHeartbeatData(self):
         # To be extended
-        self.hbdata = urllib.urlencode({
+        return urllib.urlencode({
             "port": self.factory.config.getint("network", "port"),
             "users": len(self.factory.clients),
             "max": self.factory.max_clients,
@@ -49,7 +48,7 @@ class Heartbeat(object):
     def sendHeartbeat(self):
         d = dict()
         try:
-            d[0] = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+            d[0] = getPage(self.hburl, method="POST", postdata=self.buildHeartbeatData(), headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
             d[0].addCallback(self.heartbeatSentCallback, 0)
             d[0].addErrback(self.heartbeatFailedCallback, 0)
         except:
@@ -68,7 +67,7 @@ class Heartbeat(object):
                         "salt": self.factory.salt,
                         })
                     self.factory.last_heartbeat = time.time()
-                    d[element] = getPage(self.hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+                    d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
                     d[element].addCallback(self.heartbeatSentCallback, element)
                     d[element].addErrback(self.heartbeatFailedCallback, element)
 
