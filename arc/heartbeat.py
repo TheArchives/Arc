@@ -88,7 +88,10 @@ class Heartbeat(object):
             if id == 0:
                 self.logger.error("Heartbeat failed to send. Error:")
             else:
-                self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % self.factory.heartbeats[id])
+                try:
+                    self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % str(self.factory.heartbeats[id]))
+                except TypeError:
+                    print self.factory.heartbeats[id]
             self.logger.error(str(err))
         else:
             raise err

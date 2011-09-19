@@ -23,7 +23,7 @@ class GreiferDetectorPlugin(ProtocolPlugin):
         self.loop = task.LoopingCall(self.griefcheck)
         self.loop.start(self.client.factory.grief_time, now=False)
 
-    def griefcheck():
+    def griefcheck(self):
         if self.var_blockchcount >= self.client.factory.grief_blocks:
             self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, (0, COLOUR_DARKGREEN, "Console", ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, "Possible grief behavior was detected;")), False)))
             self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, (0, COLOUR_DARKGREEN, "Console", ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, ("World: %s | User: %s" % (worldname, username))))), False))
@@ -43,7 +43,7 @@ class GreiferDetectorPlugin(ProtocolPlugin):
 
     def newWorld(self, world):
         "Hook to reset griefer count in new worlds."
-        if self.client.world.factory.worlds[world].all_write and not self.client.world.factory.worlds[world].private:
+        if world.all_write and not world.private:
             self.in_publicworld = True
         else:
             self.in_publicworld = False
