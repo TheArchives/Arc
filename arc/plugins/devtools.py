@@ -27,7 +27,7 @@ class DevToolsPlugin(ProtocolPlugin):
         if len(parts) < 2:
             self.client.sendServerMessage("You need to specify the loop and the time.")
         else:
-            if parts[1] not in self.client.factory.loopsL
+            if parts[1] not in self.client.factory.loops:
                 self.client.sendServerMessage("That loop does not exist in the server loops directory.")
             else:
                 self.client.factory.loop[parts[1]].stop()
