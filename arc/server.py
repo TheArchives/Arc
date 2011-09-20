@@ -196,7 +196,7 @@ class ArcFactory(Factory):
         try:
             number = int(self.wordfilter.get("filter", "count"))
         except Exception as e:
-            self.logger.error("Error parsing wordfilter.comf (%s)" % e)
+            self.logger.error("Error parsing wordfilter.conf (%s)" % e)
             sys.exit(1)
         for x in range(number):
             self.filter = self.filter + [[self.wordfilter.get("filter", "s"+str(x)), self.wordfilter.get("filter","r"+str(x))]]
