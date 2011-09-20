@@ -649,7 +649,7 @@ class ArcFactory(Factory):
             raise ValueError
         for client in list(list(self.worlds[world_id].clients))[:]:
             client.changeToWorld(self.default_name)
-            client.sendServerMessage("World '%s' has been Shutdown." % world_id)
+            client.sendServerMessage("World '%s' has been shut down." % world_id)
         self.worlds[world_id].stop()
         self.saveWorld(world_id, True)
         self.logger.info("World '%s' Shutdown." % world_id)

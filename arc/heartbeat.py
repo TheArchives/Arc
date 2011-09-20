@@ -81,17 +81,14 @@ class Heartbeat(object):
             fh.close()
             self.factory.runServerHook("heartbeatSent")
         else:
-            self.logger.info("Spoof heartbeat for %s sent." % self.factory.heartbeats[id])
+            self.logger.info("Spoof heartbeat for %s sent." % str(self.factory.heartbeats[id]))
 
     def heartbeatFailedCallback(self, err, id):
         if isinstance(err, twistedError.Error):
             if id == 0:
                 self.logger.error("Heartbeat failed to send. Error:")
             else:
-                try:
-                    self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % str(self.factory.heartbeats[id]))
-                except TypeError:
-                    print self.factory.heartbeats[id]
+                self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % str(self.factory.heartbeats[id]))
             self.logger.error(str(err))
         else:
             raise err

@@ -139,8 +139,9 @@ class WorldUtilPlugin(ProtocolPlugin):
                 else:
                     reactor.callLater(1, self.commandRestore(self, parts, fromloc, overriderank))
                 default_name = self.client.factory.default_name
-                self.client.factory.unloadWorld("worlds/%s" % world_id, world_id)
+                self.client.factory.unloadWorld(world_id)
                 self.client.sendServerMessage("%s has been restored to %s and booted." % (world_id, backup_number))
+                # The following code doesn't make sense -tyteen
                 if world_id in self.client.factory.worlds:
                     for client in self.client.factory.worlds[world_id].clients:
                         client.changeToWorld(world_id)
