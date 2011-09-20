@@ -285,7 +285,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         ry = self.client.y >> 5
         rz = self.client.z >> 5
         user.var_prefetchdata = (self.client, self.client.world)
-        user.sendServerMessage("%s would like to fetch you%s." % (self.client.username, (("to %s" % self.client.world.id) if self.client.world.id == user.world.id else ""))
+        user.sendServerMessage("%s would like to fetch you%s." % (self.client.username, (("to %s" % self.client.world.id) if self.client.world.id == user.world.id else "")))
         user.sendServerMessage("Do you wish to accept? [y]es [n]o")
         user.var_fetchrequest = True
         user.var_fetchdata = (self.client, self.client.world, rx, ry, rz)
