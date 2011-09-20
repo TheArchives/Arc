@@ -208,7 +208,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "op")
     def commandRank(self, parts, fromloc, overriderank):
-        "/rank rankname username - Op\nAliases: setrank\nMakes username the rank of rankname."
+        "/rank username rankname - Op\nAliases: setrank\nMakes username the rank of rankname."
         if len(parts) < 3:
             self.client.sendServerMessage("You must specify a rank and username.")
         else:
@@ -217,7 +217,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "op")
     def commandDeRank(self, parts, fromloc, overriderank):
-        "/derank rankname username - Op\nMakes username lose the rank of rankname."
+        "/derank username rankname - Op\nMakes username lose the rank of rankname."
         if len(parts) < 3:
             self.client.sendServerMessage("You must specify a rank and username.")
         else:
@@ -232,7 +232,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         else:
             if parts[0] == "/writer":
                 parts[0] = "/builder"
-            parts = ["/rank", parts[0][1:]] + parts[1:]
+            parts = ["/rank", parts[1], parts[0]] + (parts[2] if len(parts) == 3 else "")
             self.client.sendServerMessage(Rank(self, parts, fromloc, overriderank))
 
     @config("category", "player")
@@ -247,7 +247,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
             else:
                 rank = parts[0]
             rank = rank.strip("/de")
-            partsToSend = ["/derank", rank] + parts[1:]
+            parts = ["/rank", parts[1], parts[0]] + (parts[2] if len(parts) == 3 else "")
             self.client.sendServerMessage(DeRank(self, partsToSend, fromloc, overriderank))
 
     @config("category", "player")
@@ -285,10 +285,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         ry = self.client.y >> 5
         rz = self.client.z >> 5
         user.var_prefetchdata = (self.client, self.client.world)
-        if self.client.world.id == user.world.id:
-            user.sendServerMessage("%s would like to fetch you." % self.client.username)
-        else:
-            user.sendServerMessage("%s would like to fetch you to %s." % (self.client.username, self.client.world.id))
+        user.sendServerMessage("%s would like to fetch you%s." % (self.client.username, (("to %s" % self.client.world.id) if self.client.world.id == user.world.id else ""))
         user.sendServerMessage("Do you wish to accept? [y]es [n]o")
         user.var_fetchrequest = True
         user.var_fetchdata = (self.client, self.client.world, rx, ry, rz)
@@ -355,7 +352,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
                 self.client.teleportTo(x, y, z)
         except (IndexError, ValueError):
             self.client.sendServerMessage("Usage: /goto x y z [h p]")
-            self.client.sendServerMessage("MCLawl users: /l world name")
+            self.client.sendServerMessage("MCLawl users: /l worldname")
 
     @config("category", "player")
     @username_command
@@ -364,7 +361,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         x = user.x >> 5
         y = user.y >> 5
         z = user.z >> 5
-        if user.settings["tpprotect"] and not self.client.isMod():
+        if (user.settings["tpprotect"] == True) and not self.client.isMod():
             self.client.sendServerMessage("%s has teleport protection enabled - you cannot teleport to him/her." % user.username)
             return
         if user.world == self.client.world:

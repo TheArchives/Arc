@@ -183,7 +183,7 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("You have vanished.")
             self.hidden = True
             # Send the "user has disconnected" command to people
-            self.client.queueTask(TASK_PLAYERLEAVE, [self.client.id])
+            self.client.queueTask(TASK_PLAYERLEAVE, [self.client.id]) # Skipmsg = true
         else:
             self.client.sendServerMessage("That was Magic!")
             self.hidden = False
