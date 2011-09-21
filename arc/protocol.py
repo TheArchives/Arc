@@ -811,7 +811,7 @@ class ArcServerProtocol(Protocol):
     def sendNewPlayer(self, id, username, x, y, z, h, p):
         self.sendPacked(TYPE_SPAWNPOINT, id, username, x, y, z, h, p)
 
-    def sendPlayerLeave(self, id,):
+    def sendPlayerLeave(self, id):
         self.sendPacked(TYPE_PLAYERLEAVE, id)
 
     def sendKeepAlive(self):
