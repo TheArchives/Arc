@@ -6,7 +6,8 @@ import sys, threading, time, traceback, urllib
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
-from twisted.web import error as twistedError
+from twisted.internet.defer import TimeoutError
+from twisted.web.error import Error as twistedError
 from twisted.web.client import getPage
 
 from arc.constants import *
@@ -84,11 +85,14 @@ class Heartbeat(object):
             self.logger.info("Spoof heartbeat for %s sent." % self.factory.heartbeats[id][0])
 
     def heartbeatFailedCallback(self, err, id):
-        if isinstance(err, twistedError.Error):
+        if isinstance(err, TimeoutError):
+            self.logger.error("Heartbeat sending%s timed out." % ("" if id == 0 else " to "+self.factory.heartbeats[id][0]))
+        elif isinstance(err, twistedError):
             if id == 0:
                 self.logger.error("Heartbeat failed to send. Error:")
             else:
                 self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % self.factory.heartbeats[id][0])
             self.logger.error(str(err))
         else:
-            raise err
+            self.logger.error("Unexpected error in heartbeat sending process%s. Error:" % ("" if id == 0 else " to "+self.factory.heartbeats[id][0]))
+            self.logger.error(str(err))
