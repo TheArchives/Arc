@@ -26,9 +26,9 @@ class GreiferDetectorPlugin(ProtocolPlugin):
     def griefcheck(self):
         if self.var_blockchcount >= self.client.factory.grief_blocks:
             self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, (0, COLOUR_DARKGREEN, "Console", ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, "Possible grief behavior was detected;")), False)))
-            self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, (0, COLOUR_DARKGREEN, "Console", ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, ("World: %s | User: %s" % (worldname, username))))), False))
+            self.client.factory.queue.put((self.client, TASK_STAFFMESSAGE, (0, COLOUR_DARKGREEN, "Console", ("#%s%s: %s%s" % (COLOUR_DARKGREEN, 'Console ALERT', COLOUR_DARKRED, ("World: %s | User: %s" % (self.lastblock_worldname, self.client.username))))), False))
             self.client.logger.warning("%s was detected as a possible griefer in world %s." % (username, worldname))
-            self.client.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #Console ALERT: Possible grief behavior was detected; World: "+worldname+" | User: "+username+"\n")
+            self.client.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #Console ALERT: Possible grief behavior was detected; World: "+self.lastblock_worldname+" | User: "+self.client.username+"\n")
             self.client.adlog.flush()
         self.var_blockchcount = 0
 
@@ -36,9 +36,8 @@ class GreiferDetectorPlugin(ProtocolPlugin):
         "Hook trigger for block changes."
         world = self.client.world
         if block is BLOCK_AIR and self.in_publicworld:
-            if ord(world.blockstore.raw_blocks[world.blockstore.get_offset(x, y, z)]) != 3:
-                worldname = world.id
-                username = self.client.username
+            if ord(world.blockstore.raw_blocks[world.blockstore.get_offset(x, y, z)]) != 3: # Tunneling
+                self.lastblock_worldname = world.id
                 self.var_blockchcount += 1
 
     def newWorld(self, world):
