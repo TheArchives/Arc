@@ -21,7 +21,7 @@ class AutoShutdownServerPlugin():
     def checkWorlds(self):
         # Check the worlds
         if self.factory.worlds.keys() != ["default"]: # We don't care about default :P
-            worldlist = self.factory.worlds.keys().discard("default")
+            worldlist = self.factory.worlds.keys().remove("default")
             try:
                 for world in worldlist:
                     if self.factory.worlds[world].clients != set():
