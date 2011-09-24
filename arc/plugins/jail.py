@@ -99,7 +99,7 @@ class JailPlugin(ProtocolPlugin):
                 if self.client.world.id not in self.client.factory.worlds:
                     try:
                         self.client.factory.loadWorld("worlds/%s" % self.jail_world, self.jail_world)
-                    except IOError:
+                    except AssertionError:
                         self.client.sendServerMessage("It's your lucky day, world %s is broken!" % self.jail_world)
                         return
                 self.client.changeToWorld(self.jail_world)

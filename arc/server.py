@@ -629,7 +629,7 @@ class ArcFactory(Factory):
         """
         # Check if the world actually exists
         if not (os.path.isfile("%s/blocks.gz" % filename) or os.path.isfile("%s/blocks.gz.old" % filename)):
-            raise IOError
+            raise AssertionError # Lazy workaround, need to fix
         world = self.worlds[world_id] = World(filename, factory=self)
         world.source = filename
         world.clients = set()

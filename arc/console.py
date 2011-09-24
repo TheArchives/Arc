@@ -187,7 +187,7 @@ class StdinPlugin(threading.Thread):
                                     continue
                                 try:
                                     self.factory.loadWorld("worlds/"+world, world)
-                                except IOError:
+                                except AssertionError:
                                     print("Either world %s doesn't exist, or is broken." % world)
                                     continue
                                 else:
