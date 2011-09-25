@@ -34,7 +34,7 @@ class AutoShutdownServerPlugin():
                         # Somebody's inside, reset the timer
                         # Workaround
                         self.times[world] = 0
-            except AttributeError:
+            except (AttributeError, TypeError):
                 print worldlist
 
     hooks = {
