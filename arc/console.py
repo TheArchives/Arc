@@ -245,7 +245,7 @@ class StdinPlugin(threading.Thread):
                                 print("StaffChat: #message")
                                 print("Commands: /cmdlist")
                             elif message[0] == ("cmdlist"):
-                                print("about boot ban banb cmdlist cpr derank despec help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
+                                print("about boot ban banb cmdlist cpr derank despec gc help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
                             elif message[0] == ("about"):
                                 print("About The Server")
                                 print("Powered by Arc %s" % (INFO_VERSION))
@@ -298,6 +298,8 @@ class StdinPlugin(threading.Thread):
                             elif message[0] == "sendhb":
                                 print("Sending heartbeat...")
                                 self.factory.heartbeat.sendHeartbeat()
+                            elif message[0] == "gc":
+                                self.factory.cleanGarbage()
                             elif message[0] == "cpr":
                                 self.factory.heartbeat.loop.stop()
                                 del self.factory.heartbeat.loop
