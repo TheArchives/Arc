@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import sys, threading, time, traceback, urllib
+import sys, threading, time, urllib
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
@@ -48,27 +48,23 @@ class Heartbeat(object):
 
     def sendHeartbeat(self):
         d = dict()
-        try:
-            d[0] = getPage(self.hburl, method="POST", postdata=self.buildHeartbeatData(), headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-            d[0].addCallback(self.heartbeatSentCallback, 0)
-            d[0].addErrback(self.heartbeatFailedCallback, 0)
-        except:
-            self.logger.error(traceback.format_exc())
-        else:
-            for element in self.factory.heartbeats:
-                for valueset in self.factory.heartbeats.values():
-                    spoofdata = urllib.urlencode({
-                        "port": valueset[1],
-                        "users": len(self.factory.clients),
-                        "max": self.factory.max_clients,
-                        "name": valueset[0],
-                        "public": self.factory.public,
-                        "version": 7,
-                        "salt": self.factory.salt,
-                        })
-                    d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-                    d[element].addCallback(self.heartbeatSentCallback, element)
-                    d[element].addErrback(self.heartbeatFailedCallback, element)
+        d[0] = getPage(self.hburl, method="POST", postdata=self.buildHeartbeatData(), headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+        d[0].addCallback(self.heartbeatSentCallback, 0)
+        d[0].addErrback(self.heartbeatFailedCallback, 0)
+        for element in self.factory.heartbeats:
+            for valueset in self.factory.heartbeats.values():
+                spoofdata = urllib.urlencode({
+                    "port": valueset[1],
+                    "users": len(self.factory.clients),
+                    "max": self.factory.max_clients,
+                    "name": valueset[0],
+                    "public": self.factory.public,
+                    "version": 7,
+                    "salt": self.factory.salt,
+                    })
+                d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+                d[element].addCallback(self.heartbeatSentCallback, element)
+                d[element].addErrback(self.heartbeatFailedCallback, element)
 
     def heartbeatSentCallback(self, result, id):
         if id == 0:
