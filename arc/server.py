@@ -50,7 +50,6 @@ class ArcFactory(Factory):
         self.ipbanned = {}
         self.lastseen = {}
         self.specs = ConfigParser()
-        self.last_heartbeat = time.time()
         self.config = ConfigParser()
         self.options_config = ConfigParser()
         self.ploptions_config = ConfigParser()
@@ -531,9 +530,6 @@ class ArcFactory(Factory):
             for key in self.worlds:
                 if len(self.worlds[key].clients) > 0:
                     self.logger.info("%s: %s" % (key, ", ".join(str(c.username) for c in self.worlds[key].clients)))
-        if (time.time() - self.last_heartbeat) > 180:
-            self.heartbeat = None
-            self.heartbeat = Heartbeat(self)
 
     def loadArchive(self, filename):
         "Boots an archive given a filename. Returns the new world ID."

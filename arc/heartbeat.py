@@ -54,7 +54,6 @@ class Heartbeat(object):
             d[0].addErrback(self.heartbeatFailedCallback, 0)
         except:
             self.logger.error(traceback.format_exc())
-            self.factory.last_heartbeat = time.time()
         else:
             for element in self.factory.heartbeats:
                 for valueset in self.factory.heartbeats.values():
@@ -67,7 +66,6 @@ class Heartbeat(object):
                         "version": 7,
                         "salt": self.factory.salt,
                         })
-                    self.factory.last_heartbeat = time.time()
                     d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
                     d[element].addCallback(self.heartbeatSentCallback, element)
                     d[element].addErrback(self.heartbeatFailedCallback, element)
@@ -91,7 +89,7 @@ class Heartbeat(object):
             if id == 0:
                 self.logger.error("Heartbeat failed to send. Error:")
             else:
-                self.logger.info("Spoof heartbeat for %s could not be sent. Error:" % self.factory.heartbeats[id][0])
+                self.logger.error("Spoof heartbeat for %s could not be sent. Error:" % self.factory.heartbeats[id][0])
             self.logger.error(str(err))
         else:
             self.logger.error("Unexpected error in heartbeat sending process%s. Error:" % ("" if id == 0 else " to "+self.factory.heartbeats[id][0]))
