@@ -27,8 +27,6 @@ class Heartbeat(object):
         self.factory = factory
         self.logger = factory.logger
         self.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
-        self.hbdata = ""
-        self.hbservers = dict()
         self.loop = LoopingCall(self.sendHeartbeat)
         self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
         self.logger.info("Heartbeat sending process initiated.")
@@ -51,20 +49,19 @@ class Heartbeat(object):
         d[0] = getPage(self.hburl, method="POST", postdata=self.buildHeartbeatData(), headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
         d[0].addCallback(self.heartbeatSentCallback, 0)
         d[0].addErrback(self.heartbeatFailedCallback, 0)
-        for element in self.factory.heartbeats:
-            for valueset in self.factory.heartbeats.values():
-                spoofdata = urllib.urlencode({
-                    "port": valueset[1],
-                    "users": len(self.factory.clients),
-                    "max": self.factory.max_clients,
-                    "name": valueset[0],
-                    "public": self.factory.public,
-                    "version": 7,
-                    "salt": self.factory.salt,
-                    })
-                d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-                d[element].addCallback(self.heartbeatSentCallback, element)
-                d[element].addErrback(self.heartbeatFailedCallback, element)
+        for element, valueset in self.factory.heartbeats.iteritems():
+            spoofdata = urllib.urlencode({
+                "port": valueset[1],
+                "users": len(self.factory.clients),
+                "max": self.factory.max_clients,
+                "name": valueset[0],
+                "public": self.factory.public,
+                "version": 7,
+                "salt": self.factory.salt,
+                })
+            d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
+            d[element].addCallback(self.heartbeatSentCallback, element)
+            d[element].addErrback(self.heartbeatFailedCallback, element)
 
     def heartbeatSentCallback(self, result, id):
         if id == 0:

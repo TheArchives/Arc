@@ -67,8 +67,6 @@ def main():
     #)
     #logging.root.addHandler(rotate)
 
-    logger = ColouredLogger(debug)
-
     logger.info("Starting up &bArc&f v%s" % VERSION)
     factory = ArcFactory(debug)
     try:
