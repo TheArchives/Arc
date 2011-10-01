@@ -51,8 +51,6 @@ class Tracker(Thread):
     def getblockedits(self, offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        #print offset
-        #print type(offset)
         edits = self.database.runQuery("SELECT * FROM history WHERE block_offset = (?)",[offset])
         return edits
 
