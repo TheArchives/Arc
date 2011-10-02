@@ -1,5 +1,5 @@
 @ECHO off
 TITLE Arc
 
-python run.py
+python run.py -OO
 PAUSE

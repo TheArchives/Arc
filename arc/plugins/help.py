@@ -199,7 +199,7 @@ class helpPlugin(ProtocolPlugin):
         if len(parts) > 0:
             self.client.sendServerMessage("Online server staff:")
             owners = directors = admins = mods = helpers = []
-            for user in self.client.factory.usernames:
+            for user in self.client.factory.usernames.values():
                 if user.isOwner():
                     owners.add(user.username)
                 elif user.isDirector():

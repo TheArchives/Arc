@@ -9,10 +9,10 @@ if "%debug%"=="Y" goto debug
 if "%debug%"=="n" goto nodebug
 if "%debug%"=="N" goto nodebug
 :debug
-python run.py --debug
+python run.py --debug -OO
 goto quit
 :nodebug
-python run.py
+python run.py -OO
 goto quit
 :quit
 PAUSE
