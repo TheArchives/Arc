@@ -198,23 +198,22 @@ class helpPlugin(ProtocolPlugin):
         "/staff [all] - Guest\nLists all online server staff.\nSpecify all to retrieve the full server staff list."
         if len(parts) > 0:
             self.client.sendServerMessage("Online server staff:")
-            owners = directors = admins = mods = helpers = []
+            owners = []
+            directors = []
+            admins = []
+            mods = []
+            helpers = []
             for user in self.client.factory.usernames.values():
                 if user.isOwner():
                     owners.append(user.username)
-                    break
                 elif user.isDirector():
                     directors.append(user.username)
-                    break
                 elif user.isAdmin():
                     admins.append(user.username)
-                    break
                 elif user.isMod():
                     mods.append(user.username)
-                    break
                 elif user.isHelper():
                     helpers.append(user.username)
-                    break
             if owners != []:
                 self.client.sendServerList(["Owners:"] + owners)
             if directors != []:
