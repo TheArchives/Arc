@@ -202,14 +202,19 @@ class helpPlugin(ProtocolPlugin):
             for user in self.client.factory.usernames.values():
                 if user.isOwner():
                     owners.append(user.username)
-                elif user.isDirector() and not user in owners:
+                    break
+                elif user.isDirector():
                     directors.append(user.username)
-                elif user.isAdmin() and not user in [owners + directors]:
+                    break
+                elif user.isAdmin():
                     admins.append(user.username)
-                elif user.isMod() and not user in [owners + directors + admins]:
+                    break
+                elif user.isMod():
                     mods.append(user.username)
-                elif user.isHelper() and not user in [owners + directors + admins + mods]:
+                    break
+                elif user.isHelper():
                     helpers.append(user.username)
+                    break
             if owners != []:
                 self.client.sendServerList(["Owners:"] + owners)
             if directors != []:
