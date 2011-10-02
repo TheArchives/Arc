@@ -200,16 +200,16 @@ class helpPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Online server staff:")
             owners = directors = admins = mods = helpers = []
             for user in self.client.factory.usernames.values():
-                if user.isOwner():
-                    owners.append(user.username)
-                elif user.isDirector():
-                    directors.append(user.username)
-                elif user.isAdmin():
-                    admins.append(user.username)
+                if user.isHelper():
+                    helpers.append(user.username)
                 elif user.isMod():
                     mods.append(user.username)
-                elif user.isHelper():
-                    helpers.append(user.username)
+                elif user.isAdmin():
+                    admins.append(user.username)
+                elif user.isDirector():
+                    directors.append(user.username)
+                elif user.isOwner():
+                    owners.append(user.username)
             if owners != []:
                 self.client.sendServerList(["Owners:"] + owners)
             if directors != []:
