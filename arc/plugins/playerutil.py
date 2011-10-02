@@ -124,7 +124,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "Hook trigger for when the user moves"
         # Are we fake-flying them?
         if self.flying:
-            fly_block_loc = ((x>>5),((y-48)>>5)-1,(z>>5))
+            fly_block_loc = ((x>>5), ((y-48)>>5)-1, (z>>5))
             if not self.last_flying_block:
                 # OK, send the first flying blocks
                 self.setCsBlock(fly_block_loc[0], fly_block_loc[1], fly_block_loc[2], BLOCK_GLASS)
@@ -401,29 +401,26 @@ class PlayerUtilPlugin(ProtocolPlugin):
                     theList = [(key + ": ")]
                     for c in self.client.factory.worlds[key].clients:
                         user = str(c.username)
-                        if user is None:
-                            pass # To avoid NoneType error
+                        if user in self.client.factory.spectators:
+                            user = COLOUR_BLACK + user
+                        elif user in self.client.factory.owners:
+                            user = COLOUR_DARKGREEN + user
+                        elif user in self.client.factory.directors:
+                            user = COLOUR_GREEN + user
+                        elif user in self.client.factory.admins:
+                            user = COLOUR_RED + user
+                        elif user in self.client.factory.mods:
+                            user = COLOUR_BLUE + user
+                        elif user in self.client.factory.mods:
+                            user = COLOUR_DARKBLUE + user
+                        elif user is self.client.world.owner:
+                            user = COLOUR_DARKYELLOW + user
+                        elif user in self.client.world.ops:
+                            user = COLOUR_DARKCYAN + user
+                        elif user in self.client.world.builders:
+                            user = COLOUR_CYAN + user
                         else:
-                            if user in self.client.factory.spectators:
-                                user = COLOUR_BLACK + user
-                            elif user in self.client.factory.owners:
-                                user = COLOUR_DARKGREEN + user
-                            elif user in self.client.factory.directors:
-                                user = COLOUR_GREEN + user
-                            elif user in self.client.factory.admins:
-                                user = COLOUR_RED + user
-                            elif user in self.client.factory.mods:
-                                user = COLOUR_BLUE + user
-                            elif user in self.client.factory.mods:
-                                user = COLOUR_DARKBLUE + user
-                            elif user is self.client.world.owner:
-                                user = COLOUR_DARKYELLOW + user
-                            elif user in self.client.world.ops:
-                                user = COLOUR_DARKCYAN + user
-                            elif user in self.client.world.builders:
-                                user = COLOUR_CYAN + user
-                            else:
-                                user = COLOUR_WHITE + user
+                            user = COLOUR_WHITE + user
                         theList.append(user)
                     self.client.sendServerList(theList, plain=True)
         else:
@@ -499,6 +496,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     def commandClearChat(self, parts, fromloc, overriderank):
-        "/clear - Guest\nClears the chat screen."
+        "/clearchat - Guest\nClears the chat screen."
         for i in range(20):
             self.client.sendServerMessage("")

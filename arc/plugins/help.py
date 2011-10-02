@@ -195,11 +195,36 @@ class helpPlugin(ProtocolPlugin):
 
     @config("category", "info")
     def commandStaff(self, parts, fromloc, overriderank):
-        "/staff - Guest\nLists all server staff."
-        self.client.sendServerMessage("The Server Staff")
-        list = Staff(self)
-        for each in list:
-            self.client.sendServerList(each)
+        "/staff [all] - Guest\nLists all online server staff.\nSpecify all to retrieve the full server staff list."
+        if len(parts) > 0:
+            self.client.sendServerMessage("Online server staff:")
+            owners = directors = admins = mods = helpers = []
+            for user in self.client.factory.usernames:
+                if user.isOwner():
+                    owners.add(user.username)
+                elif user.isDirector():
+                    directors.add(user.username)
+                elif user.isAdmin():
+                    admins.add(user.username)
+                elif user.isMod():
+                    mods.add(user.username)
+                elif user.isHelper():
+                    helpers.add(user.username)
+            if owners != []:
+                self.client.sendServerList(["Owners:"] + owners)
+            if directors != []:
+                self.client.sendServerList(["Directors:"] + directors)
+            if admins != []:
+                self.client.sendServerList(["Admins:"] + admins)
+            if mods != []:
+                self.client.sendServerList(["Mods:"] + mods)
+            if helpers != []:
+                self.client.sendServerList(["Helpers:"] + helpers)
+        else:
+            self.client.sendServerMessage("The Server Staff")
+            list = Staff(self)
+            for each in list:
+                self.client.sendServerList(each)
 
     @config("category", "info")
     def commandHelpers(self, parts, fromloc, overriderank):
