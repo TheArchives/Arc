@@ -392,7 +392,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     def commandWho(self, parts, fromloc, overriderank):
-        "/who [username] - Guest\nAliases: pinfo, users, whois\nOnline users, or user lookup."
+        "/who [username] - Guest\nAliases: pinfo, players, users, whois\nOnline users, or user lookup."
         if len(parts) < 2:
             self.client.sendServerMessage("Do '/who username' for more info.")
             self.client.sendServerMessage("Players: ")
@@ -497,5 +497,6 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     def commandClearChat(self, parts, fromloc, overriderank):
         "/clearchat - Guest\nClears the chat screen."
-        for i in range(20):
-            self.client.sendServerMessage("")
+        for i in range(2):
+            for i in range(10):
+                self.client.sendServerMessage("")
