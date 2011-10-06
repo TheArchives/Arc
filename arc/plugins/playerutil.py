@@ -232,7 +232,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         else:
             if parts[0] == "/writer":
                 parts[0] = "/builder"
-            parts = ["/rank", parts[1], parts[0]] + (parts[2] if len(parts) == 3 else "")
+            parts = ["/rank", parts[1], parts[0]] + ([parts[2]] if len(parts) == 3 else [])
             self.client.sendServerMessage(Rank(self, parts, fromloc, overriderank))
 
     @config("category", "player")
@@ -247,7 +247,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
             else:
                 rank = parts[0]
             rank = rank.strip("/de")
-            parts = ["/rank", parts[1], parts[0]] + (parts[2] if len(parts) == 3 else "")
+            parts = ["/derank", parts[1], parts[0]] + ([parts[2]] if len(parts) == 3 else [])
             self.client.sendServerMessage(DeRank(self, partsToSend, fromloc, overriderank))
 
     @config("category", "player")
