@@ -100,12 +100,12 @@ class ArcFactory(Factory):
                 sys.exit(1)
         self.saving = False
         try:
+            self.server_name = self.config.get("main", "name")
             self.max_clients = self.config.getint("main", "max_clients")
             self.server_message = self.config.get("main", "description")
             self.public = self.config.getboolean("main", "public")
             self.controller_port = self.config.get("network", "controller_port")
             self.controller_password = self.config.get("network", "controller_password")
-            self.server_name = self.config.get("main", "name")
             # Salt, for the heartbeat server/verify-names
             self.salt = self.config.get("main", "salt") # Now reads config to cope with WoM's direct connect ???????
             self.heartbeats = dict()
@@ -115,7 +115,6 @@ class ArcFactory(Factory):
                 name = self.config.get("heartbeatnames", element)
                 port = self.config.get("heartbeatports", element)
                 self.heartbeats[id] = (name, port)
-            
         except Exception as e:
             self.logger.error("Error parsing main.conf (%s)" % e)
             sys.exit(1)
@@ -126,8 +125,6 @@ class ArcFactory(Factory):
             self.duplicate_logins = self.options_config.getboolean("options", "duplicate_logins")
             self.wom_heartbeat = self.options_config.getboolean("options", "wom_heartbeat")
             self.info_url = self.options_config.get("options", "info_url")
-            self.away_kick = self.options_config.getboolean("options", "away_kick")
-            self.away_time = self.options_config.getint("options", "away_time")
             self.colors = self.options_config.getboolean("options", "colors")
             self.physics_limit = self.options_config.getint("worlds", "physics_limit")
             self.default_name = self.options_config.get("worlds", "default_name")
@@ -137,8 +134,6 @@ class ArcFactory(Factory):
             self.logger.error("Error parsing options.conf (%s)" % e)
             sys.exit(1)
         try:
-            self.grief_blocks = self.ploptions_config.getint("antigrief", "blocks")
-            self.grief_time = self.ploptions_config.getint("antigrief", "time")
             self.backup_freq = self.ploptions_config.getint("backups", "backup_freq")
             self.backup_default = self.ploptions_config.getboolean("backups", "backup_default")
             self.backup_max = self.ploptions_config.getint("backups", "backup_max")
@@ -157,10 +152,6 @@ class ArcFactory(Factory):
                 self.blblimit["admin"] = self.ploptions_config.getint("blb", "admin")
                 self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
                 self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
-            self.usebitly = self.ploptions_config.getboolean("internet", "use_bitly")
-            if self.usebitly:
-                self.bitly_username = self.ploptions_config.getboolean("internet", "bitly_username")
-                self.bitly_apikey = self.ploptions_config.getboolean("internet", "bitly_password")
         except Exception as e:
             self.logger.error("Error parsing ploptions.conf (%s)" % e)
             sys.exit(1)
