@@ -18,7 +18,7 @@ class ArcServerProtocol(Protocol):
     Main protocol class for communicating with clients.
     Commands are mainly provided by plugins (protocol plugins).
     """
-    
+
     hooks = {}
 
     def connectionMade(self):
@@ -29,7 +29,6 @@ class ArcServerProtocol(Protocol):
         self.chatlogger = self.factory.chatlogger
         self.logger = self.factory.logger
         # Load plugins for ourselves
-        self.identified = False
         self.hooks = {}
         self.commands = {}
         self.plugins = []
@@ -52,8 +51,9 @@ class ArcServerProtocol(Protocol):
         try:
             self.id = self.factory.claimId(self)
         except ServerFull:
-            self.sendError("The server is full.")
-            return
+            if not self.isHelper():
+                self.sendError("The server is full.")
+                return
         # Open the Whisper Log, Adminchat log and WorldChat Log
         # TODO: Use a chatlog handler, this is stupid and breaks things.
         # Check for IP bans
@@ -553,7 +553,7 @@ class ArcServerProtocol(Protocol):
                         self.factory.logger.error("Error in command '%s': %s" % (command.title(), e))
                         error = traceback.format_exc()
                         errorsplit = error.split("\n")
-                        for element in errorsplit:  
+                        for element in errorsplit:
                             if not element.strip(" ") == "":
                                 self.factory.logger.error(element)
                 elif message.startswith("@"):
