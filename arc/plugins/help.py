@@ -196,7 +196,7 @@ class helpPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandStaff(self, parts, fromloc, overriderank):
         "/staff [all] - Guest\nLists all online server staff.\nSpecify all to retrieve the full server staff list."
-        if parts[1] == "all":
+        if len(parts) > 1:
             self.client.sendServerMessage("The Server Staff")
             list = Staff(self)
             for each in list:
