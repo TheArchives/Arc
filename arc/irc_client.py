@@ -123,13 +123,15 @@ class ChatBot(irc.IRCClient):
                         elif theCommand == ("banned"):
                             self.msg(user,  ", ".join(self.factory.banned))
                         elif theCommand == ("kick"):
-                            user = command[2]
-                            for client in self.factory.clients.values():
-                                if client.username.lower() == user.lower():
-                                    client.sendError("You were kicked!")
-                                    self.msg(user, "07"+str(command[2])+" has been kicked from the server.")
-                                    return
-                            self.msg(user, "07"+str(command[2])+" is not online.")
+                            theUser = command[2]
+                            if user.lower() in self.factory.usernames:
+                                if len(command) > 2:
+                                    self.factory.usernames[theUser.lower()].sendError("You were kicked by %s: %s" % (user, " ".join(command[3:])))
+                                else:
+                                    self.factory.usernames[theUser.lower()].sendError("You were kicked by %s!" % user)
+                                self.msg(user, "%s has been kicked from the server%s." % (str(command[2], (" for %s" % " ".join(command [3:]) if len(command) > 2 else ""))))
+                                return
+                            self.msg(user, "%s is not online." % command[2])
                         elif theCommand == ("ban"):
                             if command > 3:
                                 if self.factory.isBanned(command[2]):

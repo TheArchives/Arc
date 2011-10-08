@@ -1055,9 +1055,12 @@ class ArcServerProtocol(Protocol):
         if os.path.exists("config/data/inbox.dat"):
             self.messages = self.factory.messages
             for client in self.factory.clients.values():
-                if client.username in self.messages:
-                    client.sendServerMessage("You have a message waiting in your Inbox.")
-                    client.sendServerMessage("Use /inbox to check and see.")
+                try:
+                    if client.username in self.messages:
+                        client.sendServerMessage("You have a message waiting in your Inbox.")
+                        client.sendServerMessage("Use /inbox to check and see.")
+                except AttributeError:
+                    continue # Lazy workaround - we seriously need to rewrite this part
 
     def getBlbLimit(self, factor=1):
         """Fetches BLB Limit, and returns limit multiplied by a factor. 0 is returned if blb is disabled for that usergroup, and -1 for no limit."""
