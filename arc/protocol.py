@@ -623,15 +623,15 @@ class ArcServerProtocol(Protocol):
             if (self.username.lower() in self.factory.spectators):
                 colour = COLOUR_BLACK
             elif (self.username.lower() in self.factory.owners):
-                colour = COLOUR_DARKGREEN
-            elif (self.username.lower() in self.factory.directors):
                 colour = COLOUR_GREEN
+            elif (self.username.lower() in self.factory.directors):
+                colour = COLOUR_DARKRED
             elif (self.username.lower() in self.factory.admins):
                 colour = COLOUR_RED
             elif (self.username.lower() in self.factory.mods):
-                colour = COLOUR_BLUE
-            elif (self.username.lower() in self.factory.helpers):
                 colour = COLOUR_DARKBLUE
+            elif (self.username.lower() in self.factory.helpers):
+                colour = COLOUR_DARKGREY
             elif self.username.lower() in INFO_VIPLIST:
                 colour = COLOUR_YELLOW
             elif (self.username.lower() in self.world.owner):
@@ -902,7 +902,8 @@ class ArcServerProtocol(Protocol):
         else:
             self.sendPacked(TYPE_MESSAGE, 255, "You are now in world '%s'" % self.world.id)
 
-    def AllowedToBuild(self,x,y,z):
+    def AllowedToBuild(self, x, y, z):
+        # This code needs to be rewritten to shorten stuff
         build = False
         assigned = []
         try:
@@ -931,14 +932,14 @@ class ArcServerProtocol(Protocol):
             self.sendServerList(["You are not allowed to build in this zone. Only:"]+assigned+["may."])
             return False
         for id, zone in self.world.rankzones.items():
-            if "all" == zone[7]:
+            if zone[7] == "all":
                 x1, y1, z1, x2, y2, z2 = zone[1:7]
                 if x1 < x < x2:
                     if y1 < y < y2:
                         if z1 < z < z2:
                             return True
             if self.world.zoned:
-                if "builder" == zone[7]:
+                if zone[7] == "builder":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
@@ -946,9 +947,9 @@ class ArcServerProtocol(Protocol):
                                 if self.isBuilder():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be a builder to build here.")
                                     return False
-                if "op" == zone[7]:
+                if zone[7] == "op":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
@@ -956,9 +957,9 @@ class ArcServerProtocol(Protocol):
                                 if self.isOp():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be an op to build here.")
                                     return False
-                if "worldowner" == zone[7]:
+                if zone[7] == "worldowner":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
@@ -966,19 +967,19 @@ class ArcServerProtocol(Protocol):
                                 if self.isWorldOwner():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be the world owner to build here.")
                                     return False
-                if "member" == zone[7]:
+                if zone[7] == "helper":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
                             if z1 < z < z2:
-                                if self.isMember():
+                                if self.isHelper():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be a helper to build here.")
                                     return False
-                if "mod" == zone[7]:
+                if zone[7] == "mod":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
@@ -986,9 +987,9 @@ class ArcServerProtocol(Protocol):
                                 if self.isMod():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be a mod to build here.")
                                     return False
-                if "admin" == zone[7]:
+                if zone[7] == "admin":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
@@ -996,9 +997,9 @@ class ArcServerProtocol(Protocol):
                                 if self.isAdmin():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be an admin to build here.")
                                     return False
-                if "director" == zone[7]:
+                if zone[7] == "director":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:
@@ -1006,9 +1007,9 @@ class ArcServerProtocol(Protocol):
                                 if self.isDirector():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be a director to build here.")
                                     return False
-                if "owner" == zone[7]:
+                if zone[7] == "owner":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
                         if y1 < y < y2:

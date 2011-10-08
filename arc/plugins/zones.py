@@ -90,7 +90,7 @@ class ZonesPlugin(ProtocolPlugin):
             if len(parts) < 4:
                 self.client.sendServerMessage("Info missing. Usage - /znew name rank [rank]")
                 return
-            if parts[3].lower() in ["all", "builder", "op", "worldowner", "mod", "member", "admin", "director", "owner"]:
+            if parts[3].lower() in ["all", "builder", "op", "worldowner", "helper", "mod", "admin", "director", "owner"]:
                 i = 1
                 while True:
                     if not i in self.client.world.rankzones:
@@ -101,7 +101,7 @@ class ZonesPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Zone %s for rank %s has been created." % (parts[1].lower(), parts[3].lower()))
             else:
                 self.client.sendServerMessage("You must provide a proper rank.")
-                self.client.sendServerMessage("all|builder|op|worldowner|member|mod|admin|director|owner")
+                self.client.sendSplitServerMessage("all | builder | op | worldowner | helper |mod | admin | director | owner")
                 return
         elif parts[2].lower() == "user":
             i = 1

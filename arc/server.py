@@ -354,11 +354,8 @@ class ArcFactory(Factory):
         self.console.start()
         self.heartbeat = Heartbeat(self)
         self.runServerHook("heartbeatStarted")
-        # Boot worlds that got loaded
-        for world in self.worlds:
-            returned = self.loadWorld("worlds/%s" % world, world)
-            if not returned:
-                continue
+        # Boot default
+        self.loadWorld("worlds/%s" % self.default_name, self.default_name)
         if self.backup_auto:
             self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
             self.loops["autobackup"].start(float(self.backup_freq * 60), now=False)
