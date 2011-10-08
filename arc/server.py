@@ -2,7 +2,8 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import ctypes, datetime, gc, os, platform, random, re, shutil, subprocess, sys, time, traceback, cPickle, string
+import cPickle, ctypes, datetime, gc, os, random, re, shutil, string, sys, time, traceback
+from collections import defaultdict
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Queue, Empty
 
@@ -11,6 +12,7 @@ from twisted.internet import reactor, task
 
 from arc.console import StdinPlugin
 from arc.constants import *
+from arc.globals import *
 from arc.heartbeat import Heartbeat
 from arc.irc_client import ChatBotFactory
 from arc.logger import ColouredLogger, ChatLogHandler
@@ -29,7 +31,7 @@ class ArcFactory(Factory):
         self.printable = string.printable
         self.logger = ColouredLogger(debug)
         self.chatlogger = ChatLogHandler()
-
+        self.cfginfo = {"version": defaultdict(str)}
         # Load up the server plugins right away
         self.logger.info("Loading server plugins..")
         self.serverPlugins = {} # {"Name": class()}
@@ -49,14 +51,10 @@ class ArcFactory(Factory):
         self.banned = {}
         self.ipbanned = {}
         self.lastseen = {}
-        self.specs = ConfigParser()
-        self.config = ConfigParser()
-        self.options_config = ConfigParser()
-        self.ploptions_config = ConfigParser()
-        self.wordfilter = ConfigParser()
-        # self.plugins = [plugin(self) for plugin in server_plugins] <- useful code?
-        # Maybe, but I'm initialising them already in the loader
+        wordfilter = ConfigParser()
+        self.default_loaded = False
         self.hooks = {}
+        self.saving = False
         self.save_count = 1
         # Read in the greeting
         try:
@@ -74,23 +72,9 @@ class ArcFactory(Factory):
             file = open('config/data/inbox.dat', 'r')
             self.messages = cPickle.load(file)
             file.close()
-        try:
-            self.config.read("config/main.conf")
-        except Exception as a:
-            self.logger.error("Unable to read main.conf (%s)" % a)
-            sys.exit(1)
-        try:
-            self.options_config.read("config/options.conf")
-        except Exception as a:
-            self.logger.error("Unable to read options.conf (%s)" % a)
-            sys.exit(1)
-        try:
-            self.ploptions_config.read("config/ploptions.conf")
-        except Exception as a:
-            self.logger.error("Unable to read ploptions.conf (%s)" % a)
-            sys.exit(1)
+        self.loadConfig()
         self.use_irc = False
-        if (os.path.exists("config/irc.conf")):
+        if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
             self.use_irc = True
             self.irc_config = ConfigParser()
             try:
@@ -98,63 +82,6 @@ class ArcFactory(Factory):
             except Exception as a:
                 self.logger.error("Unable to read irc.conf (%s)" % a)
                 sys.exit(1)
-        self.saving = False
-        try:
-            self.server_name = self.config.get("main", "name")
-            self.max_clients = self.config.getint("main", "max_clients")
-            self.server_message = self.config.get("main", "description")
-            self.public = self.config.getboolean("main", "public")
-            self.controller_port = self.config.get("network", "controller_port")
-            self.controller_password = self.config.get("network", "controller_password")
-            # Salt, for the heartbeat server/verify-names
-            self.salt = self.config.get("main", "salt") # Now reads config to cope with WoM's direct connect ???????
-            self.heartbeats = dict()
-            heartbeats = self.config.options("heartbeatnames")
-            for element in heartbeats:
-                id = element
-                name = self.config.get("heartbeatnames", element)
-                port = self.config.get("heartbeatports", element)
-                self.heartbeats[id] = (name, port)
-        except Exception as e:
-            self.logger.error("Error parsing main.conf (%s)" % e)
-            sys.exit(1)
-        if self.salt == "":
-            self.logger.error("Salt is required.")
-            sys.exit(1)
-        try:
-            self.duplicate_logins = self.options_config.getboolean("options", "duplicate_logins")
-            self.wom_heartbeat = self.options_config.getboolean("options", "wom_heartbeat")
-            self.info_url = self.options_config.get("options", "info_url")
-            self.colors = self.options_config.getboolean("options", "colors")
-            self.physics_limit = self.options_config.getint("worlds", "physics_limit")
-            self.default_name = self.options_config.get("worlds", "default_name")
-            self.default_backup = self.options_config.get("worlds", "default_backup")
-            self.asd_delay = self.options_config.getint("worlds", "asd_delay")
-        except Exception as e:
-            self.logger.error("Error parsing options.conf (%s)" % e)
-            sys.exit(1)
-        try:
-            self.backup_freq = self.ploptions_config.getint("backups", "backup_freq")
-            self.backup_default = self.ploptions_config.getboolean("backups", "backup_default")
-            self.backup_max = self.ploptions_config.getint("backups", "backup_max")
-            self.backup_auto = self.ploptions_config.getboolean("backups", "backup_auto")
-            self.enable_archives = self.ploptions_config.getboolean("archiver", "enable_archiver")
-            self.currency = self.ploptions_config.get("bank", "currency")
-            self.useblblimit = self.ploptions_config.getboolean("blb", "use_blb_limiter")
-            if self.useblblimit:
-                self.blblimit = {}
-                self.blblimit["player"] = self.ploptions_config.getint("blb", "player")
-                self.blblimit["builder"] = self.ploptions_config.getint("blb", "builder")
-                self.blblimit["op"] = self.ploptions_config.getint("blb", "op")
-                self.blblimit["worldowner"] = self.ploptions_config.getint("blb", "worldowner")
-                self.blblimit["helper"] = self.ploptions_config.getint("blb", "helper")
-                self.blblimit["mod"] = self.ploptions_config.getint("blb", "mod")
-                self.blblimit["admin"] = self.ploptions_config.getint("blb", "admin")
-                self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
-                self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
-        except Exception as e:
-            self.logger.error("Error parsing ploptions.conf (%s)" % e)
-            sys.exit(1)
         if self.use_irc:
             try:
                 self.irc_nick = self.irc_config.get("irc", "nick")
@@ -175,21 +102,25 @@ class ArcFactory(Factory):
                 self.irc_relay = None
         else:
             self.irc_relay = None
-        self.default_loaded = False
         # Word Filter
+        # Note: worldfilter.conf has no cfgversion at the moment, because we might rewrite this bit - g will know more
         try:
-            self.wordfilter.read("config/wordfilter.conf")
+            wordfilter.read("config/wordfilter.conf")
         except Exception as e:
             self.logger.error("Unable to read wordfilter.conf (%s)" % e)
-            sys.exit(1)
+            self.logger.error("Word filtering has been disabled.")
+            self.has_wordfilter = False
+        else:
+            self.has_wordfilter = True
         self.filter = []
-        try:
-            number = int(self.wordfilter.get("filter", "count"))
-        except Exception as e:
-            self.logger.error("Error parsing wordfilter.conf (%s)" % e)
-            sys.exit(1)
-        for x in range(number):
-            self.filter = self.filter + [[self.wordfilter.get("filter", "s"+str(x)), self.wordfilter.get("filter","r"+str(x))]]
+        if self.has_wordfilter:
+            try:
+                number = int(wordfilter.get("filter", "count"))
+            except Exception as e:
+                self.logger.error("Error parsing wordfilter.conf (%s)" % e)
+                sys.exit(1)
+            for x in range(number):
+                self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter","r"+str(x))]]
         # Load up the plugins specified
         self.plugins_config = ConfigParser()
         try:
@@ -230,6 +161,140 @@ class ArcFactory(Factory):
         # Open the adminchat log.
         self.adlog = open("logs/server.log", "a")
 
+    def loadConfig(self, reload=False):
+        configParsers = dict()
+        for config in CONFIG:
+            if reload and config[3] == False:
+                # Non-dynamic
+                continue
+            if not config[1][0] in configParsers.keys():
+                # Create an instance of ConfigParser if we don't already have one
+                configParsers[config[1][0]] = ConfigParser()
+                try:
+                    self.logger.debug("Reading file config/%s..." % config[1][0])
+                    configParsers[config[1][0]].read("config/%s" % config[1][0])
+                except Exception as e:
+                    self.logger.error("Unable to read %s (%s)" % (config[1][0], e))
+                    sys.exit(1)
+                # Check Config version
+                if config[1][0] in CFGVERSION:
+                    if configParsers[config[1][0]].has_section("cfginfo"):
+                        self.cfginfo["version"][config[1][0]] = configParsers[config[1][0]].get("cfginfo", "version")
+                    else:
+                        # No config version - unacceptable! Exit
+                        self.logger.error("File %s has no config version. Unable to continue." % config[1][0])
+                        sys.exit(1)
+                if not checkConfigVersion(self.cfginfo["version"][config[1][0]], CFGVERSION[config[1][0]]):
+                    if config[1][0] in CFGVERSION:
+                        # Inside official dist
+                        self.logger.error("You have an outdated %s, please redownload the Arc package and fill in the configuration again." % config[1][0])
+                        sys.exit(1)
+                    else:
+                        # Plugin
+                        self.logger.error("You have an outdated %s, please contact the plugin author." % config[1][0])
+                        sys.exit(1)
+            # Any prerequistics?
+            if config[2] != None:
+                evaluate = eval(config[2], {"self": self})
+                self.logger.debug("Criteria result: %s" % str(evaluate))
+                if not evaluate:
+                    self.logger.debug("Criteria not met. Skipping.")
+                    self.logger.debug("Criteria: %s" % config[2])
+                    continue
+            try:
+                valueFunc = getattr(configParsers[config[1][0]], config[4])
+                if config[4] == "options":
+                    value = valueFunc(config[1][1])
+                else:
+                    value = valueFunc(config[1][1], config[1][2])
+            except Exception as e:
+                self.logger.error("Unable to read config %s." % config[1][2])
+                self.logger.error(str(e))
+                sys.exit(1)
+            else:
+                try:
+                    setattr(self, config[0], value)
+                except Exception as e:
+                    self.logger.error("Unable to set %s (%s)" % (config[0], e))
+                    sys.exit(1)
+                else:
+                    if config[5] != None:
+                        try:
+                            callbackFunc = getattr(self, config[5])
+                            callbackFunc(reload=reload)
+                        except Exception as e:
+                            self.logger.error("Unable to run callback function %s!" % config[5])
+                            self.logger.error(str(e))
+                    self.logger.debug("Loaded config %s." % config[0])
+
+    # Dummy callback functions until I figure out a better way to do all of these
+
+    def checkSalt(self, reload):
+        if self.salt in ["", "Select this text and mash your keyboard."]:
+            self.logger.critical("Salt is required.")
+            sys.exit(1)
+
+    def buildSpoofHeartbeat(self, reload):
+        heartbeats = self.hbs
+        config = ConfigParser()
+        config.read("config/main.conf") # This can't fail because it has been checked before
+        self.heartbeats = dict()
+        for element in heartbeats:
+            name = config.get("heartbeatnames", element)
+            port = config.getint("heartbeatports", element)
+            self.heartbeats[element] = (name, port)
+            reactor.listenTCP(port, self)
+            self.logger.info("Starting spoofed heartbeat %s on port %s..." % (name, port))
+
+    def modifyHeartbeatURL(self, reload):
+        "Called to recheck URL."
+        if reload:
+            self.heartbeat.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
+
+    def startASDLoop(self, reload):
+        "Called to start the ASD loop."
+        pass
+
+    def initBackupLoop(self, reload):
+        "Called to initialize the backup loop."
+        if reload:
+            self.loops["autobackup"].stop()
+        elif self.backup_auto != False:
+            self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
+
+    def modifyBackupFrequency(self, reload):
+        "Called to start the backup loop."
+        if reload:
+            self.loops["autobackup"].stop()
+        elif self.backup_auto != False:
+            self.loops["autobackup"].run(self.config["backup_freq"], now=False)
+
+    def enableArchiver(self, reload):
+        if reload:
+            self.loops["loadarchives"].stop()
+        elif self.enable_archives != False:
+            self.loops["loadarcives"] = task.LoopingCall("loadarchives")
+            self.loops["loadarcives"].start(300)
+
+    def initBLBLimiter(self, reload):
+        if not self.useblblimiter:
+            if reload:
+                del self.blblimit
+            return
+        self.blblimit = {}
+        config = ConfigParser()
+        config.read("config/options.conf") # This can't fail because it has been checked before
+        self.blblimit["player"] = config.getint("blb", "player")
+        self.blblimit["builder"] = config.getint("blb", "builder")
+        self.blblimit["op"] = config.getint("blb", "op")
+        self.blblimit["worldowner"] = config.getint("blb", "worldowner")
+        self.blblimit["helper"] = config.getint("blb", "helper")
+        self.blblimit["mod"] = config.getint("blb", "mod")
+        self.blblimit["admin"] = config.getint("blb", "admin")
+        self.blblimit["director"] = config.getint("blb", "director")
+        self.blblimit["owner"] = config.getint("blb", "owner")
+
+    # End of dummy callbacks
     def loadServerPlugins(self, something=None):
         "Used to load up all the server plugins."
         files = []
@@ -243,7 +308,7 @@ class ArcFactory(Factory):
             elif ext == "py": # Check if it ends in .py
                 files.append(file)
         self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,".py, ".join(files)+".py"))
-        self.logger.debug("Loading server plugins..")
+        self.logger.info("Loading server plugins..")
         i = 0
         while i < len(files):
             element = files[i]
@@ -356,9 +421,6 @@ class ArcFactory(Factory):
         self.runServerHook("heartbeatStarted")
         # Boot default
         self.loadWorld("worlds/%s" % self.default_name, self.default_name)
-        if self.backup_auto:
-            self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
-            self.loops["autobackup"].start(float(self.backup_freq * 60), now=False)
         # Set up tasks to run during execution
         self.loops["sendmessages"] = task.LoopingCall(self.sendMessages)
         self.loops["sendmessages"].start(0.1)
@@ -368,9 +430,6 @@ class ArcFactory(Factory):
         self.world_save_stack = []
         self.loops["saveworlds"] = task.LoopingCall(self.saveWorlds)
         self.loops["saveworlds"].start(60, now=False)
-        if self.enable_archives:
-            self.loops["loadarchives"] = task.LoopingCall(self.loadArchives)
-            self.loops["loadarchives"].start(300)
         gc.disable()
         self.loops["cleangarbage"] = task.LoopingCall(self.cleanGarbage)
         self.loops["cleangarbage"].start(60*15)
@@ -391,8 +450,39 @@ class ArcFactory(Factory):
         lastseen.read("config/data/lastseen.meta")
         bans = ConfigParser()
         bans.read("config/data/bans.meta")
-        worlds = ConfigParser()
-        worlds.read("config/data/worlds.meta")
+        if config.has_section("cfginfo"):
+            # Config version?
+            self.cfginfo["version"]["ranks.meta"] = config.get("cfginfo", "version")
+        else:
+            self.cfginfo["version"]["ranks.meta"] = "1.0.0"
+        if specs.has_section("cfginfo"):
+            # Config version?
+            self.cfginfo["version"]["spectators.meta"] = specs.get("cfginfo", "version")
+        else:
+            self.cfginfo["version"]["spectators.meta"] = "1.0.0"
+        if lastseen.has_section("cfginfo"):
+            # Config version?
+            self.cfginfo["version"]["lastseen.meta"] = lastseen.get("cfginfo", "version")
+        else:
+            self.cfginfo["version"]["lastseen.meta"] = "1.0.0"
+        if bans.has_section("cfginfo"):
+            # Config version?
+            self.cfginfo["version"]["bans.meta"] = bans.get("cfginfo", "version")
+        else:
+            self.cfginfo["version"]["bans.meta"] = "1.0.0"
+        if not checkConfigVersion(self.cfginfo["version"]["ranks.meta"], CFGVERSION["ranks.meta"]):
+            print self.cfginfo["version"]["ranks.meta"]
+            self.logger.error("You have an outdated ranks.meta, please redownload the Arc package and fill in the configuration again.")
+            sys.exit(1)
+        if not checkConfigVersion(self.cfginfo["version"]["spectators.meta"], CFGVERSION["spectators.meta"]):
+            self.logger.error("You have an outdated spectators.meta, please redownload the Arc package and fill in the configuration again.")
+            sys.exit(1)
+        if not checkConfigVersion(self.cfginfo["version"]["lastseen.meta"], CFGVERSION["lastseen.meta"]):
+            self.logger.error("You have an outdated lastseen.meta, please redownload the Arc package and fill in the configuration again.")
+            sys.exit(1)
+        if not checkConfigVersion(self.cfginfo["version"]["bans.meta"], CFGVERSION["bans.meta"]):
+            self.logger.error("You have an outdated bans.meta, please redownload the Arc package and fill in the configuration again.")
+            sys.exit(1)
         # Read in the admins
         if config.has_section("admins"):
             for name in config.options("admins"):
@@ -419,8 +509,6 @@ class ArcFactory(Factory):
         if specs.has_section("spectators"):
             for name in specs.options("spectators"):
                 self.spectators.add(name)
-        bans = ConfigParser()
-        bans.read("config/data/bans.meta")
         # Read in the bans
         if bans.has_section("banned"):
             for name in bans.options("banned"):
@@ -432,22 +520,7 @@ class ArcFactory(Factory):
         # Read in the lastseen
         if lastseen.has_section("lastseen"):
             for username in lastseen.options("lastseen"):
-                try:
-                    self.lastseen[username] = lastseen.getfloat("lastseen", username)
-                except Exception as a:
-                    self.logger.error("Unable to read the lastseen for %s!" % username)
-                    self.logger.error("%s" % a)
-                    self.logger.warn("Giving up on lastseen.")
-                    break
-        # Read in the worlds
-        if worlds.has_section("worlds"):
-            for name in worlds.options("worlds"):
-                if name is self.default_name:
-                    self.default_loaded = True
-        else:
-            self.worlds[self.default_name] = None
-        if not self.default_loaded:
-            self.worlds[self.default_name] = None
+                self.lastseen[username] = lastseen.getfloat("lastseen", username)
         self.runServerHook("metaLoaded")
 
     def saveMeta(self):
@@ -456,17 +529,20 @@ class ArcFactory(Factory):
         specs = ConfigParser()
         lastseen = ConfigParser()
         bans = ConfigParser()
-        worlds = ConfigParser()
         # Make the sections
+        config.add_section("cfginfo")
         config.add_section("owners")
         config.add_section("directors")
         config.add_section("admins")
         config.add_section("mods")
         config.add_section("helpers")
         config.add_section("silenced")
+        bans.add_section("cfginfo")
         bans.add_section("banned")
         bans.add_section("ipbanned")
+        specs.add_section("cfginfo")
         specs.add_section("spectators")
+        lastseen.add_section("cfginfo")
         lastseen.add_section("lastseen")
         # Write out things
         for owner in self.owners:
@@ -488,13 +564,15 @@ class ArcFactory(Factory):
         for ipban, reason in self.ipbanned.items():
             bans.set("ipbanned", ipban, reason)
         for username, ls in self.lastseen.items():
-            try:
-                lastseen.set("lastseen", username, str(ls))
-            except Exception as a:
-                self.logger.error("Unable to save lastseen for %s.")
-                self.logger.error("%s" % a)
-                self.logger.warn("Giving up on lastseen.")
-                break
+            lastseen.set("lastseen", username, str(ls))
+        config.set("cfginfo", "name", "ranks.meta")
+        config.set("cfginfo", "version", self.cfginfo["version"]["ranks.meta"])
+        bans.set("cfginfo", "name", "bans.meta")
+        bans.set("cfginfo", "version", self.cfginfo["version"]["bans.meta"])
+        specs.set("cfginfo", "name", "spectators.meta")
+        specs.set("cfginfo", "version", self.cfginfo["version"]["spectators.meta"])
+        lastseen.set("cfginfo", "name", "lastseen.meta")
+        lastseen.set("cfginfo", "version", self.cfginfo["version"]["lastseen.meta"])
         fp = open("config/data/ranks.meta", "w")
         config.write(fp)
         fp.close()
@@ -506,9 +584,6 @@ class ArcFactory(Factory):
         fp.close()
         fp = open("config/data/bans.meta", "w")
         bans.write(fp)
-        fp.close()
-        fp = open("config/data/worlds.meta", "w")
-        worlds.write(fp)
         fp.close()
         self.runServerHook("metaSaved")
 
@@ -796,7 +871,7 @@ class ArcFactory(Factory):
                         value = self.runServerHook("onAction", {"id": id, "colour": colour, "username": username, "text": text})
                         if value:
                             text = self.messagestrip(text)
-                            data = (id,colour,username,text)
+                            data = (id, colour, username, text)
                             for client in self.clients.values():
                                 client.sendAction(*data)
                             id, colour, username, text = data
@@ -819,20 +894,22 @@ class ArcFactory(Factory):
                             for client in world.clients:
                                 if client != source_client:
                                     client.sendNewPlayer(*data)
-                                # g: look at these lines and tell me what they do
-                                #sendmessage = self.runHook("worldChanged", source_client)
-                                #if sendmessage:
-                                client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
+                                sendmessage = self.runServerHook("worldChanged", {"client": source_client})
+                                if sendmessage:
+                                    client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
                     # Someone left!
                     elif task is TASK_PLAYERLEAVE:
-                        self.runServerHook("onPlayerLeave", {"client": source_client})
+                        self.runServerHook("onPlayerLeave", {"client": source_client, "skipmsg": data})
                         # Only run it for clients who weren't the source.
                         for client in self.clients.values():
-                            client.sendPlayerLeave(*data)
+                            client.sendPlayerLeave(data[0])
                             if not source_client.username is None:
                                 client.sendNormalMessage("%s%s&e has gone offline." % (source_client.userColour(), source_client.username))
                             else:
-                                source_client.logger.warn("Pinged the server.")
+                                try:
+                                    del self.usernames[source_client]
+                                except Exception as e:
+                                    self.logger.warn(str(e))
                         if not source_client.username is None:
                             if self.irc_relay and world:
                                 self.irc_relay.sendServerMessage("07%s has gone offline." % source_client.username)
@@ -943,7 +1020,7 @@ class ArcFactory(Factory):
         for world in self.worlds.values():
             world.read_queue()
 
-    def newWorld(self, new_name, template="default", client=None):
+    def newWorld(self, new_name, template="default"):
         "Creates a new world from some template."
         # Make the directory
         try:
@@ -956,10 +1033,10 @@ class ArcFactory(Factory):
         for filename in ["blocks.gz", "world.meta"]:
             try:
                 shutil.copyfile("arc/templates/%s/%s" % (template, filename), "worlds/%s/%s" % (new_name, filename))
-            except:
-                if not client is None:
-                    client.sendServerMessage("That template doesn't exist.")
+            except IOError:
                 return False
+            except:
+                raise
         self.runServerHook("worldCreated", {"name": new_name, "template": template})
         return True
 
@@ -1028,7 +1105,7 @@ class ArcFactory(Factory):
         "Says if the world exists (even if unbooted)"
         return os.path.isdir("worlds/%s/" % world_id)
 
-    # The following code should be replaced by a server plugin
+    # The following code needs to be rewritten
     def AutoBackup(self):
         for world in self.worlds:
             self.Backup(world)
@@ -1062,24 +1139,28 @@ class ArcFactory(Factory):
                 for i in range(0,((len(backups)+1)-self.backup_max)):
                     shutil.rmtree(os.path.join(world_dir+"backup/", str(int(backups[i]))))
             self.runServerHook("onBackup", {"world_id": world_id})
+    # The above code needs to be rewritten
 
     def messagestrip(self, message):
-        strippedmessage = ""
-        for x in message:
-            if isinstance(x, list):
-                strippedmessage = strippedmessage + self.messagestrip(x)
-            elif isinstance(x, str):
-                if str(x) in self.printable:
-                    strippedmessage = strippedmessage + str(x)
-            else:
-                self.logger.error("Unknown message type passed to the message stripper.")
-                self.logger.error("Data: %s" % x)
-                return "Error!"
-        message = strippedmessage
-        for x in self.filter:
-            rep = re.compile(x[0], re.IGNORECASE)
-            message = rep.sub(x[1], message)
-        return message
+        if self.has_wordfilter:
+            strippedmessage = ""
+            for x in message:
+                if isinstance(x, list):
+                    strippedmessage = strippedmessage + self.messagestrip(x)
+                elif isinstance(x, str):
+                    if str(x) in self.printable:
+                        strippedmessage = strippedmessage + str(x)
+                else:
+                    self.logger.error("Unknown message type passed to the message stripper.")
+                    self.logger.error("Data: %s" % x)
+                    return "Error!"
+            message = strippedmessage
+            for x in self.filter:
+                rep = re.compile(x[0], re.IGNORECASE)
+                message = rep.sub(x[1], message)
+            return message
+        else: # No word filter, just return the message
+            return message
 
     def loadArchives(self):
         self.archives = {}
@@ -1125,43 +1206,3 @@ class ArcFactory(Factory):
             except:
                 return False
         return False
-
-    def reloadConfig(self):
-        try:
-            # TODO: Figure out which of these would work dynamically, otherwise delete them from this area.
-            self.duplicate_logins = self.options_config.getboolean("options", "duplicate_logins")
-            self.info_url = self.options_config.get("options", "info_url")
-            self.away_kick = self.options_config.getboolean("options", "away_kick")
-            self.away_time = self.options_config.getint("options", "away_time")
-            self.colors = self.options_config.getboolean("options", "colors")
-            self.physics_limit = self.options_config.getint("worlds", "physics_limit")
-            self.default_backup = self.options_config.get("worlds", "default_backup")
-            self.asd_delay = self.options_config.getint("worlds", "asd_delay")
-            self.grief_blocks = self.ploptions_config.getint("antigrief", "blocks")
-            self.grief_time = self.ploptions_config.getint("antigrief", "time")
-            self.backup_freq = self.ploptions_config.getint("backups", "backup_freq")
-            self.backup_default = self.ploptions_config.getboolean("backups", "backup_default")
-            self.backup_max = self.ploptions_config.getint("backups", "backup_max")
-            self.backup_auto = self.ploptions_config.getboolean("backups", "backup_auto")
-            self.enable_archives = self.ploptions_config.getboolean("archiver", "enable_archiver")
-            self.currency = self.ploptions_config.get("bank", "currency")
-            self.useblblimit = self.ploptions_config.getboolean("blb", "use_blb_limiter")
-            if self.useblblimit:
-                self.blblimit = {}
-                self.blblimit["player"] = self.ploptions_config.getint("blb", "player")
-                self.blblimit["builder"] = self.ploptions_config.getint("blb", "builder")
-                self.blblimit["op"] = self.ploptions_config.getint("blb", "op")
-                self.blblimit["worldowner"] = self.ploptions_config.getint("blb", "worldowner")
-                self.blblimit["helper"] = self.ploptions_config.getint("blb", "helper")
-                self.blblimit["mod"] = self.ploptions_config.getint("blb", "mod")
-                self.blblimit["admin"] = self.ploptions_config.getint("blb", "admin")
-                self.blblimit["director"] = self.ploptions_config.getint("blb", "director")
-                self.blblimit["owner"] = self.ploptions_config.getint("blb", "owner")
-            if self.backup_auto:
-                self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
-                self.loops["autobackup"].start(float(self.backup_freq * 60), now=False)
-            self.runServerHook("configReloaded", {"success": True})
-            return True
-        except:
-            self.runServerHook("configReloaded", {"success": False})
-            return False

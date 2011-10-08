@@ -70,31 +70,24 @@ def main():
     logger.info("Starting up &bArc&f v%s" % VERSION)
     factory = ArcFactory(debug)
     try:
-        factory.ip = reactor.listenTCP(factory.config.getint("network", "port"), factory).getHost()
+        factory.ip = reactor.listenTCP(factory.server_port, factory).getHost()
     except CannotListenError:
-        logger.critical("Something is already running on port %s" % (factory.config.getint("network", "port")))
+        logger.critical("Something is already running on port %s" % (factory.server))
         doExit()
-    controller = ControllerFactory(factory)
-    try:
-        reactor.listenTCP(factory.config.getint("network", "controller_port"), controller)
-    except CannotListenError as a:
-        logger.warning("Controller cannot listen on port %s. Disabled." % factory.config.getint("network", "port"))
-        logger.warning("Error: %s" % a)
-        del controller
+    if factory.use_controller:
+        controller = ControllerFactory(factory)
+        try:
+            reactor.listenTCP(factory.controller_port, controller)
+        except CannotListenError as a:
+            logger.warning("Controller cannot listen on port %s. Disabled." % factory.controller_port)
+            logger.warning("Error: %s" % a)
+            del controller
     # TODO: Well...
     money_logger = logging.getLogger('TransactionLogger')
     fh = logging.FileHandler('logs/server.log')
     formatter = logging.Formatter("%(asctime)s: %(message)s")
     fh.setFormatter(formatter)
     money_logger.addHandler(fh)
-
-    heartbeats = factory.config.options("heartbeatnames")
-    for element in heartbeats:
-        name = factory.config.get("heartbeatnames", element)
-        port = factory.config.getint("heartbeatports", element)
-        logger.info("Starting spoofed heartbeat %s on port %s..." % (name, port))
-        reactor.listenTCP(port, factory)
-    del heartbeats
 
     try:
         reactor.run()

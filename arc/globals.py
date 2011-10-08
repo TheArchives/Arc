@@ -315,3 +315,16 @@ def appendToKeys(theDict, phrase):
 
 def recursive_default():
     return defaultdict(recursive_default)
+
+def checkConfigVersion(version, current):
+    theVersion = tuple()
+    try:
+        theVersion = version.split(".")
+    except ValueError as e:
+        return False
+    else:
+        # Check version
+        if (int(theVersion[0]) < current[0]) or ((int(theVersion[1]) + 2) < current[1]) or ((int(theVersion[2]) + 5) < current[2]):
+            return False
+        else:
+            return True

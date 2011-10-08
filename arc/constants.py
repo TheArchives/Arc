@@ -8,6 +8,47 @@ except:
 else:
     VERSION = "1.0.0_r%s" % SVN_VERSION
 
+CFGVERSION = {
+    "main.conf": (1, 0, 0),
+    "options.conf": (1, 0, 0),
+    "bans.meta": (1, 0, 0),
+    "ranks.meta": (1, 0, 0),
+    "lastseen.meta": (1, 0, 0),
+    "spectators.meta": (1, 0, 0),
+    "world.meta": (1, 0, 0),
+}
+
+CONFIG = [
+    # Format:
+    #(attribute name, (file, section, option), prerequistics, dynamic, mode, callback function (self = ArcFactory, None for no callback func))
+    # prerequistics is a python expression (lazy bum :P)
+    ("server_name", ("main.conf", "main", "name"), None, True, "get", None),
+    ("server_port", ("main.conf", "network", "port"), None, False, "getint", None),
+    ("max_clients", ("main.conf", "main", "max_clients"), None, True, "getint", None),
+    ("server_message", ("main.conf", "main", "description"), None, True, "get", None),
+    ("public", ("main.conf", "main", "public"), None, True, "getboolean", None),
+    ("salt", ("main.conf", "main", "salt"), None, False, "get", "checkSalt"),
+    ("use_controller", ("main.conf", "network", "use_controller"), None, False, "getboolean", None),
+    ("controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None),
+    ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get", None),
+    ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", "buildSpoofHeartbeat"),
+    ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None),
+    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL"),
+    ("info_url", ("options.conf", "options", "info_url"), None, True, "get", None),
+    ("colors", ("options.conf", "options", "colors"), None, True, "getboolean", None),
+    ("physics_limit", ("options.conf", "worlds", "physics_limit"), None, True, "getint", None),
+    ("default_name", ("options.conf", "worlds", "default_name"), None, False, "get", None),
+    ("default_backup", ("options.conf", "worlds", "default_backup"), None, True, "get", None),
+    ("asd_delay", ("options.conf", "worlds", "asd_delay"), None, True, "getint", "startASDLoop"),
+    ("backup_auto", ("options.conf", "backups", "backup_auto"), None, True, "get", "initBackupLoop"),
+    ("backup_freq", ("options.conf", "backups", "backup_freq"), "self.backup_auto == True", True, "getint", "changeBackupFrequency"),
+    ("backup_default", ("options.conf", "backups", "backup_default"), "self.backup_auto == True", True, "getboolean", None),
+    ("backup_max", ("options.conf", "backups", "backup_max"), "self.backup_auto == True", True, "getint", None),
+    ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver"),
+    ("currency", ("options.conf", "bank", "currency"), None, True, "get", None),
+    ("useblblimiter", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter"),
+]
+
 INFO_VIPLIST = [
     # Mojang staff (current or retired)
     "c418",

@@ -11,8 +11,6 @@ except ImportError:
     noimagedraw = True
 
 from twisted.internet import defer, reactor
-from twisted.web.google import *
-from arc.includes import bitly_api
 
 from arc.constants import *
 from arc.decorators import *
@@ -30,10 +28,11 @@ class InternetPlugin(ProtocolPlugin):
         "imagedraw": "commandImagedraw",
     }
 
-    tuser = ""
-    tpass = ""
-    twlog = open("logs/twitter.log", "a")
-    makefile("logs/twitter.log")
+    def gotClient(self):
+        tuser = ""
+        tpass = ""
+        makefile("logs/twitter.log")
+        twlog = open("logs/twitter.log", "a")
 
     @config("custom_cmdlog_msg", "just logged into Twitter.")
     @config("category", "info")

@@ -35,7 +35,7 @@ class Heartbeat(object):
     def buildHeartbeatData(self):
         # To be extended
         return urllib.urlencode({
-            "port": self.factory.config.getint("network", "port"),
+            "port": self.factory.server_port,
             "users": len(self.factory.clients),
             "max": self.factory.max_clients,
             "name": self.factory.server_name,

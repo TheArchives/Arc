@@ -10,6 +10,7 @@ from Queue import Empty
 from arc.blockstore import BlockStore
 from arc.constants import *
 from arc.deferred import Deferred
+from arc.globals import *
 from arc.logger import ColouredLogger
 from arc.blocktracker import Tracker
 
@@ -36,6 +37,7 @@ class World(object):
         self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")
         # Other settings
+        self.cfgversion = "1.0.0"
         self.owner = "N/A"
         self.ops = set()
         self.builders = set()
@@ -157,6 +159,12 @@ class World(object):
     def load_meta(self):
         config = ConfigParser()
         config.read(self.meta_path)
+        if config.has_section("cfginfo"):
+            self.cfgversion = config.get("cfginfo", "version")
+        else:
+            self.cfgversion = "1.0.0"
+        if not checkConfigVersion(self.cfgversion, CFGVERSION["world.meta"]):
+            self.logger.warn("World %s has an outdated world.meta, data may be lost." % self.id)
         self.x = config.getint("size", "x")
         self.y = config.getint("size", "y")
         self.z = config.getint("size", "z")
@@ -176,8 +184,6 @@ class World(object):
             self.ops = set()
         if config.has_section("builders"):
             self.builders = set(x.lower() for x in config.options("builders"))
-        elif config.has_section("writers"):
-            self.builders = set(x.lower() for x in config.options("writers"))
         else:
             self.builders = set()
         if config.has_section("permissions"):
@@ -291,6 +297,7 @@ class World(object):
 
     def save_meta(self):
         config = ConfigParser()
+        config.add_section("cfginfo")
         config.add_section("size")
         config.add_section("spawn")
         config.add_section("owner")
@@ -308,6 +315,8 @@ class World(object):
         config.add_section("rankzones")
         config.add_section("entitylist")
         config.add_section("chat")
+        config.set("cfginfo", "name", "world.meta")
+        config.set("cfginfo", "version", self.cfgversion)
         config.set("size", "x", str(self.x))
         config.set("size", "y", str(self.y))
         config.set("size", "z", str(self.z))
