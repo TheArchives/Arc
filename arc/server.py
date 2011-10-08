@@ -224,7 +224,7 @@ class ArcFactory(Factory):
                             callbackFunc(reload=reload)
                         except Exception as e:
                             self.logger.error("Unable to run callback function %s!" % config[5])
-                            self.logger.error(str(e))
+                            self.logger.error(traceback.format_exc())
                     self.logger.debug("Loaded config %s." % config[0])
 
     # Dummy callback functions until I figure out a better way to do all of these
