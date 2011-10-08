@@ -273,7 +273,7 @@ class ArcFactory(Factory):
         if reload:
             self.loops["loadarchives"].stop()
         elif self.enable_archives != False:
-            self.loops["loadarcives"] = task.LoopingCall("loadarchives")
+            self.loops["loadarcives"] = task.LoopingCall(self.loadArchives)
             self.loops["loadarcives"].start(300)
 
     def initBLBLimiter(self, reload):
