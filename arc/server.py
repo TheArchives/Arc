@@ -51,6 +51,7 @@ class ArcFactory(Factory):
         self.banned = {}
         self.ipbanned = {}
         self.lastseen = {}
+        self.loadConfig()
         wordfilter = ConfigParser()
         self.default_loaded = False
         self.hooks = {}
@@ -72,7 +73,6 @@ class ArcFactory(Factory):
             file = open('config/data/inbox.dat', 'r')
             self.messages = cPickle.load(file)
             file.close()
-        self.loadConfig()
         self.use_irc = False
         if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
             self.use_irc = True
