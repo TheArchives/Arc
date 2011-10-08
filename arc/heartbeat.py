@@ -47,6 +47,7 @@ class Heartbeat(object):
     def sendHeartbeat(self):
         try:
             getattr(self.factory, "wom_heartbeat")
+            getattr(self.factory, "heartbeats")
         except AttributeError:
             reactor.callLater(3, self.sendHeartbeat) # Server has not finished loading yet - come back in 3 seconds maybe?
         d = dict()

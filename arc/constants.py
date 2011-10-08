@@ -33,7 +33,7 @@ CONFIG = [
     ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get", None),
     ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", "buildSpoofHeartbeat"),
     ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None),
-    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", None),
+    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL"),
     ("info_url", ("options.conf", "options", "info_url"), None, True, "get", None),
     ("colors", ("options.conf", "options", "colors"), None, True, "getboolean", None),
     ("physics_limit", ("options.conf", "worlds", "physics_limit"), None, True, "getint", None),

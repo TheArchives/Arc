@@ -234,6 +234,17 @@ class ArcFactory(Factory):
             self.logger.critical("Salt is required.")
             sys.exit(1)
 
+    def buildSpoofHeartbeat(self, reload):
+        "Called to build the spoof heartbeat dictionary."
+        heartbeats = self.hbs
+        config = ConfigParser()
+        config.read("config/main.conf") # This can't fail because it has been checked before
+        self.heartbeats = dict()
+        for element in heartbeats:
+            name = config.get("heartbeatnames", element)
+            port = config.getint("heartbeatports", element)
+            self.heartbeats[element] = (name, port)
+
     def modifyHeartbeatURL(self, reload):
         "Called to recheck URL."
         if reload:
