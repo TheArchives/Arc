@@ -88,7 +88,15 @@ def main():
     formatter = logging.Formatter("%(asctime)s: %(message)s")
     fh.setFormatter(formatter)
     money_logger.addHandler(fh)
-
+    config = ConfigParser()
+    config.read("config/main.conf") # This can't fail because it has been checked before
+    factory.heartbeats = dict()
+    for element in factory.hbs:
+        name = config.get("heartbeatnames", element)
+        port = config.getint("heartbeatports", element)
+        factory.heartbeats[element] = (name, port)
+        reactor.listenTCP(port, self)
+        logger.info("Starting spoofed heartbeat %s on port %s..." % (name, port))
     try:
         reactor.run()
     except Exception as e:
