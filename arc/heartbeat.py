@@ -45,6 +45,10 @@ class Heartbeat(object):
             })
 
     def sendHeartbeat(self):
+        try:
+            getattr(self.factory, "wom_heartbeat")
+        except AttributeError:
+            reactor.callLater(3, self.sendHeartbeat) # Server has not finished loading yet - come back in 3 seconds maybe?
         d = dict()
         d[0] = getPage(self.hburl, method="POST", postdata=self.buildHeartbeatData(), headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
         d[0].addCallback(self.heartbeatSentCallback, 0)

@@ -96,7 +96,7 @@ def main():
         name = config.get("heartbeatnames", element)
         port = config.getint("heartbeatports", element)
         factory.heartbeats[element] = (name, port)
-        reactor.listenTCP(port, self)
+        reactor.listenTCP(port, factory)
         logger.info("Starting spoofed heartbeat %s on port %s..." % (name, port))
     try:
         reactor.run()

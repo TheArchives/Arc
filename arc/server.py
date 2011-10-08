@@ -160,9 +160,6 @@ class ArcFactory(Factory):
         self.usernames = {}
         # Open the adminchat log.
         self.adlog = open("logs/server.log", "a")
-        # Workaround for bug - derp!
-        self.heartbeat = Heartbeat(self)
-        self.runServerHook("heartbeatStarted")
 
     def loadConfig(self, reload=False):
         configParsers = dict()
@@ -408,6 +405,8 @@ class ArcFactory(Factory):
     def startFactory(self):
         self.console = StdinPlugin(self)
         self.console.start()
+        self.heartbeat = Heartbeat(self)
+        self.runServerHook("heartbeatStarted")
         # Boot default
         self.loadWorld("worlds/%s" % self.default_name, self.default_name)
         # Set up tasks to run during execution
