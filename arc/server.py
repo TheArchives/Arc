@@ -276,7 +276,7 @@ class ArcFactory(Factory):
             self.loops["loadarcives"].start(300)
 
     def initBLBLimiter(self, reload):
-        if not self.useblblimiter:
+        if not self.useblblimit:
             if reload:
                 del self.blblimit
             return

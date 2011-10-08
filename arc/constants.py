@@ -46,7 +46,7 @@ CONFIG = [
     ("backup_max", ("options.conf", "backups", "backup_max"), "self.backup_auto == True", True, "getint", None),
     ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver"),
     ("currency", ("options.conf", "bank", "currency"), None, True, "get", None),
-    ("useblblimiter", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter"),
+    ("useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter"),
 ]
 
 INFO_VIPLIST = [
