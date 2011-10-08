@@ -5,6 +5,7 @@
 #!/usr/bin/python
 
 import datetime, logging, sys, time, traceback, os
+from ConfigParser import RawConfigParser as ConfigParser
 
 from twisted.internet import reactor
 from twisted.internet.error import CannotListenError
