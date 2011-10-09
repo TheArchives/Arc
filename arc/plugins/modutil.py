@@ -54,6 +54,8 @@ class ModUtilPlugin(ProtocolPlugin):
         "desilence": "commandDesilence",
         "unsilence": "commandDesilence",
         "silenced": "commandSilenced",
+
+        "shutdownall": "commandShutdownAll",
     }
 
     hooks = {
@@ -462,3 +464,10 @@ class ModUtilPlugin(ProtocolPlugin):
         else:
             self.client.sendServerMessage("You are no longer spectating %s" % user.username)
             self.client.spectating = False
+
+    @config("rank", "admin")
+    def commandShutdownAll(self, parts, fromloc, overriderank):
+        "/shutdownall - Admin\nShuts down all worlds with nobody in it."
+        for world in self.client.factory.worlds.values():
+            if world.clients == set():
+                self.client.factory.unloadWorld(world.id)
