@@ -471,3 +471,4 @@ class ModUtilPlugin(ProtocolPlugin):
         for world in self.client.factory.worlds.values():
             if world.clients == set():
                 self.client.factory.unloadWorld(world.id)
+        self.sendServerMessage("All empty worlds have been shut down.")
