@@ -1,0 +1,35 @@
+Thanks for choosing to use iCraft's Python Status Script.
+
+=========================
+========== SUPPORT:
+=========================
+
+Need support? Want to chat or hang out with us? Go to irc.esper.net
+#iCraft (or hlmc.net)
+
+=========================
+========== INSTALL:
+=========================
+
+Step 1: Install Python 2.6, Python 2.5/2.7/3.x will not work.
+
+Step 2: Run the file through the command line; python2.6 server.py
+You may include a number to change the port the webserver uses.
+(Default: 8080)
+
+Step 3: If all went all, you can now access your it at
+http://127.0.0.1:8080/
+
+=========================
+========== NOTE:
+=========================
+
+This will probably not work on most free hosts.
+
+=========================
+========== CREDITS:
+=========================
+
+This README was written by AndrewPH and updated by iKJames for iCraft users, this is to guide you to install iCraft properly. THERE IS NO
+WARRANTY FOR FOLLOWING THIS README, IF DAMAGE TO YOUR SYSTEM IS DONE
+THEN THE ICRAFT TEAM IS NOT RESPONSIBLE FOR THE DAMAGES.
