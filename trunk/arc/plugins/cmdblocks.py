@@ -901,9 +901,9 @@ class CommandPlugin(ProtocolPlugin):
         for num in range(len(thiscmd)):
             if thiscmd[num:(num+4)] == "$bin":
                 try:
-                    HexBin ={"0":"0000", "1":"0001", "2":"0010", "3":"0011", "4":"0100", "5":"0101", "6":"0110", "7":"0111", "8":"1000", "9":"1001", "A":"1010", "B":"1011", "C":"1100", "D":"1101", "E":"1110", "F":"1111"}
-                    coords = thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)]#.split(",")
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], str("".join([HexBin[i] for i in '%X'%coords[0]]).lstrip('0'))) # holy crap this is complicated
+                    HexBin = {"0":"0000", "1":"0001", "2":"0010", "3":"0011", "4":"0100", "5":"0101", "6":"0110", "7":"0111", "8":"1000", "9":"1001", "A":"1010", "B":"1011", "C":"1100", "D":"1101", "E":"1110", "F":"1111"}
+                    coords = thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)] #.split(",")
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], str("".join([HexBin[i] for i in '%X'%coords[0]]).lstrip('0')))
                 except:
                     self.client.sendServerMessage("$bin Syntax Error; Use: $bin(x)")
         for num in range(len(thiscmd)):
@@ -965,7 +965,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.runningcmdlist = list({})
                 self.runningsensor = False
                 return
-		# Comments
+        # Comments
         if command == "#" and runcmd:
             runcmd = False
         if (command == "self" or command == "m") and runcmd:
@@ -1085,7 +1085,7 @@ class CommandPlugin(ProtocolPlugin):
             try:
                 try:
                     if runcmd:
-                        func(parts, "user", guest)
+                        func(parts, "cmdblock", guest)
                 except UnboundLocalError:
                     self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
                     self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
