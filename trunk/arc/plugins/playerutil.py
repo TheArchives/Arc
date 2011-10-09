@@ -232,6 +232,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         else:
             if parts[0] == "/writer":
                 parts[0] = "/builder"
+            parts[0] = parts[0].strip("/")
             parts = ["/rank", parts[1], parts[0]] + ([parts[2]] if len(parts) == 3 else [])
             self.client.sendServerMessage(Rank(self, parts, fromloc, overriderank))
 
@@ -248,7 +249,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
                 rank = parts[0]
             rank = rank.strip("/de")
             parts = ["/derank", parts[1], parts[0]] + ([parts[2]] if len(parts) == 3 else [])
-            self.client.sendServerMessage(DeRank(self, partsToSend, fromloc, overriderank))
+            self.client.sendServerMessage(DeRank(self, parts, fromloc, overriderank))
 
     @config("category", "player")
     @config("rank", "mod")
@@ -404,15 +405,17 @@ class PlayerUtilPlugin(ProtocolPlugin):
                         if user in self.client.factory.spectators:
                             user = COLOUR_BLACK + user
                         elif user in self.client.factory.owners:
-                            user = COLOUR_DARKGREEN + user
-                        elif user in self.client.factory.directors:
                             user = COLOUR_GREEN + user
+                        elif user in self.client.factory.directors:
+                            user = COLOUR_DARKRED + user
                         elif user in self.client.factory.admins:
                             user = COLOUR_RED + user
                         elif user in self.client.factory.mods:
-                            user = COLOUR_BLUE + user
-                        elif user in self.client.factory.mods:
                             user = COLOUR_DARKBLUE + user
+                        elif user in self.client.factory.mods:
+                            user = COLOUR_DARKGREY + user
+                        elif user in INFO_VIPLIST:
+                            user = COLOUR_YELLOW + user
                         elif user is self.client.world.owner:
                             user = COLOUR_DARKYELLOW + user
                         elif user in self.client.world.ops:

@@ -469,6 +469,8 @@ class ModUtilPlugin(ProtocolPlugin):
     def commandShutdownAll(self, parts, fromloc, overriderank):
         "/shutdownall - Admin\nShuts down all worlds with nobody in it."
         for world in self.client.factory.worlds.values():
+            if world.id == self.client.factory.default_name:
+                continue
             if world.clients == set():
                 self.client.factory.unloadWorld(world.id)
         self.sendServerMessage("All empty worlds have been shut down.")
