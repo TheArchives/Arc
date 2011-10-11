@@ -5,6 +5,7 @@
 import cPickle
 
 from twisted.internet import reactor
+from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
 from arc.decorators import *
@@ -232,7 +233,7 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "admin")
     def commandBanBoth(self, parts, fromloc, overriderank):
-        "/banb username reason - Admin\nName and IP ban a user from this server."
+        "/banb username reason - Admin\nName and IP ban a user from this server, and on MCBans."
         if len(parts) <= 2:
             self.client.sendServerMessage("Please specify a username and a reason.")
             return
@@ -255,6 +256,20 @@ class ModUtilPlugin(ProtocolPlugin):
         else:
             self.client.sendServerMessage("%s has been IPBanned." % ip)
             self.client.factory.addIpBan(ip, " ".join(parts[2:]))
+        # Region MCBans
+        if self.client.factory.serverPluginExists("McBansServerPlugin"):
+            try:
+                value = handler.globalBan(player, ip, " ".join(parts[2:]), self.client.username)
+            except Exception as e:
+                self.client.sendServerMessage("Error when banning user globally on MCBans.")
+                self.client.sendServerMessage(str(e))
+            else:
+                if value["result"] = u'y':
+                    self.client.sendServerMessage("%s has been banned on MCBans." % username)
+                else:
+                    self.client.sendServerMessage("MCBans was unable to process this request.")
+        else:
+            self.client.sendServerMessage("MCBans server plugin not loaded, skipping this part.")
         # Follow-up action
         if username in self.client.factory.usernames:
             self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
