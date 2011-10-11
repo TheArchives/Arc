@@ -4,6 +4,8 @@
 
 import cPickle
 
+from twisted.internet import reactor
+
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import *
@@ -468,9 +470,24 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("rank", "admin")
     def commandShutdownAll(self, parts, fromloc, overriderank):
         "/shutdownall - Admin\nShuts down all worlds with nobody in it."
-        for world in self.client.factory.worlds.values():
-            if world.id == self.client.factory.default_name:
-                continue
-            if world.clients == set():
-                self.client.factory.unloadWorld(world.id)
-        self.sendServerMessage("All empty worlds have been shut down.")
+        self.client.sendServerMessage("Shutting down all empty worlds...")
+        self.value = 0
+        def doShutdown():
+            for world in self.client.factory.worlds.values():
+                if world.id == self.client.factory.default_name:
+                    continue
+                if world.clients == set():
+                    self.client.factory.unloadWorld(world.id)
+                    self.value += 1
+                    yield
+        shutdownIter = iter(doShutdown())
+        def doStep():
+            try:
+                shutdownIter.next()
+                reactor.callLater(0.1, doStep)
+            except StopIteration:
+                if fromloc == "user":
+                    self.client.sendServerMessage("%s empty world(s) have been shut down." % self.value)
+                del self.value
+                pass
+        doStep()

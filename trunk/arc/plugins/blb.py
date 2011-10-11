@@ -138,7 +138,7 @@ class BlbPlugin(ProtocolPlugin):
                 threading.Thread(target=doBlocks).start()
                 # Now the fun part. Respawn them all!
                 for client in world.clients:
-                    self.client.factory.usernames[client].sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the server...", self.canBreakAdminBlocks() and 100 or 0)
+                    self.client.factory.usernames[client].sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
                 if fromloc == "user":
                     self.client.sendServerMessage("Your blb just completed.")
             else:
@@ -214,19 +214,19 @@ class BlbPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-                for i in range(x, x2+1):
-                    for j in range(y, y2+1):
-                        for k in range(z, z2+1):
-                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
-                                return
-                            try:
+                try:
+                    for i in range(x, x2+1):
+                        for j in range(y, y2+1):
+                            for k in range(z, z2+1):
+                                if not self.client.AllowedToBuild(i, j, k) and not overriderank:
+                                    return
                                 world[i, j, k] = block
-                            except AssertionError:
-                                self.client.sendServerMessage("Out of bounds blb error.")
-                                return
-                            self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
-                            self.client.sendBlock(i, j, k, block)
-                            yield
+                                self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
+                                self.client.sendBlock(i, j, k, block)
+                                yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds blb error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():

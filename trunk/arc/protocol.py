@@ -1051,6 +1051,13 @@ class ArcServerProtocol(Protocol):
             return
         return block
 
+    def canBreakAdminBlocks(self):
+        "Shortcut for checking permissions."
+        if hasattr(self, "world"):
+            return self.isOp()
+        else:
+            return False
+
     def MessageAlert(self):
         if os.path.exists("config/data/inbox.dat"):
             self.messages = self.factory.messages
