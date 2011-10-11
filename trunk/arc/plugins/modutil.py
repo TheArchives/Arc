@@ -241,33 +241,39 @@ class ModUtilPlugin(ProtocolPlugin):
         # Region ban
         if self.client.factory.isBanned(username):
             self.client.sendServerMessage("%s is already banned." % username)
-            return
         else:
             self.client.factory.addBan(username, " ".join(parts[2:]), self.client.username)
             self.client.sendServerMessage("Player %s banned. Continuing to IPBan..." % username)
         # Region IPBan
         if parts[1] not in self.client.factory.usernames:
             self.client.sendServerMessage("User not online, cannot IPBan.")
-            return
-        ip = self.client.factory.usernames[username].transport.getPeer().host
-        if self.client.factory.isIpBanned(ip):
-            self.client.sendServerMessage("%s is already IPBanned." % ip)
-            return
+            noIP = true
         else:
-            self.client.sendServerMessage("%s has been IPBanned." % ip)
-            self.client.factory.addIpBan(ip, " ".join(parts[2:]))
+            ip = self.client.factory.usernames[username].transport.getPeer().host
+        if not noIP:
+            if self.client.factory.isIpBanned(ip):
+                self.client.sendServerMessage("%s is already IPBanned." % ip)
+                return
+            else:
+                self.client.sendServerMessage("%s has been IPBanned." % ip)
+                self.client.factory.addIpBan(ip, " ".join(parts[2:]))
+        else:
+            self.client.sendServerMessage("User %s is not online, unable to IPBan." % username)
         # Region MCBans
         if self.client.factory.serverPluginExists("McBansServerPlugin"):
-            try:
-                value = handler.globalBan(player, ip, " ".join(parts[2:]), self.client.username)
-            except Exception as e:
-                self.client.sendServerMessage("Error when banning user globally on MCBans.")
-                self.client.sendServerMessage(str(e))
-            else:
-                if value["result"] == u'y':
-                    self.client.sendServerMessage("%s has been banned on MCBans." % username)
+            if not noIP:
+                try:
+                    value = handler.globalBan(player, ip, " ".join(parts[2:]), self.client.username)
+                except Exception as e:
+                    self.client.sendServerMessage("Error when banning user globally on MCBans.")
+                    self.client.sendServerMessage(str(e))
                 else:
-                    self.client.sendServerMessage("MCBans was unable to process this request.")
+                    if value["result"] == u'y':
+                        self.client.sendServerMessage("%s has been banned on MCBans." % username)
+                    else:
+                        self.client.sendServerMessage("MCBans was unable to process this request.")
+            else:
+                self.client.sendServerMessage("User %s is not online, unable to submit to MCBans." % username)
         else:
             self.client.sendServerMessage("MCBans server plugin not loaded, skipping this part.")
         # Follow-up action
