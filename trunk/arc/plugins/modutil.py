@@ -264,7 +264,7 @@ class ModUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Error when banning user globally on MCBans.")
                 self.client.sendServerMessage(str(e))
             else:
-                if value["result"] = u'y':
+                if value["result"] == u'y':
                     self.client.sendServerMessage("%s has been banned on MCBans." % username)
                 else:
                     self.client.sendServerMessage("MCBans was unable to process this request.")
