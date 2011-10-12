@@ -89,14 +89,16 @@ class helpPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandCmdlist(self, parts, fromloc, overriderank):
         "/cmdlist category - Guest\nThe command list of your rank, categories."
+        categories = ["all", "build", "world", "player", "info", "other"]
         if len(parts) > 1:
-            if parts[1].lower() not in ["all", "build", "world", "player", "info", "other"]:
+            if parts[1].lower() not in categories:
                 self.client.sendServerMessage("Unknown cmdlist '%s'" % parts[1])
+                self.client.sendServerMessage("Categories: %s" % " ".join(categories))
             else:
                 self.ListCommands(parts[1].lower())
         else:
             self.client.sendServerMessage("Command List - Use: /cmdlist category")
-            self.client.sendServerMessage("Categories: all build world player info other")
+            self.client.sendServerMessage("Categories: %s"  % " ".join(categories))
 
     def ListCommands(self, list):
         self.client.sendServerMessage("%s Commands:" % list.title())
