@@ -136,26 +136,29 @@ class BlockTrackerPlugin(ProtocolPlugin):
     @config("category", "build")
     def commandCheckPlayer(self, parts, fromloc, overriderank):
         "/checkplayer playername [before|after|all] [blocktype] - Guest\nChecks a player's edits on this world.\nSpecify 'before' and 'after' with the block type to show edits\nabout that type of block only."
-        if len(parts) >= 1:
-            if len(parts) == 2:
-                self.client.sendServerMessage("You need to specify the block type to view, or specify 'all'.")
-                return
-            if len(parts) == 3:
-                if parts[2].lower() not in ["all", "before", "after"]:
-                    self.client.sendServerMessage("Please specify 'before', 'after' or 'all'.")
-                    return
-                else:
-                    filter = parts[2].lower()
-                block = self.client.GetBlockValue(parts[3])
-                if block == None:
-                    return
-            else:
-                filter = "all"
-                block = "all"
+        if len(parts) > 1:
+            # if len(parts) == 2:
+                # self.client.sendServerMessage("You need to specify the block type to view, or specify 'all'.")
+                # return
+            # if len(parts) == 3:
+                # if parts[2].lower() not in ["all", "before", "after"]:
+                    # self.client.sendServerMessage("Please specify 'before', 'after' or 'all'.")
+                    # return
+                # else:
+                    # filter = parts[2].lower()
+                # block = self.client.GetBlockValue(parts[3])
+                # if block == None:
+                    # return
+            # else:
+                # filter = "all"
+                # block = "all"
+            # edits = self.client.world.blocktracker.getplayeredits(parts[1], filter, block)
+            # edits.addCallback(self.sendCallbackPlayer)
             edits = self.client.world.blocktracker.getplayeredits(parts[1], filter, block)
             edits.addCallback(self.sendCallbackPlayer)
         else:
-            self.client.sendServerMessage("Syntax: /checkplayer playername [before|after] [blocktype]")
+            # self.client.sendServerMessage("Syntax: /checkplayer playername [before|after] [blocktype]")
+            self.client.sendServerMessage("Syntax: /checkplayer playername")
 
     @config("category", "build")
     @config("rank", "mod")

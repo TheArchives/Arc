@@ -34,18 +34,24 @@ class World(object):
         if self.basename.split("/")[1].startswith("."):
             self.hidden = True
         self.blocks_path = os.path.join(basename, "blocks.gz")
-        self.old_blocks_path = os.path.join(basename, "blocks.gz.old")
         self.meta_path = os.path.join(basename, "world.meta")
         # Other settings
         self.cfgversion = "1.0.0"
         self.owner = "N/A"
         self.ops = set()
         self.builders = set()
+        self.status = dict()
+        # The following code will be replaced by self.status
         self.all_write = True
         self.private = False
         self._physics = False
         self._finite_water = False
         self.is_archive = False
+        self.autoshutdown = True
+        self.saving = False
+        self.zoned = False
+        self.locked = False # Unused right now
+        # The above code will be replaced by self.status
         self.teleports = {}
         self.messages = {}
         self.worldbans = {}
@@ -53,9 +59,6 @@ class World(object):
         self.mines = {}
         self.id = None
         self.factory = factory
-        self.autoshutdown = True
-        self.saving = False
-        self.zoned = False
         self.userzones = {}
         self.rankzones = {}
         self.entitylist = []
@@ -70,7 +73,7 @@ class World(object):
         self.flush_deferred = None
         if load:
             assert os.path.isfile(self.blocks_path), "No blocks file: %s" % self.blocks_path
-            assert os.path.isfile(self.meta_path), "No blocks file: %s" % self.blocks_path
+            assert os.path.isfile(self.meta_path), "No meta file: %s" % self.blocks_path
             self.load_meta()
 
     def start(self):
@@ -165,6 +168,8 @@ class World(object):
             self.cfgversion = "1.0.0"
         if not checkConfigVersion(self.cfgversion, CFGVERSION["world.meta"]):
             self.logger.warn("World %s has an outdated world.meta, data may be lost." % self.id)
+            self.logger.warn("A copy of the original file has been made as world.meta.orig.")
+            shutil.copy(self.meta_path, os.path.join(basename, "world.meta.orig"))
         self.x = config.getint("size", "x")
         self.y = config.getint("size", "y")
         self.z = config.getint("size", "z")

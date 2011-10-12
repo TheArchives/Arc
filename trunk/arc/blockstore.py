@@ -176,7 +176,6 @@ class BlockStore(Thread):
         try:
             if not self.queued_blocks:  # Don't flush if there's nothing to do
                 return
-
             self.logger.debug("Flushing %s..." % self.world_name)
             # Open the old and the new file
             if os.path.exists(self.blocks_path + ".new"):
