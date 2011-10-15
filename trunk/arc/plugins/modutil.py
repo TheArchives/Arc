@@ -249,6 +249,7 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("User not online, cannot IPBan.")
             noIP = True
         else:
+            noIP = False
             ip = self.client.factory.usernames[username].transport.getPeer().host
         if not noIP:
             if self.client.factory.isIpBanned(ip):
