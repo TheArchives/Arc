@@ -67,14 +67,8 @@ class PortalPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Attempting to boot and join '%s'" % world_id)
                     try:
                         self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-                    except AssertionError as e:
-                        self.client.sendServerMessage("This world is broken. Please report!")
-                        self.client.logger.error("World %s is broken!" % world_id)
-                        self.client.logger.error("Error: %s" % e)
-                        try:
-                            self.client.logger.debug("File: %s" % inspect.getfile(self))
-                        except:
-                            pass
+                    except AssertionError:
+                        self.client.sendServerMessage("World %s does not exist or is broken." % world_id)
                         return
                 world = self.client.factory.worlds[world_id]
                 if not self.client.canEnter(world):
