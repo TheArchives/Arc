@@ -68,7 +68,8 @@ class PortalPlugin(ProtocolPlugin):
                     try:
                         self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
                     except AssertionError:
-                        self.client.sendServerMessage("World %s does not exist or is broken." % world_id)
+                        if (rx, ry, rz) != self.last_block_position:
+                            self.client.sendServerMessage("World %s does not exist or is broken." % world_id)
                         return
                 world = self.client.factory.worlds[world_id]
                 if not self.client.canEnter(world):
@@ -141,7 +142,7 @@ class PortalPlugin(ProtocolPlugin):
 
     @config("rank", "op")
     def commandPortaldel(self, parts, fromloc, overriderank):
-        "/pdel [all] - Op\nAliases: deltp, pclear\nEnables Portal deletion mode"
+        "/pdel [all] - Op\nAliases: deltp, pclear\nEnables portal deletion mode. Toggle."
         if len(parts) > 1:
             if parts[1].lower() == "all":
                 self.client.world.clear_teleports()
@@ -154,7 +155,7 @@ class PortalPlugin(ProtocolPlugin):
 
     @config("rank", "op")
     def commandPortaldelend(self, parts, fromloc, overriderank):
-        "/pdelend - Op\nHere for people that need it, as we're Still Alive."
+        "/pdelend - Op\nDisables portal deletion mode."
         self.portal_remove = False
         self.client.sendServerMessage("Portal deletion mode ended.")
 

@@ -264,7 +264,7 @@ class ModUtilPlugin(ProtocolPlugin):
         if self.client.factory.serverPluginExists("McBansServerPlugin"):
             if not noIP:
                 try:
-                    value = self.client.factory.serverPlugins["McBansServerPlugin"].handler.globalBan(player, ip, " ".join(parts[2:]), self.client.username)
+                    value = self.client.factory.serverPlugins["McBansServerPlugin"].handler.globalBan(username, ip, " ".join(parts[2:]), self.client.username)
                 except Exception as e:
                     self.client.sendServerMessage("Error when banning user globally on MCBans.")
                     self.client.sendServerMessage(str(e))
