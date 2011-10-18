@@ -929,7 +929,7 @@ class ArcServerProtocol(Protocol):
         if build:
             return True
         elif assigned:
-            self.sendServerList(["You are not allowed to build in this zone. Only:"]+assigned+["may."])
+            self.sendSplitServerMessage("You are not allowed to build in this zone. Only: %s may." % ", ".join(assigned))
             return False
         for id, zone in self.world.rankzones.items():
             if zone[7] == "all":
@@ -1017,7 +1017,7 @@ class ArcServerProtocol(Protocol):
                                 if self.isOwner():
                                     return True
                                 else:
-                                    self.sendServerMessage("You must be "+zone[7]+" to build here.")
+                                    self.sendServerMessage("You must be an owner to build here.")
                                     return False
         if self.world.id == self.factory.default_name and self.isHelper() and not self.isMod() and not self.world.all_write:
             self.sendBlock(x, y, z)

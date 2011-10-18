@@ -10,7 +10,7 @@ else:
 
 CFGVERSION = {
     "main.conf": (1, 0, 0),
-    "options.conf": (1, 0, 0),
+    "options.conf": (1, 0, 1),
     "bans.meta": (1, 0, 0),
     "ranks.meta": (1, 0, 0),
     "lastseen.meta": (1, 0, 0),
@@ -34,6 +34,8 @@ CONFIG = [
     ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", "buildSpoofHeartbeat"),
     ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None),
     ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL"),
+    ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None),
+    ("lowlag_players", ("options.conf", "options", "lowlag_players"), None, True, "getint", None),
     ("info_url", ("options.conf", "options", "info_url"), None, True, "get", None),
     ("colors", ("options.conf", "options", "colors"), None, True, "getboolean", None),
     ("physics_limit", ("options.conf", "worlds", "physics_limit"), None, True, "getint", None),

@@ -54,6 +54,7 @@ class ArcFactory(Factory):
         self.loadConfig()
         wordfilter = ConfigParser()
         self.default_loaded = False
+        self.useLowLag = False
         self.hooks = {}
         self.saving = False
         self.save_count = 1
@@ -266,7 +267,7 @@ class ArcFactory(Factory):
         if reload:
             self.loops["autobackup"].stop()
         elif self.backup_auto != False:
-            self.loops["autobackup"].run(self.config["backup_freq"], now=False)
+            self.loops["autobackup"].run(self.backup_freq, now=False)
 
     def enableArchiver(self, reload):
         if reload:
@@ -592,6 +593,12 @@ class ArcFactory(Factory):
             for key in self.worlds:
                 if len(self.worlds[key].clients) > 0:
                     self.logger.info("%s: %s" % (key, ", ".join(str(c.username) for c in self.worlds[key].clients)))
+            if len(self.clients) >= self.lowlag_players:
+                self.useLowLag = True
+                self.logger.warn("Enabling low lag mode.")
+            else:
+                self.useLowLag = False
+                self.logger.warn("Disabling low lag mode.")
 
     def loadArchive(self, filename):
         "Boots an archive given a filename. Returns the new world ID."
@@ -634,8 +641,9 @@ class ArcFactory(Factory):
             world.flush()
             self.logger.info("World '%s' has been saved." % world_id)
             if self.save_count == 5:
-                for client in list(list(world.clients))[:]:
-                    client.sendServerMessage("[%s] World '%s' has been saved." % (datetime.datetime.utcnow().strftime("%H:%M"), world_id))
+                if not self.useLowLag:
+                    for client in list(list(world.clients))[:]:
+                        client.sendServerMessage("[%s] World '%s' has been saved." % (datetime.datetime.utcnow().strftime("%H:%M"), world_id))
                 self.save_count = 1
             else:
                 self.save_count += 1
@@ -723,7 +731,7 @@ class ArcFactory(Factory):
                 client.changeToWorld(self.default_backup)
             else:
                 client.changeToWorld(self.default_name)
-            client.sendServerMessage("%s has been Rebooted." % world_id)
+            client.sendServerMessage("%s has been rebooted." % world_id)
         self.worlds[world_id].stop()
         self.worlds[world_id].flush()
         self.worlds[world_id].save_meta()
@@ -750,11 +758,7 @@ class ArcFactory(Factory):
         Records a sighting of 'username' in the lastseen dict.
         """
         self.runServerHook("lastseenRecorded", {"username": username, "time": time.time()})
-        try:
-            self.lastseen[username.lower()] = time.time()
-        except Exception as a:
-            self.logger.error("Unable to set lastseen for %s" % username)
-            self.logger.error("%s" % a)
+        self.lastseen[username.lower()] = time.time()
 
     def unloadPlugin(self, plugin_name):
         "Unloads the plugin with the given module name."
@@ -883,9 +887,11 @@ class ArcFactory(Factory):
                     elif task is TASK_PLAYERCONNECT:
                         for client in self.usernames:
                             self.usernames[client].sendNewPlayer(*data)
-                            self.usernames[client].sendNormalMessage("%s%s&e has come online." % (source_client.userColour(), source_client.username))
+                            if not self.useLowLag:
+                                self.usernames[client].sendNormalMessage("%s%s&e has come online." % (source_client.userColour(), source_client.username))
                         if self.irc_relay and world:
-                            self.irc_relay.sendServerMessage("07%s has come online." % source_client.username)
+                            if not self.useLowLag:
+                                self.irc_relay.sendServerMessage("07%s has come online." % source_client.username)
                     # Someone joined a world!
                     elif task is TASK_NEWPLAYER:
                         value = self.runServerHook("onNewPlayer", {"client": source_client})
@@ -894,7 +900,7 @@ class ArcFactory(Factory):
                                 if client != source_client:
                                     client.sendNewPlayer(*data)
                                 sendmessage = self.runServerHook("worldChanged", {"client": source_client})
-                                if sendmessage:
+                                if sendmessage and not self.useLowLag:
                                     client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
                     # Someone left!
                     elif task is TASK_PLAYERLEAVE:
@@ -902,15 +908,15 @@ class ArcFactory(Factory):
                         # Only run it for clients who weren't the source.
                         for client in self.clients.values():
                             client.sendPlayerLeave(data[0])
-                            if not source_client.username is None:
+                            if not source_client.username is None and not self.useLowLag:
                                 client.sendNormalMessage("%s%s&e has gone offline." % (source_client.userColour(), source_client.username))
                             else:
                                 try:
                                     del self.usernames[source_client]
                                 except Exception as e:
-                                    self.logger.warn(str(e))
+                                    self.logger.warn("Unable to clear out ghost user. %s" % str(e))
                         if not source_client.username is None:
-                            if self.irc_relay and world:
+                            if self.irc_relay and world and not self.useLowLag:
                                 self.irc_relay.sendServerMessage("07%s has gone offline." % source_client.username)
                     # Someone changed worlds!
                     elif task is TASK_WORLDCHANGE:
@@ -918,8 +924,9 @@ class ArcFactory(Factory):
                         # Only run it for clients who weren't the source.
                         for client in data[1].clients:
                             client.sendPlayerLeave(data[0])
-                            client.sendNormalMessage("%s%s&e joined '%s'" % (source_client.userColour(), source_client.username, world.id))
-                        if self.irc_relay and world:
+                            if not self.useLowLag:
+                                client.sendNormalMessage("%s%s&e joined '%s'" % (source_client.userColour(), source_client.username, world.id))
+                        if self.irc_relay and world and not self.useLowLag:
                             self.irc_relay.sendServerMessage("07%s joined '%s'" % (source_client.username, world.id))
                         self.logger.info("%s%s&f has now joined '%s'" % (source_client.userColour(), source_client.username, world.id))
                     elif task == TASK_STAFFMESSAGE:
@@ -962,21 +969,12 @@ class ArcFactory(Factory):
                             self.logger.info(message)
                             if self.irc_relay and world:
                                 self.irc_relay.sendServerMessage(message)
-                    elif task == TASK_ONMESSAGE:
+                    elif task in [TASK_ONMESSAGE, TASK_ADMINMESSAGE]:
                         # Give all people the message
                         id, world, text = data
                         value = self.runServerHook("onOnMessage", {"id": id, "world": world, "text": text})
                         if value:
                             message = self.messagestrip(text)
-                            for client in self.clients.values():
-                                client.sendNormalMessage(COLOUR_YELLOW + message)
-                            if self.irc_relay and world:
-                                self.irc_relay.sendServerMessage(message)
-                    elif task == TASK_ADMINMESSAGE:
-                        # Give all people the message
-                        message = self.messagestrip(data)
-                        value = self.runServerHook("onAdminMessage", {"client": source_client, "message": data})
-                        if value:
                             for client in self.clients.values():
                                 client.sendNormalMessage(COLOUR_YELLOW + message)
                             if self.irc_relay and world:
