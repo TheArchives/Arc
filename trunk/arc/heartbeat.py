@@ -21,6 +21,7 @@ class Heartbeat(object):
     """
     Deals with registering with the Minecraft main server every so often.
     The Salt is also used to help verify users' identities.
+    Direct WoM Heartbeat info can be changed at https://direct.worldofminecraft.com/server.php
     """
 
     def __init__(self, factory):
