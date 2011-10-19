@@ -202,13 +202,29 @@ class ArcFactory(Factory):
                     self.logger.debug("Criteria not met. Skipping.")
                     self.logger.debug("Criteria: %s" % config[2])
                     continue
-            try:
-                valueFunc = getattr(configParsers[config[1][0]], config[4])
-                if config[4] == "options":
+            # Get the correct ConfigParser method
+            valueFunc = getattr(configParsers[config[1][0]], config[4])
+            theError = 0
+            if config[4] == "options":
+                try:
                     value = valueFunc(config[1][1])
-                else:
+                except ConfigParser.NoSectionError as e:
+                    theError = 1
+            else:
+                try:
                     value = valueFunc(config[1][1], config[1][2])
-            except Exception as e:
+                except ConfigParser.NoSectionError as e:
+                    # If there's a default value, use that
+                    if not config[6]:
+                        value = config[7]
+                    else:
+                        theError = 1
+                except ConfigParser.NoOptionError as e:
+                    if not config[6]:
+                        value = config[7]
+                    else:
+                        theError = 2
+            if theError in [1, 2]:
                 self.logger.error("Unable to read config %s." % config[1][2])
                 self.logger.error(str(e))
                 sys.exit(1)
@@ -234,17 +250,6 @@ class ArcFactory(Factory):
         if self.salt in ["", "Select this text and mash your keyboard."]:
             self.logger.critical("Salt is required.")
             sys.exit(1)
-
-    def buildSpoofHeartbeat(self, reload):
-        "Called to build the spoof heartbeat dictionary."
-        heartbeats = self.hbs
-        config = ConfigParser()
-        config.read("config/main.conf") # This can't fail because it has been checked before
-        self.heartbeats = dict()
-        for element in heartbeats:
-            name = config.get("heartbeatnames", element)
-            port = config.getint("heartbeatports", element)
-            self.heartbeats[element] = (name, port)
 
     def modifyHeartbeatURL(self, reload):
         "Called to recheck URL."
@@ -443,13 +448,18 @@ class ArcFactory(Factory):
     def loadMeta(self):
         "Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"
         config = ConfigParser()
-        config.read("config/data/ranks.meta")
         specs = ConfigParser()
-        specs.read("config/data/spectators.meta")
         lastseen = ConfigParser()
-        lastseen.read("config/data/lastseen.meta")
         bans = ConfigParser()
-        bans.read("config/data/bans.meta")
+        try:
+            config.read("config/data/ranks.meta")
+            specs.read("config/data/spectators.meta")
+            lastseen.read("config/data/lastseen.meta")
+            bans.read("config/data/bans.meta")
+        except ConfigParser.MissingSectionHeaderError as e: # This happens when the server crashes, but is rare
+            self.logger.critical("One of the .metas are corrupt.")
+            self.logger.critical(str(e))
+            sys.exit(1)
         if config.has_section("cfginfo"):
             # Config version?
             self.cfginfo["version"]["ranks.meta"] = config.get("cfginfo", "version")

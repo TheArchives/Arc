@@ -247,6 +247,8 @@ def Staff(self, server=None):
         factory = server
     else:
         factory = self.client.factory
+    if len(factory.owners): # This doesn't make much sense but okay
+        Temp.append(["Owners:"] + list(factory.owners))
     if len(factory.directors):
         Temp.append(["Directors:"] + list(factory.directors))
     if len(factory.admins):

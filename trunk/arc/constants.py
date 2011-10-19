@@ -1,12 +1,8 @@
 # Arc is copyright 2009-2011 the Arc team and other contributors.
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
-try:
-    from arc.version import *
-except:
-    VERSION = "1.0.0"
-else:
-    VERSION = "1.0.0_r%s" % SVN_VERSION
+
+VERSION = "1.0.0"
 
 CFGVERSION = {
     "main.conf": (1, 0, 0),
@@ -20,35 +16,37 @@ CFGVERSION = {
 
 CONFIG = [
     # Format:
-    #(attribute name, (file, section, option), prerequistics, dynamic, mode, callback function (self = ArcFactory, None for no callback func))
-    # prerequistics is a python expression (lazy bum :P)
-    ("server_name", ("main.conf", "main", "name"), None, True, "get", None),
-    ("server_port", ("main.conf", "network", "port"), None, False, "getint", None),
-    ("max_clients", ("main.conf", "main", "max_clients"), None, True, "getint", None),
-    ("server_message", ("main.conf", "main", "description"), None, True, "get", None),
-    ("public", ("main.conf", "main", "public"), None, True, "getboolean", None),
-    ("salt", ("main.conf", "main", "salt"), None, False, "get", "checkSalt"),
-    ("use_controller", ("main.conf", "network", "use_controller"), None, False, "getboolean", None),
-    ("controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None),
-    ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get", None),
-    ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", "buildSpoofHeartbeat"),
-    ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None),
-    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL"),
-    ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None),
-    ("lowlag_players", ("options.conf", "options", "lowlag_players"), None, True, "getint", None),
-    ("info_url", ("options.conf", "options", "info_url"), None, True, "get", None),
-    ("colors", ("options.conf", "options", "colors"), None, True, "getboolean", None),
-    ("physics_limit", ("options.conf", "worlds", "physics_limit"), None, True, "getint", None),
-    ("default_name", ("options.conf", "worlds", "default_name"), None, False, "get", None),
-    ("default_backup", ("options.conf", "worlds", "default_backup"), None, True, "get", None),
-    ("asd_delay", ("options.conf", "worlds", "asd_delay"), None, True, "getint", "startASDLoop"),
-    ("backup_auto", ("options.conf", "backups", "backup_auto"), None, True, "get", "initBackupLoop"),
-    ("backup_freq", ("options.conf", "backups", "backup_freq"), "self.backup_auto == True", True, "getint", "changeBackupFrequency"),
-    ("backup_default", ("options.conf", "backups", "backup_default"), "self.backup_auto == True", True, "getboolean", None),
-    ("backup_max", ("options.conf", "backups", "backup_max"), "self.backup_auto == True", True, "getint", None),
-    ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver"),
-    ("currency", ("options.conf", "bank", "currency"), None, True, "get", None),
-    ("useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter"),
+    #(attribute name, (file, section, option), prerequistics, dynamic, mode, callback function, required, default value)
+    # prerequistics is a python expression in which self is the factory (lazy bum :P)
+    # Callback function is the name of the function, the server will attempt to grab the function (self = ArcFactory)
+    # Default value is the value used when required = False and user did not enter a value / the option is missing in the config.
+    ("server_name", ("main.conf", "main", "name"), None, True, "get", None, True, None),
+    ("server_port", ("main.conf", "network", "port"), None, False, "getint", None, True, None),
+    ("max_clients", ("main.conf", "main", "max_clients"), None, True, "getint", None, True, None),
+    ("server_message", ("main.conf", "main", "description"), None, True, "get", None, True, None),
+    ("public", ("main.conf", "main", "public"), None, True, "getboolean", None, True, None),
+    ("salt", ("main.conf", "main", "salt"), None, False, "get", "checkSalt", True, None),
+    ("use_controller", ("main.conf", "network", "use_controller"), None, False, "getboolean", None, False, False),
+    ("controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None, False, None),
+    ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get", None, False, None),
+    ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", None, False, []),
+    ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None, False, False),
+    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL", False, False),
+    ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None, False, False),
+    ("lowlag_players", ("options.conf", "options", "lowlag_players"), None, True, "getint", None, False, 0),
+    ("info_url", ("options.conf", "options", "info_url"), None, True, "get", None, False, ""),
+    ("colors", ("options.conf", "options", "colors"), None, True, "getboolean", None, False, True),
+    ("physics_limit", ("options.conf", "worlds", "physics_limit"), None, True, "getint", None, False, 5),
+    ("default_name", ("options.conf", "worlds", "default_name"), None, False, "get", None, True, None),
+    ("default_backup", ("options.conf", "worlds", "default_backup"), None, True, "get", None, False, "main"),
+    ("asd_delay", ("options.conf", "worlds", "asd_delay"), None, True, "getint", "startASDLoop", False, 5),
+    ("backup_auto", ("options.conf", "backups", "backup_auto"), None, True, "get", "initBackupLoop", False, True),
+    ("backup_freq", ("options.conf", "backups", "backup_freq"), "self.backup_auto == True", True, "getint", "changeBackupFrequency", False, 10),
+    ("backup_default", ("options.conf", "backups", "backup_default"), "self.backup_auto == True", True, "getboolean", None, False, False),
+    ("backup_max", ("options.conf", "backups", "backup_max"), "self.backup_auto == True", True, "getint", None, False, 50),
+    ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver", False, False),
+    ("currency", ("options.conf", "bank", "currency"), None, True, "get", None, False, "Minecash"),
+    ("useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter", False, False),
 ]
 
 INFO_VIPLIST = [

@@ -193,16 +193,19 @@ class helpPlugin(ProtocolPlugin):
         except:
             r = open('config/rules.example.txt', 'r')
         for line in r:
-            self.client.sendNormalMessage(line)
+            self.client.sendSplitServerMessage(line, plain=True)
 
     @config("category", "info")
     def commandStaff(self, parts, fromloc, overriderank):
         "/staff [all] - Guest\nLists all online server staff.\nSpecify all to retrieve the full server staff list."
         if len(parts) > 1:
-            self.client.sendServerMessage("The Server Staff")
-            list = Staff(self)
-            for each in list:
-                self.client.sendServerList(each)
+            if parts[1] == "all":
+                self.client.sendServerMessage("The Server Staff")
+                list = Staff(self)
+                for each in list:
+                    self.client.sendServerList(each)
+            else:
+                self.client.sendServerMessage("Usage: /staff [all]")
         else:
             self.client.sendServerMessage("Online server staff (Do /staff all for full list):")
             owners = []
