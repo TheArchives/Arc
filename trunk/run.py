@@ -91,6 +91,7 @@ def main():
     money_logger.addHandler(fh)
     config = ConfigParser()
     config.read("config/main.conf") # This can't fail because it has been checked before
+    factory.heartbeats = dict()
     for element in factory.hbs:
         name = config.get("heartbeatnames", element)
         port = config.getint("heartbeatports", element)
