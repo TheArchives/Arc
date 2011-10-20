@@ -29,7 +29,7 @@ CONFIG = [
     ("use_controller", ("main.conf", "network", "use_controller"), None, False, "getboolean", None, False, False),
     ("controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None, False, None),
     ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get", None, False, None),
-    ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", None, False, []),
+    ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", None, True, None),
     ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None, False, False),
     ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL", False, False),
     ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None, False, False),
