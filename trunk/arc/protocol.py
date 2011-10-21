@@ -547,9 +547,9 @@ class ArcServerProtocol(Protocol):
                     try:
                         func(parts, "user", False) # fromloc is user, overriderank is false
                     except Exception as e:
-                        self.sendSplitServerMessage("Unable to run that command!")
+                        self.sendServerMessage("Unable to run that command!")
                         self.sendSplitServerMessage("Error: %s" % e)
-                        self.sendSplitServerMessage("Please report this to the staff!")
+                        self.sendServerMessage("Please report this to the staff!")
                         self.factory.logger.error("Error in command '%s': %s" % (command.title(), e))
                         error = traceback.format_exc()
                         errorsplit = error.split("\n")
@@ -778,7 +778,7 @@ class ArcServerProtocol(Protocol):
         else:
             self.sendServerMessage(current_line)
 
-    def sendSplitServerMessage(self, message):
+    def sendSplitServerMessage(self, message, plain=False):
         linelen = 63
         lines = []
         thisline = ""
@@ -792,7 +792,10 @@ class ArcServerProtocol(Protocol):
         if thisline != "":
             lines.append(thisline)
         for line in lines:
-            self.sendServerMessage(line)
+            if plain:
+                self.sendNormalMessage(line)
+            else:
+                self.sendNormalMessage(line)
 
     def splitMessage(self, message, linelen=63):
         lines = []
