@@ -604,11 +604,13 @@ class ArcFactory(Factory):
                 if len(self.worlds[key].clients) > 0:
                     self.logger.info("%s: %s" % (key, ", ".join(str(c.username) for c in self.worlds[key].clients)))
             if len(self.clients) >= self.lowlag_players:
-                self.useLowLag = True
-                self.logger.warn("Enabling low lag mode.")
+                if self.useLowLag != True:
+                    self.useLowLag = True
+                    self.logger.warn("Enabling low lag mode.")
             else:
-                self.useLowLag = False
-                self.logger.warn("Disabling low lag mode.")
+                if self.useLowLag != False:
+                    self.useLowLag = False
+                    self.logger.warn("Disabling low lag mode.")
 
     def loadArchive(self, filename):
         "Boots an archive given a filename. Returns the new world ID."

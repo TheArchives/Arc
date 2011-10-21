@@ -267,12 +267,13 @@ class ModUtilPlugin(ProtocolPlugin):
                     value = self.client.factory.serverPlugins["McBansServerPlugin"].handler.globalBan(username, ip, " ".join(parts[2:]), self.client.username)
                 except Exception as e:
                     self.client.sendServerMessage("Error when banning user globally on MCBans.")
-                    self.client.sendServerMessage(str(e))
+                    self.client.sendServerMessage(e)
                 else:
                     if value["result"] == u'y':
                         self.client.sendServerMessage("%s has been banned on MCBans." % username)
                     else:
                         self.client.sendServerMessage("MCBans was unable to process this request.")
+                        self.client.sendServerMessage("Please check MCBans for more info.")
             else:
                 self.client.sendServerMessage("User %s is not online, unable to submit to MCBans." % username)
         else:
