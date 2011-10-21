@@ -330,7 +330,7 @@ class StdinPlugin(threading.Thread):
                             else:
                                 try:
                                    world, out = message[1:len(message)-1].split(" ")
-                                   text = COLOUR_YELLOW+"!"+COLOUR_DARKGREEN+"Console:"+COLOUR_WHITE+" "+out
+                                   text = COLOUR_YELLOW+"!"+COLOUR_GREEN+"Console:"+COLOUR_WHITE+" "+out
                                 except ValueError:
                                     print("Please include a message to send.")
                                 else:
@@ -351,15 +351,15 @@ class StdinPlugin(threading.Thread):
                                 try:
                                     text = message[1:]
                                 except ValueError:
-                                    self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_DARKGREEN, "Console", message)))
+                                    self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_GREEN, "Console", message)))
                                 else:
                                     text = text[:len(text)-1]
-                                    self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, COLOUR_DARKGREEN, "Console", text,False)))
+                                    self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, COLOUR_GREEN, "Console", text,False)))
                                     self.logger.info("#Console: "+text)
                                     self.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #Console: "+text+"\n")
                                     self.adlog.flush()
                         else:
-                            self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_DARKGREEN, "Console", message[0:len(message)-1])))
+                            self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_GREEN, "Console", message[0:len(message)-1])))
             except:
                 print traceback.format_exc()
                 self.logger.error(traceback.format_exc())
