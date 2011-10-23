@@ -4,7 +4,7 @@
 
 import cPickle, ctypes, datetime, gc, os, random, re, shutil, string, sys, time, traceback
 from collections import defaultdict
-from ConfigParser import RawConfigParser as ConfigParser
+import ConfigParser
 from Queue import Queue, Empty
 
 from twisted.internet.protocol import Factory
@@ -52,7 +52,7 @@ class ArcFactory(Factory):
         self.ipbanned = {}
         self.lastseen = {}
         self.loadConfig()
-        wordfilter = ConfigParser()
+        wordfilter = ConfigParser.RawConfigParser()
         self.default_loaded = False
         self.useLowLag = False
         self.hooks = {}
@@ -77,7 +77,7 @@ class ArcFactory(Factory):
         self.use_irc = False
         if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
             self.use_irc = True
-            self.irc_config = ConfigParser()
+            self.irc_config = ConfigParser.RawConfigParser
             try:
                 self.irc_config.read("config/irc.conf")
             except Exception as a:
@@ -123,7 +123,7 @@ class ArcFactory(Factory):
             for x in range(number):
                 self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter","r"+str(x))]]
         # Load up the plugins specified
-        self.plugins_config = ConfigParser()
+        self.plugins_config = ConfigParser.RawConfigParser()
         try:
             self.plugins_config.read("config/plugins.conf")
         except Exception as e:
@@ -170,7 +170,7 @@ class ArcFactory(Factory):
                 continue
             if not config[1][0] in configParsers.keys():
                 # Create an instance of ConfigParser if we don't already have one
-                configParsers[config[1][0]] = ConfigParser()
+                configParsers[config[1][0]] = ConfigParser.RawConfigParser()
                 try:
                     self.logger.debug("Reading file config/%s..." % config[1][0])
                     configParsers[config[1][0]].read("config/%s" % config[1][0])
@@ -287,7 +287,7 @@ class ArcFactory(Factory):
                 del self.blblimit
             return
         self.blblimit = {}
-        config = ConfigParser()
+        config = ConfigParser.RawConfigParser()
         config.read("config/options.conf") # This can't fail because it has been checked before
         self.blblimit["player"] = config.getint("blb", "player")
         self.blblimit["builder"] = config.getint("blb", "builder")
@@ -447,10 +447,10 @@ class ArcFactory(Factory):
 
     def loadMeta(self):
         "Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"
-        config = ConfigParser()
-        specs = ConfigParser()
-        lastseen = ConfigParser()
-        bans = ConfigParser()
+        config = ConfigParser.RawConfigParser()
+        specs = ConfigParser.RawConfigParser()
+        lastseen = ConfigParser.RawConfigParser()
+        bans = ConfigParser.RawConfigParser()
         try:
             config.read("config/data/ranks.meta")
             specs.read("config/data/spectators.meta")
@@ -535,10 +535,10 @@ class ArcFactory(Factory):
 
     def saveMeta(self):
         "Saves the server's meta back to a file."
-        config = ConfigParser()
-        specs = ConfigParser()
-        lastseen = ConfigParser()
-        bans = ConfigParser()
+        config = ConfigParser.RawConfigParser()
+        specs = ConfigParser.RawConfigParser()
+        lastseen = ConfigParser.RawConfigParser()
+        bans = ConfigParser.RawConfigParser()
         # Make the sections
         config.add_section("cfginfo")
         config.add_section("owners")
