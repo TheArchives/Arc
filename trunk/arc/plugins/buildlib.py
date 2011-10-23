@@ -273,11 +273,13 @@ class BuildLibPlugin(ProtocolPlugin):
                     steps1 = float(2 * ((x3 - x) ** 2 + (y3 - y) ** 2 + (z3 - z) ** 2) ** 0.5)
                     steps2 = float(2 * ((x2 - x3) ** 2 + (y2 - y3) ** 2+ (z2 - z3) ** 2) ** 0.5) + steps1
                     coordinatelist = []
+                    def calcCoord(x, x2, t, steps1, steps2):
+                        return (x2 - x) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (x2 - x) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
                     for i in range(steps2+1):
                         t = float(i)
-                        var_x = (x3 - x) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (x2 - x) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
-                        var_y = (y3 - y) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (y2 - y) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
-                        var_z = (z3 - z) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (z2 - z) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
+                        var_x = calcCoord(x, x2, t, steps1, steps2)
+                        var_y = calcCoord(y, y2, t, steps1, steps2)
+                        var_z = calcCoord(z, z2, t, steps1, steps2)
                         coordinatelist.append((int(var_x) + x, int(var_y) + y, int(var_z) + z))
                     finalcoordinatelist = []
                     finalcoordinatelist = [coordtuple for coordtuple in coordinatelist if coordtuple not in finalcoordinatelist]
@@ -699,7 +701,7 @@ class BuildLibPlugin(ProtocolPlugin):
                     for j in range(-absradius-1, absradius):
                         for k in range(-absradius-1, absradius):
                             if ((i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691 < absradius and ((j >= 0 and radius > 0) or (j <= 0 and radius < 0)) and fill == "true") or \
-                            (absradius - 1 < (i ** 2 + j ** 2 + k ** 2)**0.5 + 0.691 < absradius and ((j >= 0 and radius > 0) or (j <= 0 and radius < 0)) and fill== "false"):
+                            (absradius - 1 < (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691 < absradius and ((j >= 0 and radius > 0) or (j <= 0 and radius < 0)) and fill== "false"):
                                 if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
                                     self.client.sendServerMessage("You do not have permision to build here.")
                                     return
@@ -837,21 +839,24 @@ class BuildLibPlugin(ProtocolPlugin):
                 except ValueError:
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
+            def calcStep(x, x2, y, y2, z, z2):
+                return int(((x2 - x) ** 2 + (y2 - y) ** 2 + (z2 - z) ** 2) ** 0.5 / 0.75)
             # line 1 list
-            steps = int(((x2 - x) ** 2 + (y2 - y) ** 2 + (z2 - z) ** 2) ** 0.5 / 0.75)
+            steps = []
+            steps[0] = calcStep(x, x2, y, y2, z, z2)
             mx = float(x2 - x) / steps
             my = float(y2 - y) / steps
             mz = float(z2 - z) / steps
             coordinatelist2 = []
-            for t in range(steps+1):
+            for t in range(steps[0]+1):
                 coordinatelist2.append((mx * t + x, my * t + y, mz * t + z))
             # line 2 list
-            steps = int(((x3 - x) ** 2 + (y3 - y) ** 2 + (z3 - z) ** 2) ** 0.5 / 0.75)
+            steps[1] = calcStep(x, x3, y, y3, z, z3)
             mx = float(x3 - x) / steps
             my = float(y3 - y) / steps
             mz = float(z3 - z) / steps
             coordinatelist3 = []
-            for t in range(steps+1):
+            for t in range(steps[1]+1):
                 coordinatelist3.append((mx * t + x, my * t + y, mz * t + z))
             # final coordinate list
             if len(coordinatelist2) > len(coordinatelist3):
@@ -872,7 +877,7 @@ class BuildLibPlugin(ProtocolPlugin):
                 var_x2 = point2[0]
                 var_y2 = point2[1]
                 var_z2 = point2[2]
-                steps = int(((var_x2 - var_x) ** 2 + (var_y2 - var_y) ** 2 + (var_z2 - var_z) ** 2) ** 0.5 / 0.75)
+                steps = calcStep(var_x, var_x2, var_y, var_y2, var_z, var_z2)
                 if steps != 0:
                     mx = float(var_x2 - var_x) / steps
                     my = float(var_y2 - var_y) / steps
