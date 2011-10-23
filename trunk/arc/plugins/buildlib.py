@@ -620,9 +620,6 @@ class BuildLibPlugin(ProtocolPlugin):
                             for k in range(-radius-1, radius):
                                 if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.604 < radius:
                                     # Test for axis
-                                    var_placeblock = 1
-                                    if :
-                                        var_placeblock = 0
                                     if not ((i != 0 and normalAxis == 'x') or (j != 0 and normalAxis == 'y') or (k != 0 and normalAxis == 'z')):
                                         if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
                                             self.client.sendServerMessage("You do not have permission to build here.")
