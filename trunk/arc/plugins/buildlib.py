@@ -1026,6 +1026,7 @@ class BuildLibPlugin(ProtocolPlugin):
                             return
                     for entry in blocklist[:3]:
                         i, j, k = entry
+                        try:
                             world[i, j, k] = block
                         except AssertionError:
                             self.client.sendServerMessage("Out of bounds stairs error.")
