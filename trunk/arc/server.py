@@ -77,7 +77,7 @@ class ArcFactory(Factory):
         self.use_irc = False
         if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
             self.use_irc = True
-            self.irc_config = ConfigParser.RawConfigParser
+            self.irc_config = ConfigParser.RawConfigParser()
             try:
                 self.irc_config.read("config/irc.conf")
             except Exception as a:
