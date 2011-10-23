@@ -124,20 +124,20 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-				try:
-					for i in range(-radius-1, radius):
-						for j in range(-radius-1, radius):
-							for k in range(-radius-1, radius):
-								if (i ** 2 + j ** 2 + k ** 2) ** 0.5 < radius:
-									if not self.client.AllowedToBuild(x+i, y+j, z+k):
-										return
-									world[x+i, y+j, z+k] = block
-									self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
-									self.client.sendBlock(x+i, y+j, z+k, block)
-									yield
-				except AssertionError:
-					self.client.sendServerMessage("Out of bounds sphere error.")
-					return
+                try:
+                    for i in range(-radius-1, radius):
+                        for j in range(-radius-1, radius):
+                            for k in range(-radius-1, radius):
+                                if (i ** 2 + j ** 2 + k ** 2) ** 0.5 < radius:
+                                    if not self.client.AllowedToBuild(x+i, y+j, z+k):
+                                        return
+                                    world[x+i, y+j, z+k] = block
+                                    self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
+                                    self.client.sendBlock(x+i, y+j, z+k, block)
+                                    yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds sphere error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():
@@ -195,20 +195,20 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-				try:
-					for i in range(-radius-1, radius):
-						for j in range(-radius-1, radius):
-							for k in range(-radius-1, radius):
-								if (i ** 2 + j ** 2 + k ** 2) ** 0.5 < radius and (i ** 2 + j ** 2 + k ** 2) ** 0.5 > (radius - 1.49):
-									if not self.client.AllowedToBuild(x+i, y+j, z+k) and not permissionoverride:
-										return
-									world[x+i, y+j, z+k] = block
-									self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
-									self.client.sendBlock(x+i, y+j, z+k, block)
-									yield
-				except AssertionError:
-					self.client.sendServerMessage("Out of bounds sphere error.")
-					return
+                try:
+                    for i in range(-radius-1, radius):
+                        for j in range(-radius-1, radius):
+                            for k in range(-radius-1, radius):
+                                if (i ** 2 + j ** 2 + k ** 2) ** 0.5 < radius and (i ** 2 + j ** 2 + k ** 2) ** 0.5 > (radius - 1.49):
+                                    if not self.client.AllowedToBuild(x+i, y+j, z+k) and not permissionoverride:
+                                        return
+                                    world[x+i, y+j, z+k] = block
+                                    self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
+                                    self.client.sendBlock(x+i, y+j, z+k, block)
+                                    yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds sphere error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():
@@ -259,7 +259,7 @@ class BuildLibPlugin(ProtocolPlugin):
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
-				estimatedBlocks = (2 * ((x - x2) ** 2 + (y - y2) ** 2 + (z - z2) ** 2) ** 0.5 + 2 * ((x2 - x3) ** 2 + (y2 - y3) ** 2 + (z2 - z3) ** 2) ** 0.5)
+                estimatedBlocks = (2 * ((x - x2) ** 2 + (y - y2) ** 2 + (z - z2) ** 2) ** 0.5 + 2 * ((x2 - x3) ** 2 + (y2 - y3) ** 2 + (z2 - z3) ** 2) ** 0.5)
                 if (estimatedBlocks > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to curve (Limit is %s)" % limit)
                     return
@@ -268,32 +268,32 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-				try:
-					# curve list
-					steps1 = float(2 * ((x3 - x) ** 2 + (y3 - y) ** 2 + (z3 - z) ** 2) ** 0.5)
-					steps2 = float(2 * ((x2 - x3) ** 2 + (y2 - y3) ** 2+ (z2 - z3) ** 2) ** 0.5) + steps1
-					coordinatelist = []
-					for i in range(steps2+1):
-						t = float(i)
-						var_x = (x3 - x) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (x2 - x) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
-						var_y = (y3 - y) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (y2 - y) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
-						var_z = (z3 - z) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (z2 - z) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
-						coordinatelist.append((int(var_x) + x, int(var_y) + y, int(var_z) + z))
-					finalcoordinatelist = []
-					finalcoordinatelist = [coordtuple for coordtuple in coordinatelist if coordtuple not in finalcoordinatelist]
-					for coordtuple in finalcoordinatelist:
-						i = coordtuple[0]
-						j = coordtuple[1]
-						k = coordtuple[2]
-						if not self.client.AllowedToBuild(i, j, k):
-							return
-						world[i, j, k] = block
-						self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
-						self.client.sendBlock(i, j, k, block)
-						yield
-				except AssertionError:
-					self.client.sendServerMessage("Out of bounds curve error.")
-					return
+                try:
+                    # curve list
+                    steps1 = float(2 * ((x3 - x) ** 2 + (y3 - y) ** 2 + (z3 - z) ** 2) ** 0.5)
+                    steps2 = float(2 * ((x2 - x3) ** 2 + (y2 - y3) ** 2+ (z2 - z3) ** 2) ** 0.5) + steps1
+                    coordinatelist = []
+                    for i in range(steps2+1):
+                        t = float(i)
+                        var_x = (x3 - x) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (x2 - x) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
+                        var_y = (y3 - y) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (y2 - y) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
+                        var_z = (z3 - z) * ((t) / (steps1) * (t - steps2) / (steps1 - steps2)) + (z2 - z) * ((t) / (steps2) * (t - steps1) / (steps2 - steps1))
+                        coordinatelist.append((int(var_x) + x, int(var_y) + y, int(var_z) + z))
+                    finalcoordinatelist = []
+                    finalcoordinatelist = [coordtuple for coordtuple in coordinatelist if coordtuple not in finalcoordinatelist]
+                    for coordtuple in finalcoordinatelist:
+                        i = coordtuple[0]
+                        j = coordtuple[1]
+                        k = coordtuple[2]
+                        if not self.client.AllowedToBuild(i, j, k):
+                            return
+                        world[i, j, k] = block
+                        self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
+                        self.client.sendBlock(i, j, k, block)
+                        yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds curve error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():
@@ -348,7 +348,7 @@ class BuildLibPlugin(ProtocolPlugin):
                     return
             pointlist = []
             for i in range(abs(height)):
-				they = y + ((height - i - 1) if height > 0 else (height + i + 1))
+                they = y + ((height - i - 1) if height > 0 else (height + i + 1))
                 if height > 0:
                     point1 = [x - i, they, z - i]
                     point2 = [x + i, they, z + i]
@@ -366,25 +366,25 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-				try:
-					for pointtouple in pointlist:
-						x, y, z = pointtouple[0]
-						x2, y2, z2 = pointtouple[1]
-						for i in range(x, x2+1):
-							for j in range(y, y2+1):
-								for k in range(z, z2+1):
-									if not self.client.AllowedToBuild(i, j, k) and not overriderank:
-										return
-									if fill == "true" or (i==x and j==y) or (i==x2 and j==y2) or (j==y2 and k==z2) or \
-									(i==x2 and k==z2) or (j==y and k==z) or (i==x and k==z) or (i==x and k==z2) or \
-									(j==y and k==z2) or (i==x2 and k==z) or (j==y2 and k==z) or (i==x and j==y2) or (i==x2 and j==y):
-										world[i, j, k] = block
-										self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
-										self.client.sendBlock(i, j, k, block)
-										yield
-				except AssertionError:
-					self.client.sendServerMessage("Out of bounds pyramid error.")
-					return
+                try:
+                    for pointtouple in pointlist:
+                        x, y, z = pointtouple[0]
+                        x2, y2, z2 = pointtouple[1]
+                        for i in range(x, x2+1):
+                            for j in range(y, y2+1):
+                                for k in range(z, z2+1):
+                                    if not self.client.AllowedToBuild(i, j, k) and not overriderank:
+                                        return
+                                    if fill == "true" or (i==x and j==y) or (i==x2 and j==y2) or (j==y2 and k==z2) or \
+                                    (i==x2 and k==z2) or (j==y and k==z) or (i==x and k==z) or (i==x and k==z2) or \
+                                    (j==y and k==z2) or (i==x2 and k==z) or (j==y2 and k==z) or (i==x and j==y2) or (i==x2 and j==y):
+                                        world[i, j, k] = block
+                                        self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
+                                        self.client.sendBlock(i, j, k, block)
+                                        yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds pyramid error.")
+                    return
 
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
@@ -452,20 +452,20 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-				try:
-					for coordtuple in coordinatelist2:
-						i = coordtuple[0]
-						j = coordtuple[1]
-						k = coordtuple[2]
-						if not self.client.AllowedToBuild(i, j, k) and not overriderank:
-							return
-						world[i, j, k] = block
-						self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
-						self.client.sendBlock(i, j, k, block)
-						yield
-				except AssertionError:
-					self.client.sendServerMessage("Out of bounds line error.")
-					return
+                try:
+                    for coordtuple in coordinatelist2:
+                        i = coordtuple[0]
+                        j = coordtuple[1]
+                        k = coordtuple[2]
+                        if not self.client.AllowedToBuild(i, j, k) and not overriderank:
+                            return
+                        world[i, j, k] = block
+                        self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
+                        self.client.sendBlock(i, j, k, block)
+                        yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds line error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():
@@ -614,26 +614,26 @@ class BuildLibPlugin(ProtocolPlugin):
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
             def generate_changes():
-				try:
-					for i in range(-radius-1, radius):
-						for j in range(-radius-1, radius):
-							for k in range(-radius-1, radius):
-								if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.604 < radius:
-									# Test for axis
-									var_placeblock = 1
-									if :
-										var_placeblock = 0
-									if not ((i != 0 and normalAxis == 'x') or (j != 0 and normalAxis == 'y') or (k != 0 and normalAxis == 'z')):
-										if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
-											self.client.sendServerMessage("You do not have permission to build here.")
-											return
-										world[x+i, y+j, z+k] = block
-										self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
-										self.client.sendBlock(x+i, y+j, z+k, block)
-										yield
-				except AssertionError:
-					self.client.sendServerMessage("Out of bounds circle error.")
-					return
+                try:
+                    for i in range(-radius-1, radius):
+                        for j in range(-radius-1, radius):
+                            for k in range(-radius-1, radius):
+                                if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.604 < radius:
+                                    # Test for axis
+                                    var_placeblock = 1
+                                    if :
+                                        var_placeblock = 0
+                                    if not ((i != 0 and normalAxis == 'x') or (j != 0 and normalAxis == 'y') or (k != 0 and normalAxis == 'z')):
+                                        if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
+                                            self.client.sendServerMessage("You do not have permission to build here.")
+                                            return
+                                        world[x+i, y+j, z+k] = block
+                                        self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
+                                        self.client.sendBlock(x+i, y+j, z+k, block)
+                                        yield
+                except AssertionError:
+                    self.client.sendServerMessage("Out of bounds circle error.")
+                    return
             # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
             def do_step():
@@ -702,7 +702,7 @@ class BuildLibPlugin(ProtocolPlugin):
                     for j in range(-absradius-1, absradius):
                         for k in range(-absradius-1, absradius):
                             if ((i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691 < absradius and ((j >= 0 and radius > 0) or (j <= 0 and radius < 0)) and fill == "true") or \
-							(absradius - 1 < (i ** 2 + j ** 2 + k ** 2)**0.5 + 0.691 < absradius and ((j >= 0 and radius > 0) or (j <= 0 and radius < 0)) and fill== "false"):
+                            (absradius - 1 < (i ** 2 + j ** 2 + k ** 2)**0.5 + 0.691 < absradius and ((j >= 0 and radius > 0) or (j <= 0 and radius < 0)) and fill== "false"):
                                 if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
                                     self.client.sendServerMessage("You do not have permision to build here.")
                                     return
@@ -966,16 +966,16 @@ class BuildLibPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("You have not clicked two corners yet.")
                     return
             else:
-				try:
-					x = int(parts[3])
-					y = int(parts[4])
-					z = int(parts[5])
-					x2 = int(parts[6])
-					y2 = int(parts[7])
-					z2 = int(parts[8])
-				except ValueError:
-					self.client.sendServerMessage("All coordinate parameters must be integers.")
-					return
+                try:
+                    x = int(parts[3])
+                    y = int(parts[4])
+                    z = int(parts[5])
+                    x2 = int(parts[6])
+                    y2 = int(parts[7])
+                    z2 = int(parts[8])
+                except ValueError:
+                    self.client.sendServerMessage("All coordinate parameters must be integers.")
+                    return
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
@@ -1005,18 +1005,18 @@ class BuildLibPlugin(ProtocolPlugin):
                 stepblock = chr(BLOCK_STEP)
                 for h in range(abs(height)):
                     locy = y + h * heightsign
-					combo = [(x, locy, z), (x + 1, locy, z + 1), (x + 1, locy, z), (x + 1, locy, z - 1), \
-						(x - 1, locy, z + 1), (x, locy, z + 1), (x - 1, locy, z - 1), (x - 1, locy, z), (x, locy, z - 1)]
-					if orientation == 1:
-						c1 = [combo[1], combo[2], combo[3]]
-					elif orientation == 2:
-						c1 = [combo[4], combo[5], combo[2]]
-					elif orientation == 3:
-						c1 = [combo[6], combo[7], combo[3]]
-					elif orientation == 4:
-						c1 = [combo[3], combo[8], combo[6]]
-					if counterflag == 1:
-						c1.reverse()
+                    combo = [(x, locy, z), (x + 1, locy, z + 1), (x + 1, locy, z), (x + 1, locy, z - 1), \
+                        (x - 1, locy, z + 1), (x, locy, z + 1), (x - 1, locy, z - 1), (x - 1, locy, z), (x, locy, z - 1)]
+                    if orientation == 1:
+                        c1 = [combo[1], combo[2], combo[3]]
+                    elif orientation == 2:
+                        c1 = [combo[4], combo[5], combo[2]]
+                    elif orientation == 3:
+                        c1 = [combo[6], combo[7], combo[3]]
+                    elif orientation == 4:
+                        c1 = [combo[3], combo[8], combo[6]]
+                    if counterflag == 1:
+                        c1.reverse()
                     blocklist = [combo[0]] + c1
                     orientation = orientation - heightsign * counterflag
                     if orientation > 4:
