@@ -26,9 +26,9 @@ class ServerUtilPlugin(ProtocolPlugin):
         loopsToReschedule = []
         # Do we need to reschedule the saveWorlds and backup loop?
         if parts[1] in ["shutdownall", "saveall"]:
-            loopsToReschedule.add("saveworlds")
+            loopsToReschedule.append("saveworlds")
         elif parts[1] == "shutdownall":
-            loopsToReschedule.add("backup")
+            loopsToReschedule.append("backup")
         # Firstly, stop the loops.
         for loop in loopsToReschedule:
             if self.client.factory.loops[loop].running:
