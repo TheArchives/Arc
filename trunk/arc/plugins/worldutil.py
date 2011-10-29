@@ -645,8 +645,8 @@ class WorldUtilPlugin(ProtocolPlugin):
         self.client.sendServerMessage("World Owner: %s" % self.client.world.owner)
         if self.client.world.ops:
             self.client.sendServerList(["Ops:"] + list(self.client.world.ops))
-        if self.client.world.writers:
-            self.client.sendServerList(["Builders:"] + list(self.client.world.writers))
+        if self.client.world.builders:
+            self.client.sendServerList(["Builders:"] + list(self.client.world.builders))
 
     @config("category", "info")
     def commandStatus(self, parts, fromloc, overriderank):
