@@ -137,11 +137,9 @@ class WorldUtilPlugin(ProtocolPlugin):
                     if os.path.exists(world_dir + "backup/%s/world.meta" % backup_number):
                         shutil.copy((world_dir + "backup/%s/world.meta" % backup_number), world_dir)
                 else:
-                    reactor.callLater(1, self.commandRestore(self, parts, fromloc, overriderank))
-                default_name = self.client.factory.default_name
-                self.client.factory.unloadWorld(world_id)
+                    reactor.callLater(1, self.commandRestore, self, parts, fromloc, overriderank)
+                self.client.factory.unloadWorld(world_id, skiperror=True)
                 self.client.sendServerMessage("%s has been restored to %s and booted." % (world_id, backup_number))
-                # The following code doesn't make sense -tyteen
                 if world_id in self.client.factory.worlds:
                     for client in self.client.factory.worlds[world_id].clients:
                         client.changeToWorld(world_id)
@@ -217,7 +215,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         "/physflush - Admin\nTells the physics engine to rescan the world."
         if self.client.world.physics:
             if self.client.factory.numberWithPhysics() >= self.client.factory.physics_limit:
-                self.client.sendWorldMessage("There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
+                self.client.sendServerMessage("There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
             else:
                 self.client.world.physics = False
                 self.client.world.physics = True

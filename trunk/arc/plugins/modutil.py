@@ -19,9 +19,6 @@ class ModUtilPlugin(ProtocolPlugin):
         "u": "commandUrgent",
         "urgent": "commandUrgent",
 
-        "title": "commandSetTitle",
-        "settitle": "commandSetTitle",
-
         "banish": "commandBanish",
         "worldkick": "commandBanish",
         "worldban": "commandWorldBan",
@@ -57,8 +54,6 @@ class ModUtilPlugin(ProtocolPlugin):
         "desilence": "commandDesilence",
         "unsilence": "commandDesilence",
         "silenced": "commandSilenced",
-
-        "shutdownall": "commandShutdownAll",
     }
 
     hooks = {
@@ -237,29 +232,13 @@ class ModUtilPlugin(ProtocolPlugin):
         if len(parts) <= 2:
             self.client.sendServerMessage("Please specify a username and a reason.")
             return
-        username = parts[1]
-        # Region ban
-        if self.client.factory.isBanned(username):
-            self.client.sendServerMessage("%s is already banned." % username)
-        else:
-            self.client.factory.addBan(username, " ".join(parts[2:]), self.client.username)
-            self.client.sendServerMessage("Player %s banned. Continuing to IPBan..." % username)
-        # Region IPBan
-        if parts[1] not in self.client.factory.usernames:
-            self.client.sendServerMessage("User not online, cannot IPBan.")
+        # Grab statistics
+        username = parts[1].lower()
+        if username not in self.client.factory.usernames:
             noIP = True
         else:
             noIP = False
             ip = self.client.factory.usernames[username].transport.getPeer().host
-        if not noIP:
-            if self.client.factory.isIpBanned(ip):
-                self.client.sendServerMessage("%s is already IPBanned." % ip)
-                return
-            else:
-                self.client.sendServerMessage("%s has been IPBanned." % ip)
-                self.client.factory.addIpBan(ip, " ".join(parts[2:]))
-        else:
-            self.client.sendServerMessage("User %s is not online, unable to IPBan." % username)
         # Region MCBans
         if self.client.factory.serverPluginExists("McBansServerPlugin"):
             if not noIP:
@@ -278,6 +257,22 @@ class ModUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("User %s is not online, unable to submit to MCBans." % username)
         else:
             self.client.sendServerMessage("MCBans server plugin not loaded, skipping this part.")
+        # Region ban
+        if self.client.factory.isBanned(username):
+            self.client.sendServerMessage("%s is already banned." % username)
+        else:
+            self.client.factory.addBan(username, " ".join(parts[2:]), self.client.username)
+            self.client.sendServerMessage("Player %s banned. Continuing to IPBan..." % username)
+        # Region IPBan
+        if not noIP:
+            if self.client.factory.isIpBanned(ip):
+                self.client.sendServerMessage("%s is already IPBanned." % ip)
+                return
+            else:
+                self.client.sendServerMessage("%s has been IPBanned." % ip)
+                self.client.factory.addIpBan(ip, " ".join(parts[2:]))
+        else:
+            self.client.sendServerMessage("User %s is not online, unable to IPBan." % username)
         # Follow-up action
         if username in self.client.factory.usernames:
             self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
@@ -448,31 +443,6 @@ class ModUtilPlugin(ProtocolPlugin):
         else:
             self.client.sendServerMessage("They aren't silenced.")
 
-    @config("category", "player")
-    @config("rank", "director")
-    def commandSetTitle(self, parts, fromloc, overriderank):
-        "/title username [title] - Director\nAliases: settitle\nGives or removes a title to username."
-        if len(parts) > 2:
-            rank = self.loadRank()
-            user = parts[1].lower()
-            rank[user] = (" ".join(parts[2:]))
-            self.dumpRank(rank)
-            if len(" ".join(parts[2:])) < 8:
-                self.client.sendServerMessage("Added the title of: "+(" ".join(parts[2:])))
-            else:
-                self.client.sendServerMessage("NOTICE: We recommend for you to keep Titles under 7 chars.")
-                self.client.sendServerMessage("Added the title of: "+(" ".join(parts[2:])))
-        elif len(parts)==2:
-            rank = self.loadRank()
-            user = parts[1].lower()
-            if user not in rank:
-                self.client.sendServerMessage("Syntax: /title username title")
-                return False
-            else:
-                rank.pop(user)
-                self.dumpRank(rank)
-                self.client.sendServerMessage("Removed the title.")
-
     @config("rank", "op")
     @config("category", "player")
     @username_command
@@ -489,28 +459,3 @@ class ModUtilPlugin(ProtocolPlugin):
         else:
             self.client.sendServerMessage("You are no longer spectating %s" % user.username)
             self.client.spectating = False
-
-    @config("rank", "admin")
-    def commandShutdownAll(self, parts, fromloc, overriderank):
-        "/shutdownall - Admin\nShuts down all worlds with nobody in it."
-        self.client.sendServerMessage("Shutting down all empty worlds...")
-        self.value = 0
-        def doShutdown():
-            for world in self.client.factory.worlds.values():
-                if world.id == self.client.factory.default_name:
-                    continue
-                if world.clients == set():
-                    self.client.factory.unloadWorld(world.id)
-                    self.value += 1
-                    yield
-        shutdownIter = iter(doShutdown())
-        def doStep():
-            try:
-                shutdownIter.next()
-                reactor.callLater(0.1, doStep)
-            except StopIteration:
-                if fromloc == "user":
-                    self.client.sendServerMessage("%s empty world(s) have been shut down." % self.value)
-                del self.value
-                pass
-        doStep()

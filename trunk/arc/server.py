@@ -718,18 +718,18 @@ class ArcFactory(Factory):
         self.runServerHook("worldLoaded", {"world_id": world_id})
         return world_id
 
-    def unloadWorld(self, world_id):
+    def unloadWorld(self, world_id, skiperror=False):
         """
         Unloads the given world ID.
         """
         # Devs should check this on input level
-        if world_id == self.default_name:
+        if world_id == self.default_name and not skiperror:
             raise ValueError
         for client in list(list(self.worlds[world_id].clients))[:]:
             client.changeToWorld(self.default_name)
             client.sendServerMessage("World '%s' has been shut down." % world_id)
         self.worlds[world_id].stop()
-        self.saveWorld(world_id, True)
+        self.saveWorld(world_id, shutdown=True)
         self.logger.info("World '%s' Shutdown." % world_id)
         self.runServerHook("worldUnloaded", {"world_id": world_id})
 
@@ -737,9 +737,11 @@ class ArcFactory(Factory):
         """
         Reboots a world in a crash case
         """
+        if world_id == self.default_name:
+            if self.default_backup not in self.client.factory.worlds:
+                self.loadWorld("worlds/%s" % self.default_backup, self.default_backup)
         for client in list(list(self.worlds[world_id].clients))[:]:
             if world_id == self.default_name:
-                client.loadWorld("worlds/%s" % world_id, world_id)
                 client.changeToWorld(self.default_backup)
             else:
                 client.changeToWorld(self.default_name)

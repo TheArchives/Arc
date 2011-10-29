@@ -201,7 +201,7 @@ class ArcServerProtocol(Protocol):
         return (self.username.lower() in self.world.ops) or self.isWorldOwner() or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
 
     def isWorldOwner(self):
-        return (self.username.lower() in self.world.owner) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
+        return (self.username.lower() == self.world.owner) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
 
     def isOwner(self):
         return self.factory.isOwner(self.username.lower())
