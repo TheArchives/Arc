@@ -244,11 +244,9 @@ class PlayerUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("You must specify a rank and username.")
         else:
             if parts[0] == "/dewriter":
-                rank = "/debuilder"
-            else:
-                rank = parts[0]
-            rank = rank.strip("/de")
-            parts = ["/derank", parts[1], rank] + ([parts[2]] if len(parts) == 3 else [])
+                parts[0] = "/debuilder"
+            parts[0] = parts[0].strip("/de")
+            parts = ["/derank", parts[1], parts[0]] + ([parts[2]] if len(parts) == 3 else [])
             self.client.sendServerMessage(DeRank(self, parts, fromloc, overriderank))
 
     @config("category", "player")
