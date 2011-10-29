@@ -15,7 +15,9 @@ class PlayerUtilPlugin(ProtocolPlugin):
     commands = {
         "rank": "commandRank",
         "setrank": "commandRank",
+        "promote": "commandRank",
         "derank": "commandDeRank",
+        "demote": "commandDeRank",
         "spec": "commandSpec",
         "unspec": "commandDeSpec",
         "despec": "commandDeSpec",
@@ -208,7 +210,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "op")
     def commandRank(self, parts, fromloc, overriderank):
-        "/rank username rankname - Op\nAliases: setrank\nMakes username the rank of rankname."
+        "/rank username rankname - Op\nAliases: setrank, promote\nMakes username the rank of rankname."
         if len(parts) < 3:
             self.client.sendServerMessage("You must specify a rank and username.")
         else:
@@ -217,7 +219,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "op")
     def commandDeRank(self, parts, fromloc, overriderank):
-        "/derank username rankname - Op\nMakes username lose the rank of rankname."
+        "/derank username rankname - Op\nAliases: demote\nMakes username lose the rank of rankname."
         if len(parts) < 3:
             self.client.sendServerMessage("You must specify a rank and username.")
         else:
