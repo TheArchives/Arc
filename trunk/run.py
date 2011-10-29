@@ -73,7 +73,7 @@ def main():
     try:
         factory.ip = reactor.listenTCP(factory.server_port, factory).getHost()
     except CannotListenError:
-        logger.critical("Something is already running on port %s" % (factory.server))
+        logger.critical("Something is already running on port %s" % (factory.server_port))
         doExit()
     if factory.use_controller:
         controller = ControllerFactory(factory)
