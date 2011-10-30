@@ -731,7 +731,7 @@ class ArcServerProtocol(Protocol):
                         lines.append(thisline)
                     while len(x) > linelen:
                         temp.append(x[:linelen])
-                        x=x[linelen:]
+                        x = x[linelen:]
                     lines = lines + temp
                     thisline = x
                 else:

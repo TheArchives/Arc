@@ -60,6 +60,7 @@ class ColouredLogger(object):
             self.criticallog = "logs/levels/critical.log"
             self.debuglog = "logs/levels/debug.log"
             self.commandlog = "logs/commands.log"
+            self.irclog = "logs/irc.log"
         except Exception as a:
             pass
         try:
@@ -126,7 +127,7 @@ class ColouredLogger(object):
         except Exception as e:
             self.stdout(data)
 
-    def log(self, data, file = None):
+    def log(self, data, file=None):
         if file is None:
             file = self.logfile
         "Outputs to the console.log file"
@@ -177,12 +178,21 @@ class ColouredLogger(object):
         self.stdout(done)
         
     def command(self, data):
-        "CRITICAL level output"
+        "Output for commands"
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - " + "\x01" + "g" + "COMMAND&f - "
         done = "&f" + atime + status + data
         self.log(done)
         self.log(done, self.commandlog)
+        self.stdout(done)
+
+    def irc(self, data):
+        "IRC output"
+        atime = time.strftime("%d %b (%H:%M:%S)")
+        status = " - " + "\x01" + "d" + "IRC&f - "
+        done = "&f" + atime + status + data
+        self.log(done)
+        self.log(done, self.irclog)
         self.stdout(done)
 
     def debug(self, data):

@@ -7,8 +7,14 @@ from collections import defaultdict
 import ConfigParser
 from Queue import Queue, Empty
 
-from twisted.internet.protocol import Factory
+try:
+    import OpenSSL
+except:
+    NOSSL = True
+else:
+    from twisted.internet import ssl
 from twisted.internet import reactor, task
+from twisted.internet.protocol import Factory
 
 from arc.console import StdinPlugin
 from arc.constants import *
@@ -51,13 +57,13 @@ class ArcFactory(Factory):
         self.banned = {}
         self.ipbanned = {}
         self.lastseen = {}
-        self.loadConfig()
-        wordfilter = ConfigParser.RawConfigParser()
         self.default_loaded = False
         self.useLowLag = False
         self.hooks = {}
         self.saving = False
         self.save_count = 1
+        # Load the config
+        self.loadConfig()
         # Read in the greeting
         try:
             r = open('config/greeting.txt', 'r')
@@ -74,37 +80,9 @@ class ArcFactory(Factory):
             file = open('config/data/inbox.dat', 'r')
             self.messages = cPickle.load(file)
             file.close()
-        self.use_irc = False
-        if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
-            self.use_irc = True
-            self.irc_config = ConfigParser.RawConfigParser()
-            try:
-                self.irc_config.read("config/irc.conf")
-            except Exception as a:
-                self.logger.error("Unable to read irc.conf (%s)" % a)
-                sys.exit(1)
-        if self.use_irc:
-            try:
-                self.irc_nick = self.irc_config.get("irc", "nick")
-                self.irc_pass = self.irc_config.get("irc", "password")
-                self.irc_channel = self.irc_config.get("irc", "channel")
-                self.irc_cmdlogs = self.irc_config.getboolean("irc", "cmdlogs")
-                self.ircbot = self.irc_config.getboolean("irc", "ircbot")
-                self.staffchat = self.irc_config.getboolean("irc", "staffchat")
-                self.irc_relay = ChatBotFactory(self)
-                if self.ircbot and not self.irc_channel == "#channel" and not self.irc_nick == "botname":
-                    reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
-                else:
-                    self.logger.error("IRC Bot failed to connect, you could modify, rename or remove irc.conf")
-                    self.logger.error("You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
-            except Exception as e:
-                self.logger.warn("Error parsing irc.conf (%s)" % e)
-                self.logger.warn("IRC bot will not be started.")
-                self.irc_relay = None
-        else:
-            self.irc_relay = None
         # Word Filter
         # Note: worldfilter.conf has no cfgversion at the moment, because we might rewrite this bit - g will know more
+        wordfilter = ConfigParser.RawConfigParser()
         try:
             wordfilter.read("config/wordfilter.conf")
         except Exception as e:
@@ -121,7 +99,7 @@ class ArcFactory(Factory):
                 self.logger.error("Error parsing wordfilter.conf (%s)" % e)
                 sys.exit(1)
             for x in range(number):
-                self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter","r"+str(x))]]
+                self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter", "r"+str(x))]]
         # Load up the plugins specified
         self.plugins_config = ConfigParser.RawConfigParser()
         try:
@@ -150,7 +128,7 @@ class ArcFactory(Factory):
                 "worlds/%s" % self.default_name,
                 sx, sy, sz, # Size
                 sx//2,grass_to+2, sz//2, 0, # Spawn
-                ([BLOCK_DIRT]*(grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR]*(sy-grass_to)) # Levels
+                ([BLOCK_DIRT] * (grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR] * (sy-grass_to)) # Levels
             )
             self.logger.info("Generated.")
         # Load up the contents of data.
@@ -299,8 +277,39 @@ class ArcFactory(Factory):
         self.blblimit["director"] = config.getint("blb", "director")
         self.blblimit["owner"] = config.getint("blb", "owner")
 
+    def initIRC(self, reload):
+        if self.use_irc:
+            attrs = ["irc_server", "irc_port", "irc_nick", "irc_password", "irc_use_ssl", "irc_adminmodes", "irc_cs", "irc_mod"]
+            try:
+                for attr in attrs:
+                    getattr(self, attr)
+            except AttributeError:
+                # Okay, come back later
+                self.logger.debug("Configuration not fully loaded. Coming back in 2.5 seconds.")
+                reactor.callLater(2.5, self.initIRC, reload=reload)
+                return
+            self.irc_relay = ChatBotFactory(self)
+            self.logger.debug("Initiated IRC relay factory.")
+            config = ConfigParser.RawConfigParser()
+            config.read("config/irc.conf") # This can't fail because it has been checked before
+            self.irc_channels = list()
+            for element in self.irc_cs:
+                self.irc_channels.append(config.get("channels", element))
+            self.irc_relay._channels = self.irc_channels
+            self.irc_modules = self.irc_mod.split(", ")
+            if self.irc_use_ssl:
+                if NOSSL:
+                    self.logger.error("Cannot find OpenSSL module. Reverting to standard connection.")
+                    reactor.connectTCP(self.irc_server, self.irc_port, self.irc_relay)
+                else:
+                    reactor.connectSSL(self.irc_server, self.irc_port, self.irc_relay, ssl.ClientContextFactory())
+            else:
+                reactor.connectTCP(self.irc_server, self.irc_port, self.irc_relay)
+        else:
+            self.irc_relay = None
+
     # End of dummy callbacks
-    def loadServerPlugins(self, something=None):
+    def loadServerPlugins(self, reload=False):
         "Used to load up all the server plugins."
         files = []
         self.serverHooks = {} # Clear the list of hooks
@@ -340,9 +349,9 @@ class ArcFactory(Factory):
                         i = i + 1
                         continue
             else: # We already imported it
-                mod = self.serverPlugins[element][0] #
-                del mod #
-                del self.serverPlugins[element] #
+                mod = self.serverPlugins[element][0]
+                del mod
+                del self.serverPlugins[element]
                 del sys.modules["arc.serverplugins.%s" % element] # Unimport it by deleting it
                 try:
                     __import__("arc.serverplugins.%s" % element) # import it again
@@ -1033,6 +1042,9 @@ class ArcFactory(Factory):
         for world in self.worlds.values():
             world.read_queue()
 
+    def sendMessageToAll(self, message, channel="message", client=None):
+        "Quick method for sending message to all clients."
+        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
     def newWorld(self, new_name, template="default"):
         "Creates a new world from some template."
         # Make the directory

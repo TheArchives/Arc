@@ -330,3 +330,20 @@ def checkConfigVersion(version, current):
             return False
         else:
             return True
+
+def sanitizeMessage(message, replaceSets):
+    def _messageReplace(message, dict): 
+        for key, value in dict:
+            message = message.replace(key, value)
+        return message
+    if isinstance(replacesets, list):
+        for replaceset in replacesets:
+            if isinstance(replaceset, dict):
+                message = _messageReplace(message, replaceset)
+            else:
+                raise ValueError("Replace set not a list of dicts")
+    elif isinstance(replacesets, dict):
+        message = _messageReplace(message, replacesets)
+    else:
+        raise ValueError("Replace set not a dict or a list of dicts")
+    return message
