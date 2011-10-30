@@ -247,7 +247,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         else:
             if parts[0] == "/dewriter":
                 parts[0] = "/debuilder"
-            parts[0] = parts[0].strip("/de")
+            parts[0] = parts[0].replace("/de", "")
             parts = ["/derank", parts[1], parts[0]] + ([parts[2]] if len(parts) == 3 else [])
             self.client.sendServerMessage(DeRank(self, parts, fromloc, overriderank))
 

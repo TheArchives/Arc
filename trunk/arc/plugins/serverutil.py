@@ -17,26 +17,41 @@ class ServerUtilPlugin(ProtocolPlugin):
 
     @config("rank", "admin")
     def commandWorldsOper(self, parts, fromloc, overriderank):
-        "/worldsoper shutdownall|saveall|help [action] - Admin\nPerforms mass world operations.\nDo /worldsoper help [action] for more information on a specific action."
-        if len(parts) < 1:
+        "/worldsoper [action] - Admin\nPerforms mass world operations.\nDo /worldsoper help for more information."
+        if len(parts) < 2:
             self.client.sendServerMessage("Syntax: /worldsoper action or /worldsoper help action")
             return
-        elif parts[1] not in ["shutdownall", "saveall", "help"]:
-            self.client.sendServerMessage("Unknown action %s" % parts[1])
+        action = parts[1].lower()
+        if action not in ["shutdownall", "saveall", "help"]:
+            self.client.sendServerMessage("Unknown action %s" % action)
             self.client.sendServerMessage("Available actions: shutdownall saveall help")
+            return
+        if action == "help":
+            if len(parts) > 3:
+                subject = parts[2].lower()
+                self.client.sendServerMessage("Help for %s:" % subject)
+                if subject == "shutdownall":
+                    self.client.sendServerMessage("This shuts down all worlds with nobody in it.")
+                elif subject == "saveall":
+                    self.client.sendServerMessage("This forces a save on all worlds and server rank settings.")
+                else:
+                    self.client.SendServerMessage("No help found for %s." % subject)
+            else:
+                self.client.sendServerMessage("Available actions: shutdownall saveall")
+                self.client.sendServerMessage("Please do /worldsoper help action to view help for that action.")
             return
         loopsToReschedule = []
         # Do we need to reschedule the saveWorlds and backup loop?
-        if parts[1] in ["shutdownall", "saveall"]:
+        if action in ["shutdownall", "saveall"]:
             loopsToReschedule.append("saveworlds")
-        elif parts[1] == "shutdownall":
+        elif action == "shutdownall":
             loopsToReschedule.append("backup")
         # Firstly, stop the loops.
         for loop in loopsToReschedule:
             if self.client.factory.loops[loop].running:
                 self.client.factory.loops[loop].stop()
         # Okay, let's continue with the main job.
-        if parts[1] == "shutdownall":
+        if action == "shutdownall":
             self.client.sendServerMessage("Shutting down all empty worlds...")
             self.value = 0
             def doShutdown():
@@ -58,7 +73,7 @@ class ServerUtilPlugin(ProtocolPlugin):
                     del self.value
                     pass
             doStep()
-        elif parts[1] == "saveall":
+        elif action == "saveall":
             self.client.sendServerMessage("Saving all worlds...")
             self.client.factory.saveWorlds()
             self.client.sendServerMessage("All online worlds saved.")
