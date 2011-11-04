@@ -1449,6 +1449,10 @@ class BuildLibPlugin(ProtocolPlugin):
                 except ValueError:
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
+            limit = self.client.getBlbLimit()
+            if limit == 0:
+                self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+                return
             var_locxchecklist = [(1, 0, 0), (-1, 0, 0)]
             var_locychecklist = [(0, 1, 0), (0, -1, 0)]
             var_loczchecklist = [(0, 0, 1), (0, 0, -1)]
