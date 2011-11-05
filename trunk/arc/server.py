@@ -455,21 +455,17 @@ class ArcFactory(Factory):
     def checkASD(self):
         for world in self.worlds.values():
             if world.id == self.default_name:
-                self.logger.info("World %s (default world) skipped." % self.default_name)
                 continue
             elif not world.status["autoshutdown"]:
                 self.logger.info("World %s skipped (autoshutdown disabled)" % world.id)
                 continue
-            self.logger.info("Checking world %s." % world.id)
             if world.status["last_access_count"] >= self.asd_delay:
                 name = world.id
                 self.unloadWorld(name)
-                self.logger.info("Unloaded %s because of ASD." % name)
             else:
                 if len(world.clients) == 0: # Nobody's in it, ASD reset is not handled here
                     try:
                         world.status["last_access_count"] += 1
-                        self.logger.info("Incremented ASD count for world %s. The count now is %s." % (world.id, world.status["last_access_count"]))
                     except Exception as e: # Test
                         self.logger.warn("Error when incrementing ASD count in world %s." % world.id)
                         self.logger.warn(e)
