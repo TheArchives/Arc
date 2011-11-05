@@ -145,7 +145,7 @@ class StdinPlugin(threading.Thread):
                                         print("%s is already IPBanned." % ip)
                                     else:
                                         self.factory.addIpBan(ip, " ".join(params))
-                                        self.client.factory.usernames[username].sendError("You got IPBanned by the console: %s" % (" ".join(message[2:])))
+                                        self.factory.usernames[username].sendError("You got IPBanned by the console: %s" % (" ".join(message[2:])))
                                         print("%s has been IPBanned." % ip)
                             elif message[0] == "rank":
                                 if len(message) == 1:
@@ -217,7 +217,7 @@ class StdinPlugin(threading.Thread):
                                         print("World %s loading failed." % world_id)
                                     self.factory.worlds[world_id].all_write = False
                                     if len(message) < 4:
-                                        self.client.sendServerMessage("World '%s' made and booted." % world_id)
+                                        print("World '%s' made and booted." % world_id)
                             elif message[0] == ("me"):
                                 if len(message) == 1:
                                     print("Please type an action.")
