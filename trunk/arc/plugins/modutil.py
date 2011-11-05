@@ -417,8 +417,8 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("You cannot send staff!")
             return
         else:
-            client.changeToWorld(world_id)
-            client.sendServerMessage("You were sent to %s by %s." % (world_id, self.client.username))
+            self.client.factory.usernames[username].changeToWorld(world_id)
+            self.client.factory.usernames[username].sendServerMessage("You were sent to %s by %s." % (world_id, self.client.username))
             self.client.sendServerMessage("User %s was sent to world %s." % (username, world_id))
 
     @config("category", "player")
