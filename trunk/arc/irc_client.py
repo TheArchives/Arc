@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cmath, datetime, random, sys, traceback
+import cmath, datetime, random, sys, time, traceback
 
 from twisted.internet import protocol
 from twisted.words.protocols import irc
