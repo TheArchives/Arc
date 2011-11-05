@@ -193,9 +193,9 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.queueTask(TASK_NEWPLAYER, [self.client.id, self.client.username, self.client.x, self.client.y, self.client.z, self.client.h, self.client.p])
 
     @config("category", "player")
-    @config("rank", "admin")
+    @config("rank", "mod")
     def commandBanned(self, user, fromloc, overriderank):
-        "/banned - Admin\nShows who is Banned."
+        "/banned - Mod\nShows who is Banned."
         done = ""
         for element in self.client.factory.banned.keys():
             done = done + " " + element
@@ -205,19 +205,19 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerList(["Banned: No one."])
 
     @config("category", "player")
-    @config("rank", "mod")
+    @config("rank", "helper")
     def commandSilenced(self, parts, fromloc, overriderank):
-        "/silenced - Mod\nLists all Silenced players."
+        "/silenced - Helper\nLists all Silenced players."
         if len(self.client.factory.silenced):
             self.client.sendServerList(["Silenced:"] + list(self.client.factory.silenced))
         else:
             self.client.sendServerList(["Silenced:"] + list("N/A"))
 
     @config("category", "player")
-    @config("rank", "mod")
+    @config("rank", "helper")
     @username_command
     def commandKick(self, user, fromloc, overriderank, params=[]):
-        "/kick username [reason] - Mod\nKicks the user off the server."
+        "/kick username [reason] - Helper\nKicks the user off the server."
         username = user.username
         if params:
             user.sendError("Kicked by %s: %s" % (self.client.username , " ".join(params)))
@@ -226,9 +226,9 @@ class ModUtilPlugin(ProtocolPlugin):
         self.client.sendServerMessage("User %s kicked." % username)
 
     @config("category", "player")
-    @config("rank", "admin")
+    @config("rank", "mod")
     def commandBanBoth(self, parts, fromloc, overriderank):
-        "/banb username reason - Admin\nName and IP ban a user from this server, and on MCBans."
+        "/banb username reason - Mod\nName and IP ban a user from this server, and on MCBans."
         if len(parts) <= 2:
             self.client.sendServerMessage("Please specify a username and a reason.")
             return
@@ -278,9 +278,9 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
 
     @config("category", "player")
-    @config("rank", "admin")
+    @config("rank", "mod")
     def commandBan(self, parts, fromloc, overriderank):
-        "/ban username reason - Admin\nBans the player from this server."
+        "/ban username reason - Mod\nBans the player from this server."
         if len(parts) <= 2:
             self.client.sendServerMessage("Please specify a username and a reason.")
             return
@@ -294,9 +294,9 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("%s has been banned for %s." % (username, " ".join(parts[2:])))
 
     @config("category", "player")
-    @config("rank", "admin")
+    @config("rank", "mod")
     def commandIpban(self, parts, fromloc, overriderank):
-        "/ipban username reason - Admin\nBan a user's IP from this server."
+        "/ipban username reason - Mod\nBan a user's IP from this server."
         if parts[1] not in self.client.factory.usernames:
             self.client.sendServerMessage("Sorry, that user is not online.")
             return
@@ -315,10 +315,10 @@ class ModUtilPlugin(ProtocolPlugin):
                     self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
 
     @config("category", "player")
-    @config("rank", "admin")
+    @config("rank", "mod")
     @only_username_command
     def commandUnban(self, username, fromloc, overriderank):
-        "/unban username - Admin\nRemoves the Ban on the user."
+        "/unban username - Mod\nRemoves the Ban on the user."
         if not self.client.factory.isBanned(username):
             self.client.sendServerMessage("%s is not banned." % username)
         else:
@@ -326,10 +326,10 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("%s has been unbanned." % username)
 
     @config("category", "player")
-    @config("rank", "director")
+    @config("rank", "admin")
     @only_string_command("IP")
     def commandUnipban(self, ip, fromloc, overriderank):
-        "/unipban ip - Director\nRemoves the Ban on the IP."
+        "/unipban ip - Admin\nRemoves the Ban on the IP."
         if not self.client.factory.isIpBanned(ip):
             self.client.sendServerMessage("%s is not Banned." % ip)
         else:
@@ -337,20 +337,20 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("%s UnBanned." % ip)
 
     @config("category", "player")
-    @config("rank", "admin")
+    @config("rank", "mod")
     @only_username_command
     def commandReason(self, username, fromloc, overriderank):
-        "/banreason username - Admin\nGives the reason a user was Banned."
+        "/banreason username - Mod\nGives the reason a user was Banned."
         if not self.client.factory.isBanned(username):
             self.client.sendServerMessage("%s is not Banned." % username)
         else:
             self.client.sendServerMessage("Reason: %s" % self.client.factory.banReason(username))
 
     @config("category", "player")
-    @config("rank", "director")
+    @config("rank", "admin")
     @only_string_command("IP")
     def commandIpreason(self, ip, fromloc, overriderank):
-        "/ipreason username - Director\nGives the reason an IP was Banned."
+        "/ipreason username - Admin\nGives the reason an IP was Banned."
         if not self.client.factory.isIpBanned(ip):
             self.client.sendServerMessage("%s is not Banned." % ip)
         else:
