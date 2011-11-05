@@ -2,9 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import threading
-
-from twisted.internet import reactor
+from twisted.internet import reactor, threads
 
 from arc.constants import *
 from arc.decorators import *
@@ -135,12 +133,14 @@ class BlbPlugin(ProtocolPlugin):
                     except AssertionError:
                         self.client.sendServerMessage("Out of bounds blb error.")
                         return
-                threading.Thread(target=doBlocks).start()
+                d = threads.deferToThread(doBlocks)
                 # Now the fun part. Respawn them all!
-                for client in world.clients:
-                    self.client.factory.usernames[client].sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
-                if fromloc == "user":
-                    self.client.sendServerMessage("Your blb just completed.")
+                def blbCallback():
+                    for client in world.clients:
+                        self.client.factory.usernames[client].sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
+                    if fromloc == "user":
+                        self.client.sendServerMessage("Your blb just completed.")
+                d.addCallback(blbCallback)
             else:
                 def generate_changes():
                     try:
