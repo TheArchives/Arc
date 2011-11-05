@@ -130,7 +130,6 @@ class BlbPlugin(ProtocolPlugin):
                                         return
                                     world[i, j, k] = block
                         self.client.sendServerMessage("BLB finished. Respawning...")
-                        return True
                     except AssertionError:
                         self.client.sendServerMessage("Out of bounds blb error.")
                         return
