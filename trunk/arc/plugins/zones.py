@@ -29,16 +29,16 @@ class ZonesPlugin(ProtocolPlugin):
     def commandZones(self, onoff, fromloc, overriderank):
         "/zones on|off - Op\nEnables or disables building zones in this world."
         if onoff == "on":
-            if self.client.world.zoned:
+            if self.client.world.status["zoned"]:
                 self.client.sendWorldMessage("Building zones is already on here.")
             else:
-                self.client.world.zoned = True
+                self.client.world.status["zoned"] = True
                 self.client.sendWorldMessage("This world now has building zones enabled.")
         else:
-            if not self.client.world.zoned:
+            if not self.client.world.status["zoned"]:
                 self.client.sendWorldMessage("Building zones is already off here.")
             else:
-                self.client.world.zoned = False
+                self.client.world.status["zoned"] = False
                 self.client.sendWorldMessage("This world now has building zones disabled.")
 
     @config("rank", "op")
@@ -48,11 +48,11 @@ class ZonesPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Info missing. Usage - /znew name user|rank [rank]")
             return
         try:
-            if not self.client.world.zoned and not parts[3].lower() == "all":
+            if not self.client.world.status["zoned"] and not parts[3].lower() == "all":
                 self.client.sendServerMessage("Zones must be turned on to use except for an 'all' ranked zone.")
                 return
         except IndexError:
-            if not self.client.world.zoned:
+            if not self.client.world.status["zoned"]:
                 self.client.sendServerMessage("Zones must be turned on to use except for an 'all' ranked zone.")
                 return
         for id, zone in self.client.world.userzones.items():

@@ -35,6 +35,8 @@ class World(object):
             self.hidden = True
         self.blocks_path = os.path.join(basename, "blocks.gz")
         self.meta_path = os.path.join(basename, "world.meta")
+        self.id = None
+        self.factory = factory
         # Other settings
         self.cfgversion = "1.0.0"
         self.owner = "N/A"
@@ -42,23 +44,22 @@ class World(object):
         self.builders = set()
         self.status = dict()
         # The following code will be replaced by self.status
-        self.all_write = True
-        self.private = False
+        self.status["all_build"] = True
+        self.status["private"] = False
+        self.status["is_archive"] = False
+        self.status["autoshutdown"] = True
+        self.status["saving"] = False
+        self.status["zoned"] = False
+        self.status["physics"] = False
+        self.status["finite_water"] = True
+        # The above code will be replaced by self.status
         self._physics = False
         self._finite_water = False
-        self.is_archive = False
-        self.autoshutdown = True
-        self.saving = False
-        self.zoned = False
-        self.locked = False # Unused right now
-        # The above code will be replaced by self.status
-        self.teleports = {}
-        self.messages = {}
-        self.worldbans = {}
-        self.commands = {}
-        self.mines = {}
-        self.id = None
-        self.factory = factory
+        self.portals = {}
+        self.msgblocks = {}
+        self.worldbans = set()
+        self.cmdblocks = {}
+        self.mines = list([])
         self.userzones = {}
         self.rankzones = {}
         self.entitylist = []
@@ -67,6 +68,8 @@ class World(object):
         self.entities_childerenlist = []
         self.entities_childerenlist_index = 0
         self.entities_epicentity = []
+        self.status["modified"] = False
+        self.status["last_access_count"] = 0
         # Dict of deferreds to call when a block is gotten.
         self.blockgets = {}
         # Current deferred to call after a flush is complete
@@ -167,9 +170,9 @@ class World(object):
         else:
             self.cfgversion = "1.0.0"
         if not checkConfigVersion(self.cfgversion, CFGVERSION["world.meta"]):
-            self.logger.warn("World %s has an outdated world.meta, data may be lost." % self.id)
+            self.logger.warn("World %s has an outdated world.meta, data may be lost." % self.basename)
             self.logger.warn("A copy of the original file has been made as world.meta.orig.")
-            shutil.copy(self.meta_path, os.path.join(basename, "world.meta.orig"))
+            shutil.copy(self.meta_path, os.path.join(self.basename, "world.meta.orig"))
         self.x = config.getint("size", "x")
         self.y = config.getint("size", "y")
         self.z = config.getint("size", "z")
@@ -179,10 +182,35 @@ class World(object):
             config.getint("spawn", "z"),
             config.getint("spawn", "h"),
         )
-        if config.has_section("autoshutdown"):
-            self.autoshutdown = config.get("autoshutdown", "autoshutdown")
-        if config.has_section("owner"):
-            self.owner = config.get("owner", "owner").lower()
+        if config.has_section("options"):
+            if config.has_option("options", "autoshutdown"):
+                self.status["autoshutdown"] = config.getboolean("options", "autoshutdown")
+            else:
+                self.status["autoshutdown"] = False
+            if config.has_option("options", "owner"):
+                self.status["owner"] = config.get("options", "owner").lower()
+            else:
+                self.status["owner"] = "n/a"
+            if config.has_option("options", "all_build"):
+                self.status["all_build"] = config.getboolean("options", "all_build")
+            else:
+                self.status["all_build"] = True
+            if config.has_option("options", "private"):
+                self.status["private"] = config.getboolean("options", "private")
+            else:
+                self.status["private"] = False
+            if config.has_option("options", "zoned"):
+                self.status["zoned"] = config.getboolean("options", "zoned")
+            else:
+                self.status["zoned"] = True
+            if config.has_option("options", "physics"):
+                self.status["physics"] = config.getboolean("options", "physics")
+            else:
+                self.status["physics"] = False
+            if config.has_option("options", "finite_water"):
+                self.status["finite_water"] = config.getboolean("options", "finite_water")
+            else:
+                self.status["finite_water"] = False
         if config.has_section("ops"):
             self.ops = set(x.lower() for x in config.options("ops"))
         else:
@@ -191,62 +219,33 @@ class World(object):
             self.builders = set(x.lower() for x in config.options("builders"))
         else:
             self.builders = set()
-        if config.has_section("permissions"):
-            if config.has_option("permissions", "all_write"):
-                self.all_write = config.getboolean("permissions", "all_write")
-            else:
-                self.all_write = True
-            if config.has_option("permissions", "private"):
-                self.private = config.getboolean("permissions", "private")
-            else:
-                self.private = False
-            if config.has_option("permissions", "zoned"):
-                self.zoned = config.getboolean("permissions", "zoned")
-            else:
-                self.zoned = True
-        if config.has_section("display"):
-            if config.has_option("display", "physics"):
-                self.physics = config.getboolean("display", "physics")
-            else:
-                self.physics = False
-            if config.has_option("display", "finite_water"):
-                self.finite_water = config.getboolean("display", "finite_water")
-            else:
-                self.finite_water = False
-        self.teleports = {}
-        if config.has_section("teleports"):
-            for option in config.options("teleports"):
+        if config.has_section("portals"):
+            for option in config.options("portals"):
                 offset = int(option)
-                destination = [x.strip() for x in config.get("teleports", option).split(",")]
+                destination = [x.strip() for x in config.get("portals", option).split(",")]
                 coords = map(int, destination[1:])
                 if len(coords) == 3:
                     coords = coords + [0]
                 if not (0 <= coords[3] <= 255):
                     coords[3] = 0
-                self.teleports[offset] = destination[:1] + coords
-        self.messages = {}
-        if config.has_section("messages"):
-            for option in config.options("messages"):
-                self.messages[int(option)] = config.get("messages", option)
-        self.worldbans = {}
+                self.portals[offset] = destination[:1] + coords
+        if config.has_section("msgblocks"):
+            for option in config.options("msgblocks"):
+                self.msgblocks[int(option)] = config.get("msgblocks", option)
         if config.has_section("worldbans"):
-            for option in config.options("worldbans"):
-                self.worldbans[option] = "True"
-        self.commands = {}
-        if config.has_section("commands"):
-            for option in config.options("commands"):
-                cmd = config.get("commands", option)
+            self.worldbans = set(x.lower() for x in config.options("worldbans"))
+        if config.has_section("cmdblocks"):
+            for option in config.options("cmdblocks"):
+                cmd = config.get("cmdblocks", option)
                 listofcmd = cmd.split("&n")
                 for x in listofcmd:
                     x = x.replace("&n", "")
                     if x == "":
                         listofcmd.remove(x)
-                self.commands[int(option)] = listofcmd
-        self.mines = list([])
+                self.cmdblocks[int(option)] = listofcmd
         if config.has_section("mines"):
             for option in config.options("mines"):
                 self.mines.append(int(option))
-        self.userzones = {}
         if config.has_section("userzones"):
             for option in config.options("userzones"):
                 destination = [x.strip() for x in config.get("userzones", option).split(",")]
@@ -259,7 +258,6 @@ class World(object):
                         break
                     else:
                         i += 1
-        self.rankzones = {}
         if config.has_section("rankzones"):
             for option in config.options("rankzones"):
                 user = option
@@ -272,7 +270,6 @@ class World(object):
                         break
                     else:
                         i += 1
-        self.entitylist = []
         if config.has_section("entitylist"):
             for option in config.options("entitylist"):
                 entry = config.get("entitylist", option)
@@ -305,21 +302,17 @@ class World(object):
         config.add_section("cfginfo")
         config.add_section("size")
         config.add_section("spawn")
-        config.add_section("owner")
+        config.add_section("options")
         config.add_section("ops")
         config.add_section("builders")
-        config.add_section("permissions")
-        config.add_section("display")
-        config.add_section("teleports")
-        config.add_section("messages")
+        config.add_section("portals")
+        config.add_section("msgblocks")
         config.add_section("worldbans")
-        config.add_section("commands")
+        config.add_section("cmdblocks")
         config.add_section("mines")
-        config.add_section("autoshutdown")
         config.add_section("userzones")
         config.add_section("rankzones")
         config.add_section("entitylist")
-        config.add_section("chat")
         config.set("cfginfo", "name", "world.meta")
         config.set("cfginfo", "version", self.cfgversion)
         config.set("size", "x", str(self.x))
@@ -330,37 +323,37 @@ class World(object):
         config.set("spawn", "z", str(self.spawn[2]))
         config.set("spawn", "h", str(self.spawn[3]))
         # Store Autoshutdown
-        config.set("autoshutdown", "autoshutdown", str(self.autoshutdown))
+        config.set("options", "autoshutdown", str(self.status["autoshutdown"]))
         # Store owner
-        config.set("owner", "owner", str(self.owner))
+        config.set("options", "owner", str(self.status["owner"]))
+        # Store permissions
+        config.set("options", "all_build", str(self.status["all_build"]))
+        config.set("options", "private", str(self.status["private"]))
+        config.set("options", "zoned", str(self.status["zoned"]))
+        # Store display settings
+        config.set("options", "physics", str(self.status["physics"]))
+        config.set("options", "finite_water", str(self.status["finite_water"]))
         # Store ops
         for op in self.ops:
             config.set("ops", op, "true")
         # Store builders
         for builder in self.builders:
             config.set("builders", builder, "true")
-        # Store permissions
-        config.set("permissions", "all_write", str(self.all_write))
-        config.set("permissions", "private", str(self.private))
-        config.set("permissions", "zoned", str(self.zoned))
-        # Store display settings
-        config.set("display", "physics", str(self.physics))
-        config.set("display", "finite_water", str(self.finite_water))
-        # Store teleports
-        for offset, dest in self.teleports.items():
-            config.set("teleports", str(offset), ", ".join(map(str, dest)))
-        # Store messages
-        for offset, msg in self.messages.items():
-            config.set("messages", str(offset), msg)
+        # Store portals
+        for offset, dest in self.portals.items():
+            config.set("portals", str(offset), ", ".join(map(str, dest)))
+        # Store msgblocks
+        for offset, msg in self.msgblocks.items():
+            config.set("msgblocks", str(offset), msg)
         # Store worldbans
         for name in self.worldbans:
             config.set("worldbans", str(name), "True")
-        # Store commands
-        for offset, cmd in self.commands.items():
+        # Store cmdblocks
+        for offset, cmd in self.cmdblocks.items():
             cmdstr = ""
             for x in cmd:
                 cmdstr = cmdstr + x + "&n"
-            config.set("commands", str(offset), cmdstr)
+            config.set("cmdblocks", str(offset), cmdstr)
         # Store mines
         for offset in self.mines:
             config.set("mines", str(offset), "True")
@@ -396,81 +389,82 @@ class World(object):
         world.load_meta()
         return world
 
-    def add_teleport(self, x, y, z, to):
+    # The following methods should be simplified into 1 method
+    def add_portal(self, x, y, z, to):
         offset = self.get_offset(x, y, z)
-        self.teleports[offset] = to
+        self.portals[offset] = to
 
-    def delete_teleport(self, x, y, z):
+    def delete_portal(self, x, y, z):
         offset = self.get_offset(x, y, z)
         try:
-            del self.teleports[offset]
+            del self.portals[offset]
             return True
         except KeyError:
             return False
 
-    def get_teleport(self, x, y, z):
+    def get_portal(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return self.teleports[offset]
+        return self.portals[offset]
 
-    def has_teleport(self, x, y, z):
+    def has_portal(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return offset in self.teleports
+        return offset in self.portals
 
-    def add_message(self, x, y, z, msg):
+    def clear_portals(self):
+        self.portals = {}
+
+    def add_msgblock(self, x, y, z, msg):
         offset = self.get_offset(x, y, z)
-        self.messages[offset] = msg
+        self.msgblocks[offset] = msg
 
-    def delete_message(self, x, y, z):
+    def delete_msgblock(self, x, y, z):
         offset = self.get_offset(x, y, z)
         try:
-            del self.messages[offset]
+            del self.msgblocks[offset]
             return True
         except KeyError:
             return False
 
-    def get_message(self, x, y, z):
+    def get_msgblock(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return self.messages[offset]
+        return self.msgblocks[offset]
 
-    def has_message(self, x, y, z):
+    def has_msgblock(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return offset in self.messages
+        return offset in self.msgblocks
+
+    def clear_msgblocks(self):
+        self.msgblocks = {}
 
     def add_worldban(self, name):
-        self.worldbans[name.lower()] = "True"
+        self.worldbans.add(name)
 
     def delete_worldban(self, name):
         try:
-            del self.worldbans[name.lower()]
+            self.worldbans.remove(name)
             return True
         except KeyError:
             return False
 
-    def isworldbanned(self, name):
-        return name.lower() in self.worldbans
-
-    def add_command(self, x, y, z, cmd):
+    def add_cmdblock(self, x, y, z, cmd):
         offset = self.get_offset(x, y, z)
-        self.commands[offset] = cmd
+        self.cmdblocks[offset] = cmd
 
-    def delete_command(self, x, y, z):
+    def delete_cmdblock(self, x, y, z):
         offset = self.get_offset(x, y, z)
         try:
-            del self.commands[offset]
+            del self.cmdblocks[offset]
             return True
         except KeyError:
             return False
 
-    def get_command(self, x, y, z):
+    def get_cmdblock(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return self.commands[offset]
+        return self.cmdblocks[offset]
 
-    def has_command(self, x, y, z):
+    def has_cmdblock(self, x, y, z):
         offset = self.get_offset(x, y, z)
-        return offset in self.commands
-
-    def clear_teleports(self):
-        self.teleports = {}
+        return offset in self.cmdblocks
 
     def add_mine(self, x, y, z):
         offset = self.get_offset(x, y, z)
@@ -490,6 +484,10 @@ class World(object):
 
     def clear_mines(self):
         self.mines = []
+    # The above methods needs to be simplified into 1 method
+
+    def isWorldBanned(self, name):
+        return name.lower() in self.worldbans
 
     def __getitem__(self, (x, y, z)):
         "Gets the value of a block. Returns a Deferred."
@@ -534,8 +532,8 @@ class World(object):
         # Now, make a function that will call that on the first one
         def on_flush(result):
             handle_deferred.callback((
-                    open(self.blocks_path, "rb"),
-                    os.stat(self.blocks_path).st_size,
+                open(self.blocks_path, "rb"),
+                os.stat(self.blocks_path).st_size,
             ))
         self.flush_deferred.addCallback(on_flush)
         return handle_deferred

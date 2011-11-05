@@ -11,7 +11,7 @@ CFGVERSION = {
     "ranks.meta": (1, 0, 0),
     "lastseen.meta": (1, 0, 0),
     "spectators.meta": (1, 0, 0),
-    "world.meta": (1, 0, 0),
+    "world.meta": (1, 5, 0),
 }
 
 CONFIG = [

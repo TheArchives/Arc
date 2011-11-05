@@ -56,10 +56,8 @@ class BuyPlugin(ProtocolPlugin):
             world_id = parts[1].lower()
             self.client.factory.newWorld(world_id, template)
             self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-            self.client.factory.worlds[world_id].all_write = False
+            self.client.factory.worlds[world_id].status["all_build"] = False
             if len(parts) < 4:
                 self.client.sendServerMessage("World '%s' made and booted." % world_id)
                 self.client.changeToWorld(world_id)
                 self.client.sendServerMessage(Rank(self, ["/rank", "worldowner", self.client.username, world_id], fromloc, True))
-            world = self.client.factory.worlds[world_id]
-            world.all_write = False

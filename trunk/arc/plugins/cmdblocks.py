@@ -212,9 +212,9 @@ class CommandPlugin(ProtocolPlugin):
         # avoid infinite loops by making blocks unaffected by commands
         if fromloc != "user":
             return False
-        if self.client.world.has_command(x, y, z):
+        if self.client.world.has_cmdblock(x, y, z):
             if self.cmdinfo:
-                cmdlist = self.client.world.get_command(x, y, z)
+                cmdlist = self.client.world.get_cmdblock(x, y, z)
                 if len(cmdlist)<11:
                     self.client.sendServerMessage("Page 1 of 1:")
                     for x in cmdlist:
@@ -227,7 +227,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.cmdinfolines = cmdlist
                 return False
             if self.command_remove is True:
-                self.client.world.delete_command(x, y, z)
+                self.client.world.delete_cmdblock(x, y, z)
                 self.client.sendServerMessage("You deleted a command block.")
             else:
                 if self.listeningforpay:
@@ -240,14 +240,14 @@ class CommandPlugin(ProtocolPlugin):
                 if self.cmdinfolines is not None:
                     self.client.sendServerMessage("Please complete the cmdinfo before using a cmdblock.")
                     return False
-                self.runningcmdlist = list(self.client.world.get_command(x, y, z))
+                self.runningcmdlist = list(self.client.world.get_cmdblock(x, y, z))
                 self.runningsensor = False
                 reactor.callLater(0.01, self.runcommands)
                 return False
         if self.command_cmd:
             if self.placing_cmd:
                 self.client.sendServerMessage("You placed a command block. Type /cmdend to stop.")
-                self.client.world.add_command(x, y, z, self.command_cmd)
+                self.client.world.add_cmdblock(x, y, z, self.command_cmd)
 
     def newWorld(self, world):
         "Hook to reset Command abilities in new worlds if not op."
@@ -261,14 +261,14 @@ class CommandPlugin(ProtocolPlugin):
         ry = y >> 5
         rz = z >> 5
         try:
-            if self.client.world.has_command(rx, ry, rz) and (rx, ry, rz) != self.last_block_position:
+            if self.client.world.has_cmdblock(rx, ry, rz) and (rx, ry, rz) != self.last_block_position:
                 if self.listeningforpay:
                     self.client.sendServerMessage("Please confirm or cancel payment before using a cmdblock.")
                     return False
                 if self.inputvar is not None or self.inputnum is not None or self.inputblock is not None or self.inputyn is not None:
                     self.client.sendServerMessage("Please give input before using a cmdblock.")
                     return False
-                self.runningcmdlist = list(self.client.world.get_command(rx, ry, rz))
+                self.runningcmdlist = list(self.client.world.get_cmdblock(rx, ry, rz))
                 self.runningsensor = True
                 reactor.callLater(0.01, self.runcommands)
         except AssertionError:

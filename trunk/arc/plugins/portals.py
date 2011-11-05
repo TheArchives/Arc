@@ -12,7 +12,6 @@ class PortalPlugin(ProtocolPlugin):
     
     commands = {
         "p": "commandPortal",
-        "tpbox": "commandPortal",
         "phere": "commandPortalhere",
         "pend": "commandPortalend",
         "pshow": "commandShowportals",
@@ -39,16 +38,16 @@ class PortalPlugin(ProtocolPlugin):
     
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
-        if self.client.world.has_teleport(x, y, z):
+        if self.client.world.has_portal(x, y, z):
             if self.portal_remove:
-                self.client.world.delete_teleport(x, y, z)
+                self.client.world.delete_portal(x, y, z)
                 self.client.sendServerMessage("You deleted a Portal block.")
             else:
                 self.client.sendServerMessage("That is a Portal block, you cannot change it. (/pdel?)")
                 return False # False = they weren't allowed to build
         if self.portal_dest:
             self.client.sendServerMessage("You placed a Portal block.")
-            self.client.world.add_teleport(x, y, z, self.portal_dest)
+            self.client.world.add_portal(x, y, z, self.portal_dest)
     
     def posChanged(self, x, y, z, h, p):
         "Hook trigger for when the user moves"
@@ -56,7 +55,7 @@ class PortalPlugin(ProtocolPlugin):
         ry = y >> 5
         rz = z >> 5
         try:
-            world, tx, ty, tz, th = self.client.world.get_teleport(rx, ry, rz)
+            world, tx, ty, tz, th = self.client.world.get_portal(rx, ry, rz)
         except (KeyError, AssertionError):
             pass
         else:
@@ -73,7 +72,7 @@ class PortalPlugin(ProtocolPlugin):
                         return
                 world = self.client.factory.worlds[world_id]
                 if not self.client.canEnter(world):
-                    if world.private:
+                    if world.status["private"]:
                         if (rx, ry, rz) != self.last_block_position:
                             self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
                     else:
@@ -95,7 +94,7 @@ class PortalPlugin(ProtocolPlugin):
     
     @config("rank", "op")
     def commandPortal(self, parts, fromloc, overriderank):
-        "/p worldname x y z [r] - Op\nAliases: tpbox\nMakes the next block you place a Portal."
+        "/p worldname x y z [r] - Op\nMakes the next block you place a Portal."
         if len(parts) < 5:
             self.client.sendServerMessage("Please enter a worldname and a coord triplet.")
         else:
@@ -135,7 +134,7 @@ class PortalPlugin(ProtocolPlugin):
     @config("rank", "op")
     def commandShowportals(self, parts, fromloc, overriderank):
         "/pshow - Op\nAliases: tpshow\nShows all Portal blocks as blue, only to you."
-        for offset in self.client.world.teleports.keys():
+        for offset in self.client.world.portals.keys():
             x, y, z = self.client.world.get_coords(offset)
             self.client.sendPacked(TYPE_BLOCKSET, x, y, z, BLOCK_BLUE)
         self.client.sendServerMessage("All Portals appearing blue temporarily.")
@@ -145,7 +144,7 @@ class PortalPlugin(ProtocolPlugin):
         "/pdel [all] - Op\nAliases: deltp, pclear\nEnables portal deletion mode. Toggle."
         if len(parts) > 1:
             if parts[1].lower() == "all":
-                self.client.world.clear_teleports()
+                self.client.world.clear_portals()
                 self.client.sendServerMessage("All Portals in this world removed.")
             else:
                 self.client.sendServerMessage("To delete all portals please specify 'all'.")

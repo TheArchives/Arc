@@ -228,7 +228,7 @@ class ArcServerProtocol(Protocol):
         return self.factory.isSpectator(self.username.lower())
 
     def canEnter(self, world):
-        if not world.private and (self.username.lower() not in world.worldbans):
+        if not world.status["private"] and not world.isWorldBanned(self.username.lower()):
             return True
         else:
             return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or (self.username.lower() == world.owner) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
@@ -666,11 +666,13 @@ class ArcServerProtocol(Protocol):
         self.last_block_changes = []
         # End of code that needs to be plugin-fied
         self.initial_position = position
-        if self.world.is_archive:
+        if self.world.status["is_archive"]:
             self.sendSplitServerMessage("This world is an archive, and will cease to exist once the last person leaves.")
             self.sendServerMessage(COLOUR_RED+"Staff: Please do not reboot this world.")
         if self.world.hidden:
             self.sendSplitServerMessage(COLOUR_GREEN+"This world is hidden, and does not show up on the world list.")
+        if self.world.status["last_access_count"] > 0:
+            self.world.status["last_access_count"] = 0
         breakable_admins = self.runHook("canbreakadmin")
         self.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.factory.server_name, world_id)), "Entering world '%s'" % world_id, 100 if breakable_admins else 0)
         self.sendLevel()
@@ -941,7 +943,7 @@ class ArcServerProtocol(Protocol):
                     if y1 < y < y2:
                         if z1 < z < z2:
                             return True
-            if self.world.zoned:
+            if self.world.status["zoned"]:
                 if zone[7] == "builder":
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     if x1 < x < x2:
@@ -1022,13 +1024,13 @@ class ArcServerProtocol(Protocol):
                                 else:
                                     self.sendServerMessage("You must be an owner to build here.")
                                     return False
-        if self.world.id == self.factory.default_name and self.isHelper() and not self.isMod() and not self.world.all_write:
+        if self.world.id == self.factory.default_name and self.isHelper() and not self.isMod() and not self.world.status["all_build"]:
             self.sendBlock(x, y, z)
             self.sendServerMessage("Only Builder/Op and Mod+ may edit '%s'." % self.factory.default_name)
             return
-        if not self.world.all_write and self.isBuilder() or self.isOp():
+        if not self.world.status["all_build"] and self.isBuilder() or self.isOp():
             return True
-        if self.world.all_write:
+        if self.world.status["all_build"]:
             return True
         self.sendServerMessage("This world is locked. You must be Builder/Op or Mod+ to build here.")
         return False

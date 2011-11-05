@@ -215,7 +215,7 @@ class StdinPlugin(threading.Thread):
                                     returned = self.factory.loadWorld("worlds/%s" % world_id, world_id)
                                     if returned == False:
                                         print("World %s loading failed." % world_id)
-                                    self.factory.worlds[world_id].all_write = False
+                                    self.factory.worlds[world_id].status["all_build"] = False
                                     if len(message) < 4:
                                         print("World '%s' made and booted." % world_id)
                             elif message[0] == ("me"):

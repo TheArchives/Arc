@@ -258,7 +258,14 @@ class ArcFactory(Factory):
 
     def startASDLoop(self, reload):
         "Called to start the ASD loop."
-        pass
+        if reload:
+            self.loops["asd"].stop()
+        if self.asd_delay != 0:
+            if "asd" in self.loops:
+                del self.loops["asd"]
+            self.loops["asd"] = task.LoopingCall(self.checkASD)
+            self.loops["asd"].start(60, now=False)
+            self.logger.info("ASD Checking process initialized.")
 
     def initBackupLoop(self, reload):
         "Called to initialize the backup loop."
@@ -445,6 +452,28 @@ class ArcFactory(Factory):
         self.logger.info("%i garbage objects collected, %i were uncollected." % (count, len(gc.garbage)))
         self.runServerHook("garbageCollected", {"collected": count, "uncollected": len(gc.garbage)})
 
+    def checkASD(self):
+        for world in self.worlds.values():
+            if world.id == self.default_name:
+                self.logger.info("World %s (default world) skipped." % self.default_name)
+                continue
+            elif not world.status["autoshutdown"]:
+                self.logger.info("World %s skipped (autoshutdown disabled)" % world.id)
+                continue
+            self.logger.info("Checking world %s." % world.id)
+            if world.status["last_access_count"] >= self.asd_delay:
+                name = world.id
+                self.unloadWorld(name)
+                self.logger.info("Unloaded %s because of ASD." % name)
+            else:
+                if len(world.clients) == 0: # Nobody's in it, ASD reset is not handled here
+                    try:
+                        world.status["last_access_count"] += 1
+                        self.logger.info("Incremented ASD count for world %s. The count now is %s." % (world.id, world.status["last_access_count"]))
+                    except Exception as e: # Test
+                        self.logger.warn("Error when incrementing ASD count in world %s." % world.id)
+                        self.logger.warn(e)
+
     def loadMeta(self):
         "Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"
         config = ConfigParser.RawConfigParser()
@@ -481,7 +510,6 @@ class ArcFactory(Factory):
         else:
             self.cfginfo["version"]["bans.meta"] = "1.0.0"
         if not checkConfigVersion(self.cfginfo["version"]["ranks.meta"], CFGVERSION["ranks.meta"]):
-            print self.cfginfo["version"]["ranks.meta"]
             self.logger.error("You have an outdated ranks.meta, please redownload the Arc package and fill in the configuration again.")
             sys.exit(1)
         if not checkConfigVersion(self.cfginfo["version"]["spectators.meta"], CFGVERSION["spectators.meta"]):
@@ -623,7 +651,7 @@ class ArcFactory(Factory):
         self.newWorld(world_id, "../arc/archives/%s" % filename)
         self.loadWorld("worlds/%s" % world_id, world_id)
         world = self.worlds[world_id]
-        world.is_archive = True
+        world.status["is_archive"] = True
         self.runServerHook("archiveLoaded", {"filename": filename, "id": world_id})
         return world_id
 
@@ -697,7 +725,7 @@ class ArcFactory(Factory):
     def leaveWorld(self, world, user):
         world.clients.remove(user)
         self.runServerHook("worldLeft", {"world_id": world.id, "client": user})
-        if world.is_archive and not world.clients:
+        if world.status["is_archive"] and not world.clients:
             self.unloadWorld(world.id)
 
     def loadWorld(self, filename, world_id):
@@ -764,7 +792,7 @@ class ArcFactory(Factory):
         Returns the IDs of all public worlds
         """
         for world_id, world in self.worlds.items():
-            if not world.private:
+            if not world.status["private"]:
                 yield world_id
 
     def recordPresence(self, username):
@@ -821,6 +849,7 @@ class ArcFactory(Factory):
                     if task is TASK_BLOCKSET:
                         value = self.runServerHook("onBlockset", {"client": source_client, "data": data})
                         if value:
+                            world.status["modified"] = True
                             # Only run it for clients who weren't the source.
                             for client in world.clients:
                                 if client is not source_client:
@@ -1121,7 +1150,8 @@ class ArcFactory(Factory):
     # The following code needs to be rewritten
     def AutoBackup(self):
         for world in self.worlds:
-            self.Backup(world)
+            if world.status["modified"] == True:
+                self.Backup(world)
 
     def Backup(self, world_id):
         world_dir = ("worlds/%s/" % world_id)

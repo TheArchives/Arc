@@ -10,10 +10,29 @@ from ConfigParser import RawConfigParser as ConfigParser
 from twisted.internet import reactor
 from twisted.internet.error import CannotListenError
 
+from arc.controller import ControllerFactory
+from arc.constants import *
+from arc.globals import *
 from arc.logger import ColouredLogger
+from arc.server import ArcFactory
 
 debug = (True if "--debug" in sys.argv else False)
 logger = ColouredLogger(debug)
+
+makefile("logs/")
+makefile("logs/console/")
+makefile("logs/console/console.log")
+makefile("arc/archives/")
+makefile("logs/chat.log")
+makefile("logs/server.log")
+makefile("logs/staff.log")
+makefile("logs/whisper.log")
+makefile("logs/world.log")
+makefile("config/data/")
+makedatfile("config/data/balances.dat")
+makedatfile("config/data/inbox.dat")
+makedatfile("config/data/jail.dat")
+makedatfile("config/data/titles.dat")
 
 try:
     from colorama import init
@@ -27,11 +46,6 @@ except Exception as e:
     logger.warn("Unable to import colorama: %s" % e)
     logger.warn("Console colours DISABLED.")
 
-from arc.controller import ControllerFactory
-from arc.constants import *
-from arc.globals import *
-from arc.server import ArcFactory
-
 def doExit():
     if os.name == "nt":
         raw_input("\nYou may now close the server console window.")
@@ -40,21 +54,6 @@ def doExit():
 
 def main():
     global logger
-
-    makefile("logs/")
-    makefile("logs/console/")
-    makefile("logs/console/console.log")
-    makefile("arc/archives/")
-    makefile("logs/chat.log")
-    makefile("logs/server.log")
-    makefile("logs/staff.log")
-    makefile("logs/whisper.log")
-    makefile("logs/world.log")
-    makefile("config/data/")
-    makedatfile("config/data/balances.dat")
-    makedatfile("config/data/inbox.dat")
-    makedatfile("config/data/jail.dat")
-    makedatfile("config/data/titles.dat")
 
     #logging.basicConfig(
     #    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

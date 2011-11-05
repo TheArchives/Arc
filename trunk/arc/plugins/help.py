@@ -48,7 +48,7 @@ class helpPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("StaffChat: #message")
                 elif parts[1].lower() == "physic":
                     self.client.sendServerMessage("Help; Physics Engine")
-                    self.client.sendServerMessage("Turn physics on to use Physics (max of 5 worlds)")
+                    self.client.sendServerMessage("Turn physics on to use Physics (max of %s worlds)" % self.client.factory.physics_limit)
                     self.client.sendServerMessage("If fwater is on then your water won't move.")
                     self.client.sendServerMessage("Orange blocks make Lavafalls, darkblue blocks make Waterfalls.")
                     self.client.sendServerMessage("Spouts need fwater to be on in order to work.")

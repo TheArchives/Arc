@@ -28,6 +28,9 @@ class WorldUtilPlugin(ProtocolPlugin):
         "lock": "commandLock",
         #"ponly": "commandPOnly"
 
+        "asd": "commandAutoShutdown",
+        "autoshutdown": "commandAutoShutdown",
+
         "new": "commandNew",
         "mapadd": "commandNew",
         "rename": "commandRename",
@@ -182,19 +185,19 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandPhysics(self, onoff, fromloc, overriderank):
         "/physics on|off - Admin\nEnables or disables physics in this world."
         if onoff == "on":
-            if self.client.world.physics:
+            if self.client.world.status["physics"]:
                 self.client.sendWorldMessage("Physics is already on here.")
             else:
                 if self.client.factory.numberWithPhysics() >= self.client.factory.physics_limit:
                     self.client.sendWorldMessage("There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
                 else:
-                    self.client.world.physics = True
+                    self.client.world.status["physics"] = True
                     self.client.sendWorldMessage("This world now has physics enabled.")
         else:
-            if not self.client.world.physics:
+            if not self.client.world.status["physics"]:
                 self.client.sendWorldMessage("Physics is already off here.")
             else:
-                self.client.world.physics = False
+                self.client.world.status["physics"] = False
                 self.client.sendWorldMessage("This world now has physics disabled.")
 
     @config("category", "world")
@@ -203,22 +206,22 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandFwater(self, onoff, fromloc, overriderank):
         "/fwater on|off - Op\nEnables or disables finite water in this world."
         if onoff == "on":
-            self.client.world.finite_water = True
+            self.client.world.status["finite_water"] = True
             self.client.sendWorldMessage("This world now has finite water enabled.")
         else:
-            self.client.world.finite_water = False
+            self.client.world.status["finite_water"] = False
             self.client.sendWorldMessage("This world now has finite water disabled.")
 
     @config("category", "world")
     @config("rank", "admin")
     def commandPhysflush(self, parts, fromloc, overriderank):
         "/physflush - Admin\nTells the physics engine to rescan the world."
-        if self.client.world.physics:
+        if self.client.world.status["physics"]:
             if self.client.factory.numberWithPhysics() >= self.client.factory.physics_limit:
                 self.client.sendServerMessage("There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
             else:
-                self.client.world.physics = False
-                self.client.world.physics = True
+                self.client.world.status["physics"] = False
+                self.client.world.status["physics"] = True
                 self.client.sendWorldMessage("This world now has a physics flush running.")
         else:
             self.client.sendServerMessage("This world does not have physics on.")
@@ -229,11 +232,11 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandPrivate(self, onoff, fromloc, overriderank):
         "/private on|off - Op\nEnables or disables the private status for this world."
         if onoff == "on":
-            self.client.world.private = True
+            self.client.world.status["private"] = True
             self.client.sendWorldMessage("This world is now private.")
             self.client.sendServerMessage("%s is now private." % self.client.world.id)
         else:
-            self.client.world.private = False
+            self.client.world.status["private"] = False
             self.client.sendWorldMessage("This world is now public.")
             self.client.sendServerMessage("%s is now public." % self.client.world.id)
 
@@ -243,15 +246,15 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandLock(self, onoff, fromloc, overriderank):
         "/lock on|off - Op\nEnables or disables the world lock."
         if onoff == "on":
-            self.client.world.all_write = False
+            self.client.world.status["all_build"] = False
             self.client.sendWorldMessage("This world is now locked.")
-            self.client.sendServerMessage("Locked %s" % self.client.world.id)
+            self.client.sendServerMessage("Locked %s." % self.client.world.id)
         else:
-            self.client.world.all_write = True
+            self.client.world.status["all_build"] = True
             self.client.sendWorldMessage("This world is now unlocked.")
-            self.client.sendServerMessage("Unlocked %s" % self.client.world.id)
+            self.client.sendServerMessage("Unlocked %s." % self.client.world.id)
 
-    #@op_only
+    #@config("rank", "op")
     #@on_off_command
     #def commandPOnly(self, onoff, fromloc, rankoverride):
         #"/ponly on/off - Makes the world only accessable by portals."
@@ -264,6 +267,17 @@ class WorldUtilPlugin(ProtocolPlugin):
             #elf.client.sendWorldMessage("This world is now accesable through commands.")
             #self.client.sendServerMessage("%s is now accessable through commands." % self.client.world.id)
 
+    @config("category", "world")
+    @config("rank", "mod")
+    @on_off_command
+    def commandAutoShutdown(self, onoff, fromloc, overriderank):
+        "/asd on|off - World Owner\nAliases: autoshutdown\nEnable or disable autoshutdown in this world."
+        if onoff == "on":
+            self.client.world.status["autoshutdown"] = True
+            self.client.sendServerMessage("Enabled ASD on %s." % self.client.world.id)
+        else:
+            self.client.world.status["autoshutdown"] = False
+            self.client.sendServerMessage("Enabled ASD on %s." % self.client.world.id)
     @config("category", "world")
     @config("rank", "admin")
     def commandNew(self, parts, fromloc, overriderank):
@@ -285,7 +299,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             result = self.client.factory.newWorld(world_id, template)
             if result:
                 self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-                self.client.factory.worlds[world_id].all_write = False
+                self.client.factory.worlds[world_id].status["all_build"] = False
                 if len(parts) < 4:
                     self.client.sendServerMessage("World '%s' made and booted." % world_id)
             else:
@@ -488,7 +502,7 @@ class WorldUtilPlugin(ProtocolPlugin):
                 ([BLOCK_DIRT]*(grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR]*(sy-grass_to)) # Levels
                 )
             self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
-            self.client.factory.worlds[world_id].all_write = False
+            self.client.factory.worlds[world_id].status["all_build"] = False
             self.client.sendServerMessage("World '%s' made and booted." % world_id)
 
     @config("category", "world")
@@ -599,7 +613,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("There is no world by that name.")
         else:
             if not self.client.canEnter(world):
-                if world.private:
+                if world.status["private"]:
                     self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
                     return
                 else:
@@ -655,11 +669,11 @@ class WorldUtilPlugin(ProtocolPlugin):
         if not self.client.world.owner == "n/a":
             self.client.sendServerMessage("Owner: %s" % (self.client.world.owner))
         self.client.sendNormalMessage(\
-            (self.client.world.all_write and "&4Unlocked" or "&2Locked")+" "+\
-            (self.client.world.zoned and "&2Zones" or "&4Zones")+" "+\
-            (self.client.world.private and "&2Private" or "&4Private")+" "+\
-            (self.client.world.physics and "&2Physics" or "&4Physics")+" "+\
-            (self.client.world.finite_water and "&4FWater" or "&2FWater")
+            (self.client.world.status["all_build"] and "&4Unlocked" or "&2Locked")+" "+\
+            (self.client.world.status["zoned"] and "&2Zones" or "&4Zones")+" "+\
+            (self.client.world.status["private"] and "&2Private" or "&4Private")+" "+\
+            (self.client.world.status["physics"] and "&2Physics" or "&4Physics")+" "+\
+            (self.client.world.status["finite_water"] and "&4FWater" or "&2FWater")
         )
         if self.client.world.ops:
             self.client.sendServerList(["Ops:"] + list(self.client.world.ops))
