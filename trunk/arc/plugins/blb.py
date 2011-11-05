@@ -137,8 +137,8 @@ class BlbPlugin(ProtocolPlugin):
                 d = threads.deferToThread(doBlocks)
                 # Now the fun part. Respawn them all!
                 def blbCallback():
-                    for client in world.clients:
-                        self.client.factory.usernames[client].sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
+                    for client in world.clients.values():
+                        client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
                     if fromloc == "user":
                         self.client.sendServerMessage("Your blb just completed.")
                 d.addCallback(blbCallback)
