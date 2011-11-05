@@ -109,6 +109,7 @@ class BlbPlugin(ProtocolPlugin):
                     return
             world = self.client.world
             if realLimit >= 45565: # To test it out first, will try a bigger one later - tyteen
+                self.client.sendServerMessage("BLB has been started.")
                 def doBlocks():
                     # This implements 2 new things: Respawn method and try-the-whole-loop.
                     # Since the loop stops when an AssertionErrors pops up, so we just
