@@ -66,11 +66,11 @@ class Updater(object):
         else:
             owner = "n/a"
         if config.has_section("ops"):
-            ops = set(x.lower() for x in config.options("ops"))
+            ops = set(g.lower() for g in config.options("ops"))
         else:
             ops = set()
         if config.has_section("builders"):
-            builders = set(x.lower() for x in config.options("builders"))
+            builders = set(m.lower() for m in config.options("builders"))
         else:
             builders = set()
         if config.has_section("permissions"):
@@ -106,7 +106,7 @@ class Updater(object):
         if config.has_section("teleports"):
             for option in config.options("teleports"):
                 offset = int(option)
-                destination = [x.strip() for x in config.get("teleports", option).split(",")]
+                destination = [j.strip() for j in config.get("teleports", option).split(",")]
                 coords = map(int, destination[1:])
                 if len(coords) == 3:
                     coords = coords + [0]
@@ -126,10 +126,10 @@ class Updater(object):
             for option in config.options("commands"):
                 cmd = config.get("commands", option)
                 listofcmd = cmd.split("&n")
-                for x in listofcmd:
-                    x = x.replace("&n", "")
-                    if x == "":
-                        listofcmd.remove(x)
+                for l in listofcmd:
+                    l = l.replace("&n", "")
+                    if l == "":
+                        listofcmd.remove(l)
                 cmdblocks[int(option)] = listofcmd
         mines = list([])
         if config.has_section("mines"):
@@ -138,7 +138,7 @@ class Updater(object):
         userzones = {}
         if config.has_section("userzones"):
             for option in config.options("userzones"):
-                destination = [x.strip() for x in config.get("userzones", option).split(",")]
+                destination = [f.strip() for f in config.get("userzones", option).split(",")]
                 coords = map(int, destination[1:7])
                 users = map(str, destination[7:])
                 i = 1
@@ -152,7 +152,7 @@ class Updater(object):
         if config.has_section("rankzones"):
             for option in config.options("rankzones"):
                 user = option
-                destination = [x.strip() for x in config.get("rankzones", option).split(",")]
+                destination = [d.strip() for d in config.get("rankzones", option).split(",")]
                 coords = map(int, destination[1:7])
                 i = 1
                 while True:
@@ -168,7 +168,7 @@ class Updater(object):
                 if entry.find("[") != -1:
                     entitylist.append(eval(entry))
                 else:
-                    entry = [x.strip() for x in config.get("entitylist", option).split(",")]
+                    entry = [w.strip() for w in config.get("entitylist", option).split(",")]
                     for i in range(len(entry)):
                         try:
                             entry[i] = int(entry[i])
