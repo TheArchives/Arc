@@ -29,17 +29,12 @@ class ZonesPlugin(ProtocolPlugin):
     def commandZones(self, onoff, fromloc, overriderank):
         "/zones on|off - Op\nEnables or disables building zones in this world."
         if onoff == "on":
-            if self.client.world.status["zoned"]:
-                self.client.sendWorldMessage("Building zones is already on here.")
-            else:
-                self.client.world.status["zoned"] = True
-                self.client.sendWorldMessage("This world now has building zones enabled.")
+            self.client.world.status["zoned"] = True
+            self.client.sendWorldMessage("This world now has building zones enabled.")
         else:
-            if not self.client.world.status["zoned"]:
-                self.client.sendWorldMessage("Building zones is already off here.")
-            else:
-                self.client.world.status["zoned"] = False
-                self.client.sendWorldMessage("This world now has building zones disabled.")
+            self.client.world.status["zoned"] = False
+            self.client.sendWorldMessage("This world now has building zones disabled.")
+        self.client.world.status["modified"] = True
 
     @config("rank", "op")
     def commandNewZone(self, parts, fromloc, overriderank):

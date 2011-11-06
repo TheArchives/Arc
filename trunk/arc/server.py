@@ -1148,6 +1148,8 @@ class ArcFactory(Factory):
         for world in self.worlds:
             if world.status["modified"] == True:
                 self.Backup(world)
+                # Reset modification flag
+                world.status["modified"] = False
 
     def Backup(self, world_id):
         world_dir = ("worlds/%s/" % world_id)
@@ -1155,29 +1157,29 @@ class ArcFactory(Factory):
             return
         if not os.path.exists(world_dir):
             self.logger.info("World %s does not exist." % (world.id))
-        else:
-            if not os.path.exists(world_dir+"backup/"):
-                os.mkdir(world_dir+"backup/")
-            folders = os.listdir(world_dir+"backup/")
-            backups = list([])
-            for x in folders:
-                if x.isdigit():
-                    backups.append(x)
-            backups.sort(lambda x, y: int(x) - int(y))
-            path = os.path.join(world_dir+"backup/", "0")
-            if backups:
-                path = os.path.join(world_dir+"backup/", str(int(backups[-1])+1))
-            os.mkdir(path)
-            shutil.copy(world_dir + "blocks.gz", path)
-            shutil.copy(world_dir + "world.meta", path)
-            try:
-                self.logger.info("%s's backup %s is saved." % (world_id, str(int(backups[-1])+1)))
-            except:
-                self.logger.info("%s's backup 0 is saved." % (world_id))
-            if len(backups)+1 > self.backup_max:
-                for i in range(0,((len(backups)+1)-self.backup_max)):
-                    shutil.rmtree(os.path.join(world_dir+"backup/", str(int(backups[i]))))
-            self.runServerHook("onBackup", {"world_id": world_id})
+            return
+        if not os.path.exists(world_dir+"backup/"):
+            os.mkdir(world_dir+"backup/")
+        folders = os.listdir(world_dir+"backup/")
+        backups = list([])
+        for x in folders:
+            if x.isdigit():
+                backups.append(x)
+        backups.sort(lambda x, y: int(x) - int(y))
+        path = os.path.join(world_dir+"backup/", "0")
+        if backups:
+            path = os.path.join(world_dir+"backup/", str(int(backups[-1])+1))
+        os.mkdir(path)
+        shutil.copy(world_dir + "blocks.gz", path)
+        shutil.copy(world_dir + "world.meta", path)
+        try:
+            self.logger.info("%s's backup %s is saved." % (world_id, str(int(backups[-1])+1)))
+        except:
+            self.logger.info("%s's backup 0 is saved." % (world_id))
+        if len(backups)+1 > self.backup_max:
+            for i in range(0, ((len(backups)+1)-self.backup_max)):
+                shutil.rmtree(os.path.join(world_dir+"backup/", str(int(backups[i]))))
+        self.runServerHook("onBackup", {"world_id": world_id})
     # The above code needs to be rewritten
 
     def messagestrip(self, message):

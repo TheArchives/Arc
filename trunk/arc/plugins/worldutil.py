@@ -193,12 +193,14 @@ class WorldUtilPlugin(ProtocolPlugin):
                 else:
                     self.client.world.status["physics"] = True
                     self.client.sendWorldMessage("This world now has physics enabled.")
+                    self.client.world.status["modified"] = True
         else:
             if not self.client.world.status["physics"]:
                 self.client.sendWorldMessage("Physics is already off here.")
             else:
                 self.client.world.status["physics"] = False
                 self.client.sendWorldMessage("This world now has physics disabled.")
+                self.client.world.status["modified"] = True
 
     @config("category", "world")
     @config("rank", "op")
@@ -211,6 +213,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         else:
             self.client.world.status["finite_water"] = False
             self.client.sendWorldMessage("This world now has finite water disabled.")
+        self.client.world.status["modified"] = True
 
     @config("category", "world")
     @config("rank", "admin")
@@ -239,6 +242,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.world.status["private"] = False
             self.client.sendWorldMessage("This world is now public.")
             self.client.sendServerMessage("%s is now public." % self.client.world.id)
+        self.client.world.status["modified"] = True
 
     @config("category", "world")
     @config("rank", "op")
@@ -253,6 +257,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.world.status["all_build"] = True
             self.client.sendWorldMessage("This world is now unlocked.")
             self.client.sendServerMessage("Unlocked %s." % self.client.world.id)
+        self.client.world.status["modified"] = True
 
     #@config("rank", "op")
     #@on_off_command
@@ -266,6 +271,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             #self.client.world.portal_only = False
             #elf.client.sendWorldMessage("This world is now accesable through commands.")
             #self.client.sendServerMessage("%s is now accessable through commands." % self.client.world.id)
+        #self.client.world.status["modified"] = True
 
     @config("category", "world")
     @config("rank", "mod")
@@ -278,6 +284,8 @@ class WorldUtilPlugin(ProtocolPlugin):
         else:
             self.client.world.status["autoshutdown"] = False
             self.client.sendServerMessage("Enabled ASD on %s." % self.client.world.id)
+        self.client.world.status["modified"] = True
+
     @config("category", "world")
     @config("rank", "admin")
     def commandNew(self, parts, fromloc, overriderank):
@@ -382,7 +390,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             newworldlist = []
             hidden = 0
             for world in worldlist:
-                if not world.startswith("."): # Hidden worlds!
+                if (not world.startswith(".")) or self.client.isHelper(): # World hidden, showing them to helper+ only
                     newworldlist.append(world)
                 else:
                     hidden += 1
@@ -566,23 +574,23 @@ class WorldUtilPlugin(ProtocolPlugin):
             if len(parts[1]) != 1:
                 self.client.sendServerMessage("Only specify one starting letter per entry, not multiple")
                 return
-            if len(parts)==3:
+            if len(parts) == 3:
                 if len(parts[2]) != 1:
                     self.client.sendServerMessage("Only specify one starting letter per entry, not multiple")
                     return
             letter1 = ord(parts[1].lower())
-            if len(parts)==3:
+            if len(parts) == 3:
                 letter2 = ord(parts[2].lower())
             else:
                 letter2 = letter1
-            if letter1>letter2:
+            if letter1 > letter2:
                 a = letter1
                 letter1 = letter2
                 letter2 = a
             worldlist = os.listdir("worlds/.trash/")
             newlist = []
             for world in worldlist:
-                if letter1 <= ord(world[0]) <= letter2 and not world.startswith("."):
+                if letter1 <= ord(world[0]) <= letter2:
                     newlist.append(world)
             self.client.sendServerList(["Deleted:"] + newlist)
 
@@ -702,7 +710,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         self.client.sendServerMessage("You are at %s, %s, %s [h%s, p%s]" % (x, y, z, h, p))
 
     def commandRandom(self, parts, fromloc, overriderank):
-        "/random - Takes you to a random world."
+        "/random - Guest\nTakes you to a random world."
         # Get all public worlds
         target_worlds = list(self.client.factory.publicWorlds())
         # Try excluding us (we may not be public)
