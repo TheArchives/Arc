@@ -28,7 +28,7 @@ class Updater(object):
                 self.j += 1
             else:
                 self.i += 1
-        self.logger.info("Finished processing. %s worlds were processed, and %s worlds cannot be processed." % (i, j))
+        self.logger.info("Finished processing. %s worlds were processed, and %s worlds cannot be processed." % (self.i, self.j))
 
     def resaveMeta(self, worldname, icfg=False):
         config = ConfigParser.ConfigParser()
