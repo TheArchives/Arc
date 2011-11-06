@@ -30,7 +30,7 @@ class Updater(object):
                 self.i += 1
         self.logger.info("Finished processing. %s worlds were processed, and %s worlds cannot be processed." % (i, j))
 
-    def resaveMeta(self, worldname):
+    def resaveMeta(self, worldname, icfg=False):
         config = ConfigParser.ConfigParser()
         try:
             config.read(worldname)
@@ -41,14 +41,20 @@ class Updater(object):
             self.j += 1
             time.sleep(5)
             return
-        if config.has_section("cfginfo"):
-            cfgversion = config.get("cfginfo", "version")
-            if cfgversion == "1.5.0":
-                # Does not need update
-                self.logger.info("World %s is already at the latest format." % worldname)
-                return
-        else:
-            self.logger.warn("Unable to fetch config version, errors may occur.")
+        if not icfg:
+            if config.has_section("cfginfo"):
+                cfgversion = config.get("cfginfo", "version")
+                if cfgversion == "1.5.0":
+                    if config.has_section("permissions"):
+                        # Nope, cfgversion is lying. Just redo everything
+                        self.resaveMeta(worldname, icfg=True)
+                        return
+                    else:
+                        # Does not need update
+                        self.logger.info("World %s is already at the latest format." % worldname)
+                        return
+            else:
+                self.logger.warn("Unable to fetch config version, errors may occur.")
         try:
             x = config.getint("size", "x")
             y = config.getint("size", "y")
@@ -258,7 +264,7 @@ class Updater(object):
         for i in range(len(entitylist)):
             entry = entitylist[i]
             config.set("entitylist", str(i), str(entry))
-        fp = open(meta_path, "w")
+        fp = open(worldname, "w")
         config.write(fp)
         fp.flush()
         os.fsync(fp.fileno())
