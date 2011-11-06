@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import ConfigParser, logging, os, sys, traceback
+import ConfigParser, logging, os, sys, time, traceback
 
 class Updater(object):
     def __init__(self):
@@ -10,8 +10,8 @@ class Updater(object):
         self.update()
 
     def update(self):
-        i = 0
-        j = 0
+        self.i = 0
+        self.j = 0
         if not os.path.isdir("worlds/"):
             self.logger.error("Please copy this updater to the root director (where the run.bat resides) and run this updater again.")
             sys.exit(1)
@@ -23,9 +23,9 @@ class Updater(object):
             except Exception as e:
                 self.logger.error("Error in processing world %s: %s" % (world, e))
                 self.logger.error(traceback.format_exc())
-                j += 1
+                self.j += 1
             else:
-                i += 1
+                self.i += 1
         self.logger.info("Finished processing. %s worlds were processed, and %s worlds cannot be processed." % (i, j))
 
     def resaveMeta(self, worldname):
@@ -40,15 +40,23 @@ class Updater(object):
                 return
         else:
             self.logger.warn("Unable to fetch config version, errors may occur.")
-        x = config.getint("size", "x")
-        y = config.getint("size", "y")
-        z = config.getint("size", "z")
-        spawn = (
-            config.getint("spawn", "x"),
-            config.getint("spawn", "y"),
-            config.getint("spawn", "z"),
-            config.getint("spawn", "h"),
-        )
+        try:
+            x = config.getint("size", "x")
+            y = config.getint("size", "y")
+            z = config.getint("size", "z")
+            spawn = (
+                config.getint("spawn", "x"),
+                config.getint("spawn", "y"),
+                config.getint("spawn", "z"),
+                config.getint("spawn", "h"),
+            )
+        except Exception as e:
+            self.logger.error("World %s has a meta that does not contain size or spawn information." % worldname)
+            self.logger.error(traceback.format_exc())
+            self.logger.error("Resuming process in 7 seconds.")
+            self.j += 1
+            time.sleep(7)
+            return
         if config.has_section("autoshutdown"):
             autoshutdown = config.get("autoshutdown", "autoshutdown")
         else:
