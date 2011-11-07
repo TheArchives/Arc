@@ -457,7 +457,6 @@ class ArcFactory(Factory):
             if world.id == self.default_name:
                 continue
             elif not world.status["autoshutdown"]:
-                self.logger.info("World %s skipped (autoshutdown disabled)" % world.id)
                 continue
             if world.status["last_access_count"] >= self.asd_delay:
                 name = world.id

@@ -2,6 +2,11 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
+from twisted.enterprise import adbapi
+
 class DBLayer(object):
     """ The database layer for communications between the server and the database. """
-    pass
+
+    def __init__(self, factory):
+        self.factory = factory
+        self.logger = factory.logger

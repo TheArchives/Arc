@@ -537,7 +537,7 @@ class ZonesPlugin(ProtocolPlugin):
                         return
             for id,zone in self.client.world.rankzones.items():
                 if oldname == zone[0]:
-                    if zone[7] == "member" and not self.client.isMember():
+                    if zone[7] == "helper" and not self.client.isHelper():
                         self.client.sendSplitServerMessage("You can not rename a ranked zone in which the rank is higher than your current rank.")
                         return
                     if zone[7] == "mod" and not self.client.isMod():
