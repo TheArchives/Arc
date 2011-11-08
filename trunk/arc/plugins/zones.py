@@ -131,7 +131,7 @@ class ZonesPlugin(ProtocolPlugin):
             if parts[2] == "add":
                 for id, zone in self.client.world.userzones.items():
                     if zone[0] == parts[1]:
-                        if self.client.username in zone[6:] or self.client.isAdmin() or self.client.world.owner == self.client.username:
+                        if self.client.username in zone[6:] or self.client.isWorldOwner():
                             for user in parts[3:]:
                                 if not user.lower() in zone[6:]:
                                     self.client.world.userzones[id] += [user.lower()]
@@ -146,7 +146,7 @@ class ZonesPlugin(ProtocolPlugin):
             if parts[2] == "remove":
                 for id, zone in self.client.world.userzones.items():
                     if zone[0] == parts[1]:
-                        if self.client.username in zone[6:] or self.client.isAdmin() or self.client.world.owner == self.client.username:
+                        if self.client.username in zone[6:] or self.client.isAdmin() or self.client.isWorldOwner():
                             for user in parts[3:]:
                                 try:
                                     self.client.world.userzones[id].remove(user.lower())
@@ -170,7 +170,7 @@ class ZonesPlugin(ProtocolPlugin):
             match = False
             for id, zone in self.client.world.userzones.items():
                 if zone[0] == parts[1]:
-                    if self.client.username in zone[6:] or self.client.isAdmin() or self.client.world.owner == self.client.username:
+                    if self.client.username in zone[6:] or self.client.isWorldOwner():
                         match = True
                         del self.client.world.userzones[id]
                         self.client.sendServerMessage("Zone %s has been removed." % zone[0])
@@ -360,7 +360,7 @@ class ZonesPlugin(ProtocolPlugin):
             block = chr(globals()['BLOCK_AIR'])
             for id,zone in self.client.world.userzones.items():
                 if user == zone[0]:
-                    if self.client.username in zone[6:] or self.client.isAdmin() or self.client.world.owner == self.client.username:
+                    if self.client.username in zone[6:] or self.client.isWorldOwner():
                         match=True
                         x , y, z, x2, y2, z2 = zone[1:7]
                         if x > x2:
@@ -454,7 +454,7 @@ class ZonesPlugin(ProtocolPlugin):
         "/zdelall - Op\nRemoves all zones in a world (if you can delete them)"
         match = False
         for id, zone in self.client.world.userzones.items():
-            if self.client.username in zone[6:] or self.client.isAdmin() or self.client.world.owner == self.client.username:
+            if self.client.username in zone[6:] or self.client.isWorldOwner():
                 del self.client.world.userzones[id]
             else:
                 self.client.sendSplitServerMessage("You are not a member of %s. You must be one of its users to delete this zone." %zone[0])
@@ -528,7 +528,7 @@ class ZonesPlugin(ProtocolPlugin):
 
             for id,zone in self.client.world.userzones.items():
                 if oldname == zone[0]:
-                    if self.client.username in zone[6:] or self.client.isAdmin() or self.client.world.owner == self.client.username:
+                    if self.client.username in zone[6:] or self.client.isWorldOwner():
                         zone[0] = newname
                         self.client.sendServerMessage("Zone %s has been renamed to %s." % (oldname, newname))
                         return

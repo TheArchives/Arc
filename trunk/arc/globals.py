@@ -52,7 +52,7 @@ def Rank(self, parts, fromloc, overriderank, server=None):
             else:
                 if fromloc != "console":
                     return ("You are not high enough rank!")
-            self.client.world.owner = (username)
+            self.client.world.status["owner"] = (username)
         elif rank == "helper":
             if not server:
                 if not self.client.isMod():
@@ -153,10 +153,7 @@ def DeRank(self, parts, fromloc, overriderank, server=None):
                 if fromloc != "console":
                     if not factory.isWorldOwner(parts[-1]):
                         return ("You are not high enough rank!")
-            try:
-                self.client.world.owner = ("")
-            except KeyError:
-                return ("%s is not a world owner." % username)
+            self.client.world.status["owner"] = ("N/A")
         elif rank == "helper":
             if not server:
                 if not self.client.isMod():
@@ -330,3 +327,20 @@ def checkConfigVersion(version, current):
             return False
         else:
             return True
+
+def sanitizeMessage(message, replaceSets):
+    def _messageReplace(message, dict): 
+        for key, value in dict:
+            message = message.replace(key, value)
+        return message
+    if isinstance(replacesets, list):
+        for replaceset in replacesets:
+            if isinstance(replaceset, dict):
+                message = _messageReplace(message, replaceset)
+            else:
+                raise ValueError("Replace set not a list of dicts")
+    elif isinstance(replacesets, dict):
+        message = _messageReplace(message, replacesets)
+    else:
+        raise ValueError("Replace set not a dict or a list of dicts")
+    return message

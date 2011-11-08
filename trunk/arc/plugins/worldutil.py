@@ -638,10 +638,10 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandSetOwner(self, parts, fromloc, overriderank):
         "/setowner [username] - Mod\nAliases: worldowner\nSets the world's owner string, or unsets it."
         if len(parts) == 1:
-            self.client.world.owner = "N/A"
+            self.client.world.status["owner"] = "N/A"
             self.client.sendServerMessage("The World Owner has been unset.")
         else:
-            self.client.world.owner = str(parts[1].lower())
+            self.client.world.status["owner"] = str(parts[1].lower())
             self.client.sendServerMessage("The World Owner has been set.")
 
     @config("category", "info")
@@ -664,7 +664,7 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandWorldStaff(self, parts, byuser, rankoverride):
         "/worldstaff - Guest\nLists this world's builders, ops and the world owner.."
         self.client.sendServerMessage("The Staff of %s:" % (self.client.world.id))
-        self.client.sendServerMessage("World Owner: %s" % self.client.world.owner)
+        self.client.sendServerMessage("World Owner: %s" % self.client.world.status["owner"])
         if self.client.world.ops:
             self.client.sendServerList(["Ops:"] + list(self.client.world.ops))
         if self.client.world.builders:
@@ -674,7 +674,7 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandStatus(self, parts, fromloc, overriderank):
         "/status - Guest\nAliases: mapinfo\nReturns info about the current world."
         self.client.sendServerMessage("%s (%sx%sx%s)" % (self.client.world.id, self.client.world.x, self.client.world.y, self.client.world.z))
-        if not self.client.world.owner == "n/a":
+        if not self.client.world.world.status["owner"].lower() == "n/a":
             self.client.sendServerMessage("Owner: %s" % (self.client.world.owner))
         self.client.sendNormalMessage(\
             (self.client.world.status["all_build"] and "&4Unlocked" or "&2Locked")+" "+\

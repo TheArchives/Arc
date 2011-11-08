@@ -201,7 +201,7 @@ class ArcServerProtocol(Protocol):
         return (self.username.lower() in self.world.ops) or self.isWorldOwner() or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
 
     def isWorldOwner(self):
-        return (self.username.lower() == self.world.owner) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
+        return (self.username.lower() == self.world.status["owner"].lower()) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
 
     def isOwner(self):
         return self.factory.isOwner(self.username.lower())
@@ -231,7 +231,7 @@ class ArcServerProtocol(Protocol):
         if not world.status["private"] and not world.isWorldBanned(self.username.lower()):
             return True
         else:
-            return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or (self.username.lower() == world.owner) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
+            return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or (self.username.lower() == world.status["owner"].lower()) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
 
     def dataReceived(self, data):
         "Called when data is received over the socket."
@@ -634,7 +634,7 @@ class ArcServerProtocol(Protocol):
                 colour = COLOUR_DARKGREY
             elif self.username.lower() in INFO_VIPLIST:
                 colour = COLOUR_YELLOW
-            elif (self.username.lower() in self.world.owner):
+            elif (self.username.lower() == self.world.status["owner"].lower()):
                 colour = COLOUR_DARKYELLOW
             elif (self.username.lower() in self.world.ops):
                 colour = COLOUR_DARKCYAN
@@ -733,7 +733,7 @@ class ArcServerProtocol(Protocol):
                         lines.append(thisline)
                     while len(x) > linelen:
                         temp.append(x[:linelen])
-                        x=x[linelen:]
+                        x = x[linelen:]
                     lines = lines + temp
                     thisline = x
                 else:

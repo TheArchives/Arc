@@ -154,7 +154,7 @@ class ControllerProtocol(LineReceiver):
                 "x": world.x,
                 "y": world.y,
                 "z": world.z,
-                "owner": world.owner,
+                "owner": world.status["owner"],
             })
             for world in self.factory.worlds.values()
         ]})

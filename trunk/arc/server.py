@@ -7,8 +7,14 @@ from collections import defaultdict
 import ConfigParser
 from Queue import Queue, Empty
 
-from twisted.internet.protocol import Factory
+try:
+    import OpenSSL
+except:
+    NOSSL = True
+else:
+    from twisted.internet import ssl
 from twisted.internet import reactor, task
+from twisted.internet.protocol import Factory
 
 from arc.console import StdinPlugin
 from arc.constants import *
@@ -51,13 +57,13 @@ class ArcFactory(Factory):
         self.banned = {}
         self.ipbanned = {}
         self.lastseen = {}
-        self.loadConfig()
-        wordfilter = ConfigParser.RawConfigParser()
         self.default_loaded = False
         self.useLowLag = False
         self.hooks = {}
         self.saving = False
         self.save_count = 1
+        # Load the config
+        self.loadConfig()
         # Read in the greeting
         try:
             r = open('config/greeting.txt', 'r')
@@ -105,6 +111,7 @@ class ArcFactory(Factory):
             self.irc_relay = None
         # Word Filter
         # Note: worldfilter.conf has no cfgversion at the moment, because we might rewrite this bit - g will know more
+        wordfilter = ConfigParser.RawConfigParser()
         try:
             wordfilter.read("config/wordfilter.conf")
         except Exception as e:
@@ -121,7 +128,7 @@ class ArcFactory(Factory):
                 self.logger.error("Error parsing wordfilter.conf (%s)" % e)
                 sys.exit(1)
             for x in range(number):
-                self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter","r"+str(x))]]
+                self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter", "r"+str(x))]]
         # Load up the plugins specified
         self.plugins_config = ConfigParser.RawConfigParser()
         try:
@@ -150,7 +157,7 @@ class ArcFactory(Factory):
                 "worlds/%s" % self.default_name,
                 sx, sy, sz, # Size
                 sx//2,grass_to+2, sz//2, 0, # Spawn
-                ([BLOCK_DIRT]*(grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR]*(sy-grass_to)) # Levels
+                ([BLOCK_DIRT] * (grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR] * (sy-grass_to)) # Levels
             )
             self.logger.info("Generated.")
         # Load up the contents of data.
@@ -307,7 +314,7 @@ class ArcFactory(Factory):
         self.blblimit["owner"] = config.getint("blb", "owner")
 
     # End of dummy callbacks
-    def loadServerPlugins(self, something=None):
+    def loadServerPlugins(self, reload=False):
         "Used to load up all the server plugins."
         files = []
         self.serverHooks = {} # Clear the list of hooks
@@ -347,9 +354,9 @@ class ArcFactory(Factory):
                         i = i + 1
                         continue
             else: # We already imported it
-                mod = self.serverPlugins[element][0] #
-                del mod #
-                del self.serverPlugins[element] #
+                mod = self.serverPlugins[element][0]
+                del mod
+                del self.serverPlugins[element]
                 del sys.modules["arc.serverplugins.%s" % element] # Unimport it by deleting it
                 try:
                     __import__("arc.serverplugins.%s" % element) # import it again
@@ -1056,6 +1063,10 @@ class ArcFactory(Factory):
         # OK, now, for every world, let them read their queues
         for world in self.worlds.values():
             world.read_queue()
+
+    def sendMessageToAll(self, message, channel="message", client=None):
+        "Quick method for sending message to all clients."
+        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
 
     def newWorld(self, new_name, template="default"):
         "Creates a new world from some template."

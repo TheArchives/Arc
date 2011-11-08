@@ -416,7 +416,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
                             user = COLOUR_DARKGREY + user
                         elif user in INFO_VIPLIST:
                             user = COLOUR_YELLOW + user
-                        elif user is self.client.world.owner:
+                        elif user == self.client.world.status["owner"].lower():
                             user = COLOUR_DARKYELLOW + user
                         elif user in self.client.world.ops:
                             user = COLOUR_DARKCYAN + user

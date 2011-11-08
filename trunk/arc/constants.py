@@ -7,6 +7,7 @@ VERSION = "1.0.0"
 CFGVERSION = {
     "main.conf": (1, 0, 0),
     "options.conf": (1, 0, 1),
+    "irc.conf": (1, 0, 0),
     "bans.meta": (1, 0, 0),
     "ranks.meta": (1, 0, 0),
     "lastseen.meta": (1, 0, 0),
@@ -34,6 +35,7 @@ CONFIG = [
     ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL", False, False),
     ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None, False, False),
     ("lowlag_players", ("options.conf", "options", "lowlag_players"), None, True, "getint", None, False, 0),
+    #("use_irc", ("irc.conf", "irc", "use_irc"), None, False, "getboolean", "initIRC", False, False),
     ("info_url", ("options.conf", "options", "info_url"), None, True, "get", None, False, ""),
     ("colors", ("options.conf", "options", "colors"), None, True, "getboolean", None, False, True),
     ("physics_limit", ("options.conf", "worlds", "physics_limit"), None, True, "getint", None, False, 5),
@@ -84,7 +86,8 @@ INFO_VIPLIST = [
     # Others we give our bows to.
     "fragmer",
     "pyropyro",
-    "tktech"
+    "tktech",
+    "jte"
     ]
 
 FORMAT_LENGTHS = {
@@ -177,6 +180,27 @@ COLOUR_RED = "&c"
 COLOUR_PURPLE = "&d"
 COLOUR_YELLOW = "&e"
 COLOUR_WHITE = "&f"
+
+IRCCOLOUR_BLACK = chr(3) + '1'
+IRCCOLOUR_DARKBLUE = chr(3) + '2'
+IRCCOLOUR_DARKGREEN = chr(3) + '3'
+IRCCOLOUR_DARKCYAN = chr(3) + '10'
+IRCCOLOUR_DARKRED = chr(3) + '5'
+IRCCOLOUR_DARKPURPLE = chr(3) + '6'
+IRCCOLOUR_DARKYELLOW = chr(3) + '7'
+IRCCOLOUR_GREY = chr(3) + '15'
+IRCCOLOUR_DARKGREY = chr(3) + '14'
+IRCCOLOUR_BLUE = chr(3) + '12'
+IRCCOLOUR_GREEN = chr(3) + '9'
+IRCCOLOUR_CYAN = chr(3) + '11'
+IRCCOLOUR_RED = chr(3) + '4'
+IRCCOLOUR_PURPLE = chr(3) + '13'
+IRCCOLOUR_YELLOW = chr(3) + '8'
+IRCCOLOUR_WHITE = chr(3) + '0'
+
+IRCCOLOUR_DEFAULT = chr(15)
+IRCCOLOUR_BOLD = chr(2)
+IRCCOLOUR_UNDERLINE = chr(31)
 
 BLOCK_NOTHING = 0
 BLOCK_NONE = 0
@@ -503,6 +527,49 @@ BlockList[46]="tnt"
 BlockList[47]="bookcase"
 BlockList[48]="moss"
 BlockList[49]="obsidian"
+
+MSGREPLACE = {
+    "escape_commands": {"./": " /", ".!": " !"},
+}
+MSGREPLACE["game_colour_to_irc"] = {
+    COLOUR_BLACK: IRCCOLOUR_BLACK,
+    COLOUR_DARKBLUE: IRCCOLOUR_DARKBLUE,
+    COLOUR_DARKGREEN: IRCCOLOUR_DARKGREEN,
+    COLOUR_DARKCYAN: IRCCOLOUR_DARKCYAN,
+    COLOUR_DARKRED: IRCCOLOUR_DARKRED,
+    COLOUR_DARKPURPLE: IRCCOLOUR_DARKPURPLE,
+    COLOUR_DARKYELLOW: IRCCOLOUR_DARKYELLOW,
+    COLOUR_GREY: IRCCOLOUR_GREY,
+    COLOUR_DARKGREY: IRCCOLOUR_DARKGREY,
+    COLOUR_BLUE: IRCCOLOUR_BLUE,
+    COLOUR_GREEN: IRCCOLOUR_GREEN,
+    COLOUR_CYAN: IRCCOLOUR_CYAN,
+    COLOUR_RED: IRCCOLOUR_RED,
+    COLOUR_PURPLE: IRCCOLOUR_PURPLE,
+    COLOUR_YELLOW: IRCCOLOUR_YELLOW,
+    COLOUR_WHITE: IRCCOLOUR_WHITE
+}
+MSGREPLACE["text_colour_to_game"] = { # % to &
+    "%0": "&0",
+    "%1": "&1",
+    "%2": "&2",
+    "%3": "&3",
+    "%4": "&4",
+    "%5": "&5",
+    "%6": "&6",
+    "%7": "&7",
+    "%8": "&8",
+    "%9": "&9",
+    "%a": "&a",
+    "%b": "&b",
+    "%c": "&c",
+    "%d": "&d",
+    "%e": "&e",
+    "%f": "&f"
+}
+
+from arc.globals import invertDict
+MSGREPLACE["irc_colour_to_game"] = invertDict(MSGREPLACE["game_colour_to_irc"])
 
 class ServerFull(Exception):
     pass

@@ -155,7 +155,7 @@ class ModUtilPlugin(ProtocolPlugin):
         if self.client.world.isWorldBanned(username):
             self.client.sendServerMessage("%s is already WorldBanned." % username)
             return
-        elif username == self.client.world.owner:
+        elif username == self.client.world.status["owner"].lower():
             self.client.sendServerMessage("You can't WorldBan the world owner!")
             return
         else:
@@ -450,7 +450,7 @@ class ModUtilPlugin(ProtocolPlugin):
         "/spectate username - Guest\nAliases: follow, watch\nFollows specified user around"
         nospec_check = True
         try:
-            self.client.spectating
+            getattr(self.client, "spectating")
         except AttributeError:
             nospec_check = False
         if not nospec_check or self.client.spectating != user.id:
