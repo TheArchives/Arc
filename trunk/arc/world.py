@@ -38,12 +38,11 @@ class World(object):
         self.id = None
         self.factory = factory
         # Other settings
-        self.cfgversion = "1.0.0"
-        self.owner = "N/A"
         self.ops = set()
         self.builders = set()
         self.status = dict()
-        # The following code will be replaced by self.status
+        self.status["cfgversion"] = "1.0.0"
+        self.status["owner"] = "n/a"
         self.status["all_build"] = True
         self.status["private"] = False
         self.status["is_archive"] = False
@@ -52,7 +51,6 @@ class World(object):
         self.status["zoned"] = False
         self.status["physics"] = False
         self.status["finite_water"] = True
-        # The above code will be replaced by self.status
         self._physics = False
         self._finite_water = False
         self.portals = {}
@@ -166,10 +164,10 @@ class World(object):
         config = ConfigParser()
         config.read(self.meta_path)
         if config.has_section("cfginfo"):
-            self.cfgversion = config.get("cfginfo", "version")
+            self.status["cfgversion"] = config.get("cfginfo", "version")
         else:
-            self.cfgversion = "1.0.0"
-        if not checkConfigVersion(self.cfgversion, CFGVERSION["world.meta"]):
+            self.status["cfgversion"] = "1.0.0"
+        if not checkConfigVersion(self.status["cfgversion"], CFGVERSION["world.meta"]):
             self.logger.warn("World %s has an outdated world.meta, data may be lost." % self.basename)
             self.logger.warn("A copy of the original file has been made as world.meta.orig.")
             shutil.copy(self.meta_path, os.path.join(self.basename, "world.meta.orig"))
@@ -313,7 +311,7 @@ class World(object):
         config.add_section("spawn")
         config.add_section("size")
         config.add_section("cfginfo")
-        config.set("cfginfo", "version", self.cfgversion)
+        config.set("cfginfo", "version", str(self.status["cfgversion"]))
         config.set("cfginfo", "name", "world.meta")
         config.set("size", "z", str(self.z))
         config.set("size", "y", str(self.y))
