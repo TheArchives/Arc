@@ -276,7 +276,6 @@ class BlbPlugin(ProtocolPlugin):
                 y, y2 = y2, y
             if z > z2:
                 z, z2 = z2, z
-            # TODO: Fix the formula
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
@@ -294,11 +293,11 @@ class BlbPlugin(ProtocolPlugin):
                             for k in range(z, z2+1):
                                 if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                     return
-                                if i==x or i==x2 or j==y or j==y2 or k==z or k==z2:
+                                if i == x or i == x2 or j == y or j == y2 or k == z or k == z2:
                                     world[i, j, k] = block
-                                self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
-                                self.client.sendBlock(i, j, k, block)
-                                yield
+                                    self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
+                                    self.client.sendBlock(i, j, k, block)
+                                    yield
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds bhb error.")
                     return
