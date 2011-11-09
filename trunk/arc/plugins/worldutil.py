@@ -674,7 +674,7 @@ class WorldUtilPlugin(ProtocolPlugin):
     def commandStatus(self, parts, fromloc, overriderank):
         "/status - Guest\nAliases: mapinfo\nReturns info about the current world."
         self.client.sendServerMessage("%s (%sx%sx%s)" % (self.client.world.id, self.client.world.x, self.client.world.y, self.client.world.z))
-        if not self.client.world.world.status["owner"].lower() == "n/a":
+        if not self.client.world.status["owner"].lower() == "n/a":
             self.client.sendServerMessage("Owner: %s" % (self.client.world.status["owner"]))
         self.client.sendNormalMessage(\
             (self.client.world.status["all_build"] and "&4Unlocked" or "&2Locked")+" "+\
