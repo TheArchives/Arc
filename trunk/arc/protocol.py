@@ -169,7 +169,7 @@ class ArcServerProtocol(Protocol):
         self.factory.queue.put((self, TASK_PLAYERLEAVE, (self.id,)))
         if self.username:
             self.factory.logger.info("Disconnected '%s'" % (self.username))
-            self.factory.runServerHook("playerQuit", {"client": self})
+            self.factory.runHook("playerQuit", {"client": self})
             self.runHook("playerquit", self.username)
             self.factory.logger.debug("(reason: %s)" % (reason))
         # Kill all plugins
@@ -300,7 +300,7 @@ class ArcServerProtocol(Protocol):
                 reactor.callLater(1, self.sendKeepAlive)
                 self.data = PlayerData(self) # Create a player data object
                 self.settings["tpprotect"] = self.data.bool("misc", "tpprotect") # Get their teleport protection setting
-                self.factory.runServerHook("onPlayerConnect", {"client": self}) # Run the player connect hook
+                self.factory.runHook("onPlayerConnect", {"client": self}) # Run the player connect hook
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if block == 255:

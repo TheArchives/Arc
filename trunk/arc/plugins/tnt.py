@@ -37,7 +37,7 @@ class DynamitePlugin(ProtocolPlugin):
         tobuild = []
         world = self.client.world
         # Randomise the variables
-        fanout = random.randint(2,6)
+        fanout = random.randint(2, 6)
         if self.build_dynamite and block == BLOCK_TNT:
             def explode():
                 # Clear the explosion radius

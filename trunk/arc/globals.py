@@ -344,3 +344,8 @@ def sanitizeMessage(message, replaceSets):
     else:
         raise ValueError("Replace set not a dict or a list of dicts")
     return message
+
+def find(f, seq):
+    
+    for it in (item for item in seq if f(item)):
+        return it

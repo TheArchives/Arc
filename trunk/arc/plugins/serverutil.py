@@ -85,7 +85,10 @@ class ServerUtilPlugin(ProtocolPlugin):
         "/sinfo - Guest\nDisplay server information."
         if self.client.factory.serverPluginExists("SystemInfoPlugin"):
             usageList = self.client.factory.serverPlugins["SystemInfoPlugin"].calculateSystemUsage()
-            self.client.sendSplitServerMessage("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
+            if usageList == False:
+                self.client.sendServerMessage("System information plugin disabled, unable to display system information.")
+            else:
+                self.client.sendSplitServerMessage("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
         else:
             self.client.sendServerMessage("System information plugin disabled, unable to display system information.")
 

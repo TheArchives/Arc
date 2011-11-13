@@ -87,7 +87,7 @@ class Physics(Thread):
                     # Do n fluid removals
                     updates = 0
                     for offset, block in enumerate(self.blockstore.raw_blocks):
-                        if block == CHR_LAVA or block == CHR_WATER or block == CHR_STILLWATER or block == CHR_SPOUT or block == CHR_LAVA_SPOUT:
+                        if block == CHR_LAVA or block == CHR_WATER or block == CHR_SPOUT or block == CHR_LAVA_SPOUT:
                             x, y, z = self.blockstore.get_coords(offset)
                             self.set_block((x, y, z), BLOCK_AIR)
                             updates += 1
@@ -104,8 +104,7 @@ class Physics(Thread):
                     if not self.was_physics or self.was_unflooding:
                         self.logger.debug("Queue everything for '%s'." % self.blockstore.world_name)
                         self.changed.clear()
-                        self.working = Popxrange(0, (self.blockstore.x*self.blockstore.y*self.blockstore.z))
-
+                        self.working = Popxrange(0, (self.blockstore.x * self.blockstore.y * self.blockstore.z))
                     # if working list is empty then copy changed set to working set
                     # otherwise keep using the working set till empty
                     elif len(self.working) == 0:
@@ -115,9 +114,7 @@ class Physics(Thread):
                         self.working = set()         # changes from a Popxrange to a set
                         while len(changedfixed) > 0:
                             self.expand_checks(changedfixed.pop())
-
                     self.logger.debug("Starting physics run for '%s' with %d checks." % (self.blockstore.world_name, len(self.working)))
-
                     updates = 0
                     try:
                         for x in xrange(LIMIT_CHECKS):
@@ -125,7 +122,6 @@ class Physics(Thread):
                             updates += self.handle(offset)
                     except KeyError:
                         pass
-
                     #if overflow and (time.time() - self.last_lag > self.LAG_INTERVAL):
                         #self.blockstore.admin_message("Physics is currently lagging in %(id)s.")
                         #self.last_lag = time.time()
@@ -308,7 +304,6 @@ class Physics(Thread):
                 if block == CHR_SAND:
                     return updates
                 # TODO got to stop water from stacking, water on water pushes out
-
             else:
                 if block == CHR_SAND:
                     return updates
@@ -318,7 +313,6 @@ class Physics(Thread):
                         self.set_block((nx, ny, nz), ord(block))
                         updates += 1
                 # TODO make water levels the same even if tunnel to water is lower then surface
-
         elif block == CHR_SPONGE:   # TODO check if sponge adding and (below) removal requires re-animation
             # OK, it's a sponge. Add it to sponge locations.
             self.sponge_locations.add(offset)

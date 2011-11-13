@@ -10,6 +10,16 @@ from arc.constants import *
 
 class McBansServerPlugin():
 
+    name = "McBansServerPlugin"
+
+    hooks = {
+        "onPlayerConnect": "connected",
+        "playerQuit": "disconnected",
+        "playerBanned": "banned",
+        "playerUnbanned": "unbanned",
+        "heartbeatSent": "callback"
+    }
+
     def gotServer(self):
         self.logger.debug("[&1MCBans&f] Reading in API Key..")
         config = ConfigParser.RawConfigParser()
@@ -137,15 +147,5 @@ class McBansServerPlugin():
                 pass
             else:
                 self.factory.logger.error("MCBans error: %s" % str(error))
-            
-    name = "McBansServerPlugin"
-
-    hooks = {
-        "onPlayerConnect": connected,
-        "playerQuit": disconnected,
-        "playerBanned": banned,
-        "playerUnbanned": unbanned,
-        "heartbeatSent": callback
-    }
 
 serverPlugin = McBansServerPlugin

@@ -5,11 +5,22 @@
 try:
     import psutil
 except ImportError:
-    import reqs.psutil
+    noModule = True
 
 class SystemInfoServerPlugin():
+    name = "SystemInfoPlugin"
+    
+    hooks = {
+        "heartbeatSent": "onHeartbeat"
+    }
+
+    def gotServer(self):
+        if noModule:
+            self.logger.info("Module psutil not found. /sinfo has been disabled.")
 
     def calculateSystemUsage(self):
+        if noModule:
+            return False
         cpuall = psutil.cpu_percent(interval=0)
         cores = len(psutil.cpu_percent(interval=0, percpu=True))
         diskusage = psutil.disk_usage("/")
@@ -20,6 +31,8 @@ class SystemInfoServerPlugin():
         return theList
 
     def onHeartbeat(self, data=None):
+        if noModule:
+            pass
         usageList = self.calculateSystemUsage()
         cpucores = psutil.cpu_percent(interval=0, percpu=True)
         cores = len(psutil.cpu_percent(interval=0, percpu=True))
@@ -34,11 +47,5 @@ class SystemInfoServerPlugin():
                 i = i + 1
             done = done[0:(len(done)-2)]
             self.logger.debug("CPU: %s%% (%s)" % (usageList[0], done))
-    
-    name = "SystemInfoPlugin"
-    
-    hooks = {
-        "heartbeatSent": onHeartbeat
-    }
 
 serverPlugin = SystemInfoServerPlugin
