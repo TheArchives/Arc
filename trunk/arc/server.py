@@ -406,13 +406,12 @@ class ArcFactory(Factory):
         finalvalue = True
         if hook in self.serverHooks.keys():
             for element in self.serverHooks[hook]:
-                try:
-                    if data is not None:
-                        value = element[1](element[0], data)
-                    else:
-                        value = element[1](element[0])
-                    if value == False:
-                        finalvalue = False
+                if data is not None:
+                    value = element[1](element[0], data)
+                else:
+                    value = element[1](element[0])
+                if value == False:
+                    finalvalue = False
 
     def registerCommand(self, command, func, aliases, rank):
         "Registers func as the handler for the command named 'command'."
