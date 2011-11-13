@@ -403,19 +403,16 @@ class ArcFactory(Factory):
 
     def runHook(self, hook, data=None):
         "Used to run hooks for ServerPlugins"
-        result = []
-        for func in self.hooks.get(hook, []):
-            if data is not None:
-                value = func(data)
-            else:
-                value = func()
-            if value is not None:
-                if func.config["overrideother"] == True:
-                    # This method requires absolute control! Just return and discard whatever we had
-                    return [value]
-                else:
-                    result.append(value)
-        return result
+        finalvalue = True
+        if hook in self.serverHooks.keys():
+            for element in self.serverHooks[hook]:
+                try:
+                    if data is not None:
+                        value = element[1](element[0], data)
+                    else:
+                        value = element[1](element[0])
+                    if value == False:
+                        finalvalue = False
 
     def registerCommand(self, command, func, aliases, rank):
         "Registers func as the handler for the command named 'command'."
@@ -743,7 +740,7 @@ class ArcFactory(Factory):
         "Makes the user join the given World."
         value = self.runHook("worldJoining", {"world_id": worldid, "client": user})
         if not value:
-            return self.worlds(user.world.id)
+            return self.worlds[user.world.id]
         new_world = self.worlds[worldid]
         try:
             self.logger.info("%s is joining world %s" % (user.username, new_world.basename))
