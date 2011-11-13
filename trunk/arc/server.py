@@ -403,15 +403,19 @@ class ArcFactory(Factory):
 
     def runHook(self, hook, data=None):
         "Used to run hooks for ServerPlugins"
-        finalvalue = True
-        if hook in self.serverHooks.keys():
-            for element in self.serverHooks[hook]:
-                if data is not None:
-                    value = element[1](element[0], data)
+        result = []
+        for element in self.hooks.get(hook, []):
+            if data is not None:
+                value = element[1](element[0], data)
+            else:
+                value = element[1](element[0])
+            if value is not None:
+                if func.config["overrideother"] == True:
+                    # This method requires absolute control! Just return and discard whatever we had
+                    return [value]
                 else:
-                    value = element[1](element[0])
-                if value == False:
-                    finalvalue = False
+                    result.append(value)
+        return result
 
     def registerCommand(self, command, func, aliases, rank):
         "Registers func as the handler for the command named 'command'."
