@@ -2,9 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import threading
-
-from twisted.internet import reactor
+from twisted.internet import reactor, threads
 
 from arc.constants import *
 from arc.decorators import *
@@ -294,9 +292,9 @@ class BuildUtil(ProtocolPlugin):
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to copy (Limit is %s)" % limit)
                     return
-            self.client.bsaved_blocks = set()
-            world = self.client.world
             def doBlocks():
+                self.client.bsaved_blocks = set()
+                world = self.client.world
                 try:
                     for i in range(x, x2+1):
                         for j in range(y, y2+1):
@@ -305,13 +303,14 @@ class BuildUtil(ProtocolPlugin):
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
                                 block = world.blockstore.raw_blocks[check_offset]
-                                self.client.bsaved_blocks.add((i -x, j - y, k -z, block))
-                    self.client.sendServerMessage("Your copy just completed.")
+                                self.client.bsaved_blocks.add((i - x, j - y, k - z, block))
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds copy error.")
                     return
-            threading.Thread(target=doBlocks).start()
-
+            def copyDoneCallback():
+                self.client.sendServerMessage("Your copy just completed.")
+            d = threads.deferToThread(doBlocks)
+            d.addCallback(copyDoneCallback)
 
     @config("category", "build")
     @config("rank", "builder")
