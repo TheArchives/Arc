@@ -388,13 +388,11 @@ class ArcFactory(Factory):
         #The following code should be handled by the ServerPlugins class and registerHook
         self.logger.debug("Getting hooks..")
         for plugin in self.serverPlugins.values(): # For every plugin,
-            if hasattr(plugin, "hooks"):
-                for element, fname in plugin.hooks.items(): # For every hook in the plugin,
-                    if element not in self.serverHooks.keys():
-                        self.serverHooks[element] = [] # Make a note of the hook in the hooks dict
-                    func = getattr(plugin, fname)
-                    self.serverHooks[element].append([plugin, func]) # Make a note of the hook in the hooks dict
-                    self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
+            for element, fname in plugin.hooks.items(): # For every hook in the plugin,
+                if element not in self.serverHooks.keys():
+                    self.serverHooks[element] = [] # Make a note of the hook in the hooks dict
+                self.serverHooks[element].append([plugin, getattr(plugin, fname)]) # Make a note of the hook in the hooks dict
+                self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
         self.logger.debug("self.serverHooks: %s" % self.serverHooks)
         self.runHook("serverPluginsLoaded")
 
@@ -407,11 +405,12 @@ class ArcFactory(Factory):
         if hook in self.serverHooks.keys():
             for element in self.serverHooks[hook]:
                 if data is not None:
-                    value = element[1](element[0], data)
+                    value = element[1](data)
                 else:
-                    value = element[1](element[0])
+                    value = element[1]()
                 if value == False:
                     finalvalue = False
+        return finalvalue
 
     def registerCommand(self, command, func, aliases, rank):
         "Registers func as the handler for the command named 'command'."
@@ -440,18 +439,8 @@ class ArcFactory(Factory):
         except KeyError:
             self.factory.logger.warn("Command '%s' is not registered to %s." % (command, func))
 
-    def registerHook(self, hook, func):
-        "Registers func as something to be run for hook 'hook'."
-        if hook not in self.hooks:
-            self.hooks[hook] = []
-        self.hooks[hook].append(func)
-
-    def unregisterHook(self, hook, func):
-        "Unregisters func from hook 'hook'."
-        try:
-            self.hooks[hook].remove(func)
-        except (KeyError, ValueError):
-            self.factory.logger.warn("Hook '%s' is not registered to %s." % (hook, func))
+    def unregisterHook(self, hook):
+        pass # To be implemented
 
     def buildProtocol(self, addr):
         "Builds the protocol. Used to switch between Manic Digger and Minecraft."

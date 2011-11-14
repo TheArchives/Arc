@@ -41,7 +41,7 @@ class ServerPlugin(object):
     __metaclass__ = PluginMetaclass
 
     def __init__(self, factory):
-    # Store the factory
+        # Store the factory
         self.factory = factory
         self.logger = ColouredLogger(debug)
         # Register our hooks
