@@ -43,6 +43,8 @@ class BuildUtil(ProtocolPlugin):
         "crep": "commandCreplace",
         "replacenot": "commandReplaceNot",
         "nrep": "commandReplaceNot",
+        "replacenear": "commandReplaceNear",
+        "rn": "commandReplaceNear",
         "fill": "commandFill",
 
         "ruler": "commandRuler",
@@ -738,6 +740,70 @@ class BuildUtil(ProtocolPlugin):
                     pass
             do_step()
 
+    @builder_only
+    def commandReplaceNear(self, parts, fromloc, overriderank):
+        "/replacenear radius blocktoreplace blockreplacing [x y z] - Builder\nAliases: rn\nReplaces the blocks near you."
+        if len(parts) < 3:
+            self.client.sendServerMessage("Please enter three parameters.")
+        else:
+            try:
+                radius = int(parts[1])
+            except ValueError:
+                self.client.sendServerMessage("Radius must be a number.")
+                return
+            blockA = self.client.GetBlockValue(parts[2])
+            blockB = self.client.GetBlockValue(parts[3])
+            if blockA == None or blockB == None:
+                return
+            if len(parts) == 4:
+                # If they only provided the type argument, use the current player position
+                x, y, z = self.client.x>>5, self.client.y>>5, self.client.z>>5
+            else:
+                try:
+                    x = int(parts[4])
+                    y = int(parts[5])
+                    z = int(parts[6])
+                except ValueError:
+                    self.client.sendServerMessage("All coordinate parameters must be integers.")
+                    return
+            limit = self.client.getBlbLimit()
+            if limit != -1:
+                # Stop them doing silly things
+                if ((radius * 2) ** 3 > limit) or limit == 0:
+                    self.client.sendSplitServerMessage("Sorry, that area is too big for you to replacenear (Limit is %s)" % limit)
+                    return
+            world = self.client.world
+            def generate_changes():
+                try:
+                    for i in range(x-radius, x+radius):
+                        for j in range(y-radius, y+radius):
+                            for k in range(z-radius, z+radius):
+                                if not self.client.AllowedToBuild(i, j, k) and not overriderank:
+                                    return
+                                check_offset = world.blockstore.get_offset(i, j, k)
+                                block = world.blockstore.raw_blocks[check_offset]
+                                if block == blockA:
+                                    world[i, j, k] = blockB
+                                    self.client.runHook("blockchange", x, y, z, ord(block), ord(block), byuser)
+                                    self.client.queueTask(TASK_BLOCKSET, (i, j, k, blockB), world=world)
+                                    self.client.sendBlock(i, j, k, blockB)
+                                    yield
+                except AssertionError:
+                    self.client.sendErrorMessage("Out of bounds replacenear error.")
+                    return
+            block_iter = iter(generate_changes())
+            def do_step():
+                # Do 10 blocks
+                try:
+                    for x in range(10):
+                        block_iter.next()
+                    reactor.callLater(0.01, do_step)
+                except StopIteration:
+                    if fromloc == "user":
+                        self.client.sendServerMessage("Your replacenear just completed.")
+                    pass
+            do_step()
+
     @config("category", "build")
     @config("rank", "op")
     def commandFill(self, parts, fromloc, overriderank):
@@ -770,6 +836,9 @@ class BuildUtil(ProtocolPlugin):
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
             limit = self.client.getBlbLimit()
+            if limit == 0:
+                self.client.sendServerMessage("You have exceeded the fill limit for your rank. (Limit is %s)" % limit)
+                return
             var_locxchecklist = [(1, 0, 0), (-1, 0, 0)]
             var_locychecklist = [(0, 1, 0), (0, -1, 0)]
             var_loczchecklist = [(0, 0, 1), (0 ,0, -1)]
@@ -797,9 +866,6 @@ class BuildUtil(ProtocolPlugin):
                 self.client.sendBlock(x, y, z, block)
             except:
                 pass
-            if limit == 0:
-                self.client.sendServerMessage("You have exceeded the fill limit for your rank. (Limit is %s)" % limit)
-                return
             def generate_changes():
                 var_blockchanges = 0
                 while self.var_blocklist != []:
