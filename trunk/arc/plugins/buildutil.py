@@ -740,7 +740,7 @@ class BuildUtil(ProtocolPlugin):
                     pass
             do_step()
 
-    @builder_only
+    @config("rank", "builder")
     def commandReplaceNear(self, parts, fromloc, overriderank):
         "/replacenear radius blocktoreplace blockreplacing [x y z] - Builder\nAliases: rn\nReplaces the blocks near you."
         if len(parts) < 3:
@@ -837,7 +837,7 @@ class BuildUtil(ProtocolPlugin):
                     return
             limit = self.client.getBlbLimit()
             if limit == 0:
-                self.client.sendServerMessage("You have exceeded the fill limit for your rank. (Limit is %s)" % limit)
+                self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
                 return
             var_locxchecklist = [(1, 0, 0), (-1, 0, 0)]
             var_locychecklist = [(0, 1, 0), (0, -1, 0)]

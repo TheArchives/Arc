@@ -20,6 +20,10 @@ class BuildLibPlugin(ProtocolPlugin):
         "pyramid": "commandPyramid",
         "csphere": "commandCsphere",
         "circle": "commandCircle",
+        "hcircle": "commandHCircle",
+        "hcyl": "commandHCylinder",
+        "cylinder": "commandCylinder",
+        "cyl": "commandCylinder",
         "dome": "commandDome",
         "ellipsoid": "commandEllipsoid",
         "ell": "commandEllipsoid",
@@ -187,7 +191,7 @@ class BuildLibPlugin(ProtocolPlugin):
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
-                if ((radius * 2) ** 3 > limit) or limit == 0:
+                if (((radius * 2) ** 3) - (((radius - 1) * 2) ** 3) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to hsphere (Limit is %s)" % limit)
                     return
             # Draw all the blocks on, I guess
@@ -200,7 +204,7 @@ class BuildLibPlugin(ProtocolPlugin):
                         for j in range(-radius-1, radius):
                             for k in range(-radius-1, radius):
                                 if (i ** 2 + j ** 2 + k ** 2) ** 0.5 < radius and (i ** 2 + j ** 2 + k ** 2) ** 0.5 > (radius - 1.49):
-                                    if not self.client.AllowedToBuild(x+i, y+j, z+k) and not permissionoverride:
+                                    if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
                                         return
                                     world[x+i, y+j, z+k] = block
                                     self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
@@ -281,7 +285,6 @@ class BuildLibPlugin(ProtocolPlugin):
                         var_y = calcCoord(y, y2, t, steps1, steps2)
                         var_z = calcCoord(z, z2, t, steps1, steps2)
                         coordinatelist.append((int(var_x) + x, int(var_y) + y, int(var_z) + z))
-                    finalcoordinatelist = []
                     finalcoordinatelist = [coordtuple for coordtuple in coordinatelist if coordtuple not in finalcoordinatelist]
                     for coordtuple in finalcoordinatelist:
                         i = coordtuple[0]
@@ -348,6 +351,12 @@ class BuildLibPlugin(ProtocolPlugin):
                 except ValueError:
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
+            limit = self.client.getBlbLimit()
+            # Stop them doing silly things
+            if limit != -1:
+                if int(((x * y) * (z)) / 3 > limit) or limit == 0:
+                    self.client.sendServerMessage("Sorry, that area is too big for you to pyramid. (Limit is %s)" % limit)
+                    return
             pointlist = []
             for i in range(abs(height)):
                 they = y + ((height - i - 1) if height > 0 else (height + i + 1))
@@ -358,11 +367,6 @@ class BuildLibPlugin(ProtocolPlugin):
                     point1 = [x - i, they, z - i]
                     point2 = [x + i, they, z + i]
                 pointlist = pointlist + [(point1, point2)]
-            limit = self.client.getBlbLimit()
-            # Stop them doing silly things
-            if int(((x * y) * (z)) / 3 > limit) or limit == 0:
-                self.client.sendServerMessage("Sorry, that area is too big for you to pyramid. (Limit is %s)" % limit)
-                return
             # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
@@ -377,9 +381,9 @@ class BuildLibPlugin(ProtocolPlugin):
                                 for k in range(z, z2+1):
                                     if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                         return
-                                    if fill == "true" or (i==x and j==y) or (i==x2 and j==y2) or (j==y2 and k==z2) or \
-                                    (i==x2 and k==z2) or (j==y and k==z) or (i==x and k==z) or (i==x and k==z2) or \
-                                    (j==y and k==z2) or (i==x2 and k==z) or (j==y2 and k==z) or (i==x and j==y2) or (i==x2 and j==y):
+                                    if fill == "true" or (i == x and j == y) or (i == x2 and j == y2) or (j == y2 and k == z2) or \
+                                    (i == x2 and k == z2) or (j == y and k == z) or (i == x and k == z) or (i == x and k == z2) or \
+                                    (j == y and k == z2) or (i == x2 and k == z) or (j == y2 and k == z) or (i == x and j == y2) or (i == x2 and j == y):
                                         world[i, j, k] = block
                                         self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
                                         self.client.sendBlock(i, j, k, block)
@@ -433,15 +437,14 @@ class BuildLibPlugin(ProtocolPlugin):
                     return
             steps = int(((x2 - x) ** 2 + (y2 - y) ** 2 + (z2 - z) ** 2) ** 0.5)
             if steps == 0:
-                self.client.sendServerMessage("Your lines need to be longer.")
+                self.client.sendServerMessage("Your line need to be longer.")
                 return
-            mx = float(x2-x)/steps
-            my = float(y2-y)/steps
-            mz = float(z2-z)/steps
+            mx = float(x2 - x) / steps
+            my = float(y2 - y) / steps
+            mz = float(z2 - z) / steps
             coordinatelist1 = []
             for t in range(steps+1):
                 coordinatelist1.append((int(round(mx * t + x)), int(round(my * t + y)), int(round(mz * t + z))))
-            coordinatelist2 = []
             coordinatelist2 = [coordtuple for coordtuple in coordinatelist1 if coordtuple not in coordinatelist2]
             limit = self.client.getBlbLimit()
             if limit != -1:
@@ -487,7 +490,7 @@ class BuildLibPlugin(ProtocolPlugin):
     def commandCsphere(self, parts, fromloc, overriderank):
         "/csphere blocktype blocktype radius [x y z] - Op\nPlace/delete a block and /csphere block radius"
         if len(parts) < 7 and len(parts) != 4:
-            self.client.sendServerMessage("Please enter two types a radius(and possibly a coord triple)")
+            self.client.sendServerMessage("Please enter two types a radius (and possibly a coord triple)")
         else:
             # Try getting the radius
             try:
@@ -572,14 +575,12 @@ class BuildLibPlugin(ProtocolPlugin):
     def commandCircle(self, parts, fromloc, overriderank):
         "/circle blocktype radius axis [x y z] - Op\nPlace/delete a block and /circle block radius axis"
         if len(parts) < 7 and len(parts) != 4:
-            self.client.sendServerMessage("Please enter a type, radius, axis(and possibly a coord triple)")
+            self.client.sendServerMessage("Please enter a type, radius, axis (and possibly a coord triple)")
         else:
             # Try getting the normal axis
-            normalAxis = parts[3]
-            if normalAxis == 'x' or normalAxis == 'y' or normalAxis == 'z':
-                pass
-            else:
-                self.client.sendServerMessage("Normal axis must be x,y, or z.")
+            normalAxis = parts[3].lower()
+            if normalAxis not in ["x", "y", "z"]:
+                self.client.sendServerMessage("Normal axis must be x, y, or z.")
                 return
             # Try getting the radius
             try:
@@ -839,6 +840,12 @@ class BuildLibPlugin(ProtocolPlugin):
                 except ValueError:
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
+            limit = self.client.getBlbLimit()
+            if limit != -1:
+                # Stop them doing silly things
+                if ((((x - x2) ** 2 + (y - y2) ** 2 + (z - z2) ** 2) ** 0.5 * ((x - x3) ** 2 + (y - y3) ** 2 + (z - z3) ** 2) ** 0.5) > limit) or limit == 0:
+                    self.client.sendServerMessage("Sorry, that area is too big for you to polytri (Limit is %s)" % limit)
+                    return
             def calcStep(x, x2, y, y2, z, z2):
                 return int(((x2 - x) ** 2 + (y2 - y) ** 2 + (z2 - z) ** 2) ** 0.5 / 0.75)
             # line 1 list
@@ -890,12 +897,6 @@ class BuildLibPlugin(ProtocolPlugin):
                             finalcoordinatelist.append(coordtuple)
                 elif point1 not in finalcoordinatelist:
                     finalcoordinatelist.append(point1)
-            limit = self.client.getBlbLimit()
-            if limit != -1:
-                # Stop them doing silly things
-                if ((((x - x2) ** 2 + (y - y2) ** 2 + (z - z2) ** 2) ** 0.5 * ((x - x3) ** 2 + (y - y3) ** 2 + (z - z3) ** 2) ** 0.5) > limit) or limit == 0:
-                    self.client.sendServerMessage("Sorry, that area is too big for you to polytri (Limit is %s)" % limit)
-                    return
             # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
@@ -933,7 +934,7 @@ class BuildLibPlugin(ProtocolPlugin):
     @config("category", "build")
     @config("rank", "builder")
     def commandStairs(self, parts, fromloc, overriderank):
-        "/stairs blockname height [c] [x y z x2 y2 z2] - Builder\nc = counter-clockwise\nBuilds a spiral staircase."
+        "/stairs blockname height [orientation] [x y z x2 y2 z2] - Builder\nBuilds a spiral staircase.\nOrientation: a = anti-clockwise, c = clockwise"
         if len(parts) < 9 and len(parts) != 3 and len(parts) != 4:
             self.client.sendServerMessage("Please enter a blocktype height (c (for counter-clockwise)")
             self.client.sendServerMessage("(and possibly two coord triples)")
@@ -942,15 +943,13 @@ class BuildLibPlugin(ProtocolPlugin):
             self.client.sendServerMessage("be used for the initial orientation")
         else:
             # Try getting the counter-clockwise flag
-            if len(parts) == 4:
-                if parts[3] == "c":
-                    counterflag = 1
-                else:
-                    self.client.sendServerMessage("The third entry must be 'c' for counter-clockwise")
-                    return
-            else:
+            if parts[3].lower() == "a":
+                counterflag = 1
+            elif parts[3].lower() == "c":
                 counterflag = -1
-            # Try getting the height as a direct integer type.
+            else:
+                self.client.sendServerMessage("The third entry must be a for anti-clockwise or c for clockwise.")
+                return
             try:
                 height = int(parts[2])
             except ValueError:
@@ -960,7 +959,7 @@ class BuildLibPlugin(ProtocolPlugin):
             if block == None:
                 return
             # If they only provided the type argument, use the last two block places
-            if len(parts) == 3 or len(parts) == 4:
+            if len(parts) == 4:
                 try:
                     x, y, z = self.client.last_block_changes[0]
                     x2, y2, z2 = self.client.last_block_changes[1]
@@ -969,12 +968,12 @@ class BuildLibPlugin(ProtocolPlugin):
                     return
             else:
                 try:
-                    x = int(parts[3])
-                    y = int(parts[4])
-                    z = int(parts[5])
-                    x2 = int(parts[6])
-                    y2 = int(parts[7])
-                    z2 = int(parts[8])
+                    x = int(parts[4])
+                    y = int(parts[5])
+                    z = int(parts[6])
+                    x2 = int(parts[7])
+                    y2 = int(parts[8])
+                    z2 = int(parts[9])
                 except ValueError:
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
@@ -982,7 +981,7 @@ class BuildLibPlugin(ProtocolPlugin):
             if limit != -1:
                 # Stop them doing silly things
                 if (height * 4 > limit) or limit == 0:
-                    self.client.sendSplitServerMessage("Sorry, that area is too big for you to make stairs(Limit is %s)" % limit)
+                    self.client.sendSplitServerMessage("Sorry, that area is too big for you to make stairs (Limit is %s)" % limit)
                     return
             # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
@@ -1093,6 +1092,10 @@ class BuildLibPlugin(ProtocolPlugin):
             z, z2 = z2, z
         x_range = x2 - x
         z_range = z2 - z
+        limit = self.client.getBlbLimit()
+        if limit == 0:
+            self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+            return
         # Draw all the blocks on, I guess
         # We use a generator so we can slowly release the blocks
         # We also keep world as a local so they can't change worlds and affect the new one
@@ -1148,6 +1151,9 @@ class BuildLibPlugin(ProtocolPlugin):
             z, z2 = z2, z
         x_range = x2 - x
         z_range = z2 - z
+        if limit == 0:
+            self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+            return
         # Draw all the blocks on, I guess
         # We use a generator so we can slowly release the blocks
         # We also keep world as a local so they can't change worlds and affect the new one
@@ -1187,13 +1193,13 @@ class BuildLibPlugin(ProtocolPlugin):
     @config("category", "build")
     @config("rank", "op")
     def commandHole(self, parts, fromloc, overriderank):
-        "/hole - Op\ncreates a hole between two blocks"
+        "/hole - Op\nCreates a hole between two blocks."
         # Use the last two block places
         try:
             x1, y1, z1 = self.client.last_block_changes[0]
             x2, y2, z2 = self.client.last_block_changes[1]
         except IndexError:
-            self.client.sendServerMessage("You have not clicked two corners yet")
+            self.client.sendServerMessage("You have not clicked two corners yet.")
             return
         if x1 > x2:
             x1, x2 = x2, x1
@@ -1203,6 +1209,9 @@ class BuildLibPlugin(ProtocolPlugin):
             z1, z2 = z2, z1
         x_range = x2 - x1
         z_range = z2 - z1
+        if limit == 0:
+            self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+            return
         block = BLOCK_AIR
         world = self.client.world
         def generate_changes():
@@ -1221,7 +1230,7 @@ class BuildLibPlugin(ProtocolPlugin):
                             world[x, y, z] = chr(block)
                         except AssertionError:
                             pass
-                        self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world = world)
+                        self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
                         self.client.sendBlock(x, y, z, block)
                         yield
         # Now, set up a loop delayed by the reactor
@@ -1257,6 +1266,9 @@ class BuildLibPlugin(ProtocolPlugin):
             z1, z2 = z2, z1
         x_range = x2 - x1
         z_range = z2 - z1
+        if limit == 0:
+            self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+            return
         block = BLOCK_WATER
         world = self.client.world
         def generate_changes():
@@ -1328,6 +1340,9 @@ class BuildLibPlugin(ProtocolPlugin):
             z, z2 = z2, z
         x_range = x2 - x
         z_range = z2 - z
+        if limit == 0:
+            self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+            return
         # Draw all the blocks on, I guess
         # We use a generator so we can slowly release the blocks
         # We also keep world as a local so they can't change worlds and affect the new one
@@ -1366,7 +1381,7 @@ class BuildLibPlugin(ProtocolPlugin):
     @config("category", "build")
     @config("rank", "op")
     def commandPit(self, parts, fromloc, overriderank):
-        "/pit - Op\ncreates a lava pit between two blocks"
+        "/pit - Op\nCreates a lava pit between two blocks."
         # Use the last two block places
         try:
             x1, y1, z1 = self.client.last_block_changes[0]
@@ -1382,6 +1397,9 @@ class BuildLibPlugin(ProtocolPlugin):
             z1, z2 = z2, z1
         x_range = x2 - x1
         z_range = z2 - z1
+        if limit == 0:
+            self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
+            return
         block = BLOCK_LAVA
         world = self.client.world
         def generate_changes():
@@ -1513,9 +1531,265 @@ class BuildLibPlugin(ProtocolPlugin):
                 try:
                     for x in range(7): # 70 blocks per tenths of a second, 700 blocks a second
                         block_iter.next()
-                    reactor.callLater(0.01, do_step)  #This is how long (in seconds) it waits to run another 0.7 blocks
+                    reactor.callLater(0.01, do_step)  # This is how long (in seconds) it waits to run another 0.7 blocks
                 except StopIteration:
                     if fromloc == "user":
                         self.client.sendServerMessage("Your fungus just completed.")
+                    pass
+            do_step()
+
+    @config("category", "build")
+    @config("rank", "op")
+    def commandHCircle(self, parts, fromloc, overriderank):
+        "/hcircle blocktype radius axis [x y z] - Op\nCreates a hollow circle."
+        if len(parts) < 7 and len(parts) != 4:
+            self.client.sendServerMessage("Please enter a type, radius, axis (and possibly a coord triple)")
+        else:
+            # Try getting the normal axis
+            normalAxis = parts[3].lower()
+            if normalAxis not in ["x", "y", "z"]:
+                self.client.sendServerMessage("Normal axis must be x, y or z.")
+                return
+            # Try getting the radius
+            try:
+                radius = int(parts[2])
+            except ValueError:
+                self.client.sendServerMessage("Radius must be an integer.")
+                return
+            block = self.client.GetBlockValue(parts[1])
+            if block == None:
+                return
+            # If they only provided the type argument, use the last two block places
+            if len(parts) == 4:
+                try:
+                    x, y, z = self.client.last_block_changes[0]
+                except IndexError:
+                    self.client.sendServerMessage("You have not clicked for a center yet.")
+                    return
+            else:
+                try:
+                    x = int(parts[4])
+                    y = int(parts[5])
+                    z = int(parts[6])
+                except ValueError:
+                    self.client.sendServerMessage("All coordinate parameters must be integers.")
+                    return
+            limit = self.client.getBlbLimit()
+            if limit != -1:
+                if (int((2 * cmath.pi * (radius ** 2)) - (2 * cmath.pi * ((radius - 1) ** 2))) > limit) or limit == 0:
+                    self.client.sendServerMessage("Sorry, that area is too big for you to hcircle.")
+                    return
+            # Draw all the blocks on, I guess
+            # We use a generator so we can slowly release the blocks
+            # We also keep world as a local so they can't change worlds and affect the new one
+            world = self.client.world
+            def generate_changes():
+                for i in range(-radius-1, radius):
+                    for j in range(-radius-1, radius):
+                        for k in range(-radius-1, radius):
+                            if ((i ** 2 + j ** 2 + k ** 2) ** 0.5 + .604 < radius) and ((i**2 + j**2 + k**2)**0.5 + .604 > radius - 1.208):
+                                if not ((i != 0 and normalAxis == "x") or (j != 0 and normalAxis == "y") or (k != 0 and normalAxis == "z")):
+                                    if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
+                                        self.client.sendServerMessage("You do not have permission to build here.")
+                                        return
+                                    try:
+                                        world[x+i, y+j, z+k] = block
+                                    except AssertionError:
+                                        self.client.sendServerMessage("Out of bounds hcircle error.")
+                                        return
+                                    self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
+                                    self.client.sendBlock(x+i, y+j, z+k, block)
+                                    yield
+            # Now, set up a loop delayed by the reactor
+            block_iter = iter(generate_changes())
+            def do_step():
+                # Do 10 blocks
+                try:
+                    for x in range(10):
+                        block_iter.next()
+                    reactor.callLater(0.01, do_step)
+                except StopIteration:
+                    if fromloc == "user":
+                        self.client.sendServerMessage("Your hcircle just completed.")
+                    pass
+            do_step()
+
+    @config("category", "build")
+    @config("rank", "op")
+    def commandHCylinder(self, parts, fromloc, overriderank):
+        "/hcyl blocktype radius height axis [x y z] - Op\nCreates a hollow cylinder."
+        if len(parts) < 8 and len(parts) != 5:
+            self.client.sendServerMessage("Please enter a type, radius, height, axis (and possibly a coord triple)")
+        else:
+            # Try getting the normal axis
+            normalAxis = parts[4].lower()
+            if normalAxis not in ["x", "y", "z"]:
+                self.client.sendServerMessage("Normal axis must be x, y, or z.")
+                return
+            # Try getting the radius
+            try:
+                radius = int(parts[2])
+            except ValueError:
+                self.client.sendServerMessage("Radius must be an integer.")
+                return
+            # Try getting the height
+            try:
+                height = int(parts[3])
+            except ValueError:
+                self.client.sendServerMessage("Height must be an integer.")
+                return
+            block = self.client.GetBlockValue(parts[1])
+            if block == None:
+                return
+            # If they only provided the type argument, use the last block places
+            if len(parts) == 5:
+                try:
+                    x, y, z = self.client.last_block_changes[0]
+                except IndexError:
+                    self.client.sendServerMessage("You have not clicked for a center yet.")
+                    return
+            else:
+                try:
+                    x = int(parts[5])
+                    y = int(parts[6])
+                    z = int(parts[7])
+                except ValueError:
+                    self.client.sendServerMessage("All coordinate parameters must be integers.")
+                    return
+            limit = self.client.getBlbLimit()
+            if limit != -1:
+                if (int((cmath.pi * (radius ** 2) * height) - (cmath.pi * ((radius - 1) ** 2) * height)) > limit) or limit == 0:
+                    self.client.sendServerMessage("Sorry, that area is too big for you to hcyl.")
+                    return
+            # Draw all the blocks on, I guess
+            # We use a generator so we can slowly release the blocks
+            # We also keep world as a local so they can't change worlds and affect the new one
+            world = self.client.world
+            def generate_changes(theX, axis):
+                a = theX
+                while theX < (height + a):
+                    for i in range(-radius-1, radius):
+                        for j in range(-radius-1, radius):
+                            for k in range(-radius-1, radius):
+                                if ((i ** 2 + j ** 2 + k ** 2) ** 0.5 + .604 < radius) and ((i ** 2 + j ** 2 + k ** 2) ** 0.5 + .604 > (radius - 1.208)):
+                                    if not ((i != 0 and axis == "x") or (j != 0 and axis == "y") or (k != 0 and axis == "z")):
+                                        if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
+                                            self.client.sendServerMessage("You do not have permission to build here.")
+                                            return
+                                        try:
+                                            world[x+i, y+j, z+k] = block
+                                        except AssertionError:
+                                            self.client.sendServerMessage("Out of bounds hcyl error.")
+                                            return
+                                        self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
+                                        self.client.sendBlock(x+i, y+j, z+k, block)
+                                        yield
+                    theX += 1
+            if normalAxis == "x":
+                block_iter = iter(generate_changes(x, "x"))
+            elif normalAxis == "y":
+                block_iter = iter(generate_changes(y, "y"))
+            elif normalAxis == "z":
+                block_iter = iter(generate_changes(z, "z"))
+            else:
+                self.client.sendServerMessage("Unknown axis error.")
+            def do_step():
+                # Do 10 blocks
+                try:
+                    for x in range(10):
+                        block_iter.next()
+                    reactor.callLater(0.01, do_step)
+                except StopIteration:
+                    if fromloc == "user":
+                        self.client.sendServerMessage("Your hcyl just completed.")
+                    pass
+            do_step()
+
+    @config("category", "build")
+    @config("rank", "op")
+    def commandCylinder(self, parts, fromloc, overriderank):
+        "/cyl blocktype radius height axis [x y z] - Op\nAliases: cylinder\nCreates a cylinder."
+        if len(parts) < 8 and len(parts) != 5:
+            self.client.sendServerMessage("Please enter a type, radius, height, axis (and possibly a coord triple)")
+        else:
+            # Try getting the normal axis
+            normalAxis = parts[4].lower()
+            if normalAxis not in ["x", "y", "z"]:
+                self.client.sendServerMessage("Normal axis must be x, y, or z.")
+                return
+            # Try getting the radius
+            try:
+                radius = int(parts[2])
+            except ValueError:
+                self.client.sendServerMessage("Radius must be an integer.")
+                return
+            # Try getting the height
+            try:
+                height = int(parts[3])
+            except ValueError:
+                self.client.sendServerMessage("Height must be an integer.")
+                return
+            block = self.client.GetBlockValue(parts[1])
+            if block == None:
+                return
+            # If they only provided the type argument, use the last block places
+            if len(parts) == 5:
+                try:
+                    x, y, z = self.client.last_block_changes[0]
+                except IndexError:
+                    self.client.sendServerMessage("You have not clicked for a center yet.")
+                    return
+            else:
+                try:
+                    x = int(parts[5])
+                    y = int(parts[6])
+                    z = int(parts[7])
+                except ValueError:
+                    self.client.sendServerMessage("All coordinate parameters must be integers.")
+                    return
+            limit = self.client.getBlbLimit()
+            if limit != -1:
+                if (cmath.pi * (radius ** 2) * height > limit) or limit == 0:
+                    self.client.sendSplitServerMessage("Sorry, that area is too big for you to make a cylinder. (Limit is %s)" % limit)
+                    return
+            # Draw all the blocks on, I guess
+            # We use a generator so we can slowly release the blocks
+            # We also keep world as a local so they can't change worlds and affect the new one
+            world = self.client.world
+            def generate_changes(theX, axis):
+                a = theX
+                while theX < (height + a):
+                    for i in range(-radius-1, radius):
+                        for j in range(-radius-1, radius):
+                            for k in range(-radius-1, radius):
+                                if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.604 < radius:
+                                    if not ((i != 0 and axis == "x") or (j != 0 and axis == "y") or (k != 0 and axis == "z")):
+                                        if not self.client.AllowedToBuild(x+i, y+j, z+k) and not overriderank:
+                                            self.client.sendServerMessage("You do not have permission to build here.")
+                                            return
+                                        try:
+                                            world[x+i, y+j, z+k] = block
+                                        except AssertionError:
+                                            self.client.sendServerMessage("Out of bounds hcyl error.")
+                                            return
+                                        self.client.queueTask(TASK_BLOCKSET, (x+i, y+j, z+k, block), world=world)
+                                        self.client.sendBlock(x+i, y+j, z+k, block)
+                                        yield
+                    theX += 1
+            if normalAxis == "x":
+                block_iter = iter(generate_changes(x, "x"))
+            elif normalAxis == "y":
+                block_iter = iter(generate_changes(y, "y"))
+            elif normalAxis == "z":
+                block_iter = iter(generate_changes(z, "z"))
+            def do_step():
+                # Do 10 blocks
+                try:
+                    for x in range(10):
+                        block_iter.next()
+                    reactor.callLater(0.01, do_step)
+                except StopIteration:
+                    if fromloc == "user":
+                        self.client.sendServerMessage("Your cylinder just completed.")
                     pass
             do_step()
