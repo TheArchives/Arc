@@ -47,42 +47,42 @@ class MinePlugin(ProtocolPlugin):
         tobuild = []
         world = self.client.world
         fanout = 3
-        if world.has_mine(mx, my, mz) or world.has_mine(mx, my-1, mz):
-            if world.has_mine(mx, my-1, mz):
-                world.delete_mine(mx, my-1, mz)
-                my = ry - 3
-            if world.has_mine(mx, my, mz):
-                my = ry - 2
-                world.delete_mine(mx, my, mz)
-            try:
-                for i in range(-fanout, fanout+1):
-                    for j in range(-fanout, fanout+1):
-                        for k in range(-fanout, fanout+1):
-                            if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691 < fanout:
-                                if not self.client.AllowedToBuild(mx+i, my+j, mz+k):
-                                    return
-                                check_offset = world.blockstore.get_offset(mx+i, my+j, mz+k)
-                                blocktype = world.blockstore.raw_blocks[check_offset]
-                                if blocktype not in [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD)]:
-                                    if not world.has_mine(mx+i, my+j, mz+k):
-                                        tobuild.append((i, j, k))
-                def explode(block, save):
-                    # Send the explosion
-                    for dx, dy, dz in tobuild:
-                        try:
-                            if save: world[mx+dx, my+dy, mz+dz] = chr(block)
-                            self.client.sendBlock(mx+dx, my+dy, mz+dz, block)
-                            self.client.factory.queue.put((self.client, TASK_BLOCKSET, (mx+dx, my+dy, mz+dz, block)))
-                        except AssertionError: # OOB
-                            pass
-                # Explode in 0.5 seconds
-                self.client.sendServerMessage("*CLICK*")
-                reactor.callLater(0.5, explode, BLOCK_STILLLAVA, False)
-                # Explode2 in 1 seconds
-                reactor.callLater(1, explode, BLOCK_AIR, True)
-            except AssertionError:
-                # oob
-                pass
+        try:
+            if world.has_mine(mx, my, mz) or world.has_mine(mx, my-1, mz):
+                if world.has_mine(mx, my-1, mz):
+                    world.delete_mine(mx, my-1, mz)
+                    my = ry - 3
+                if world.has_mine(mx, my, mz):
+                    my = ry - 2
+                    world.delete_mine(mx, my, mz)
+        except AssertionError: # Out of bounds
+            pass
+        else:
+            for i in range(-fanout, fanout+1):
+                for j in range(-fanout, fanout+1):
+                    for k in range(-fanout, fanout+1):
+                        if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691 < fanout:
+                            if not self.client.AllowedToBuild(mx+i, my+j, mz+k):
+                                return
+                            check_offset = world.blockstore.get_offset(mx+i, my+j, mz+k)
+                            blocktype = world.blockstore.raw_blocks[check_offset]
+                            if blocktype not in [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD)]:
+                                if not world.has_mine(mx+i, my+j, mz+k):
+                                    tobuild.append((i, j, k))
+            def explode(block, save):
+                # Send the explosion
+                for dx, dy, dz in tobuild:
+                    try:
+                        if save: world[mx+dx, my+dy, mz+dz] = chr(block)
+                        self.client.sendBlock(mx+dx, my+dy, mz+dz, block)
+                        self.client.factory.queue.put((self.client, TASK_BLOCKSET, (mx+dx, my+dy, mz+dz, block)))
+                    except AssertionError: # Out of bounds
+                        pass
+            # Explode in 0.5 seconds
+            self.client.sendServerMessage("*CLICK*")
+            reactor.callLater(0.5, explode, BLOCK_STILLLAVA, False)
+            # Explode2 in 1 seconds
+            reactor.callLater(1, explode, BLOCK_AIR, True)
 
     def newWorld(self, world):
         "Hook to reset mine abilities in new worlds if not op."
