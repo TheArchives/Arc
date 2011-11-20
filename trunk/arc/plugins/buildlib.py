@@ -47,7 +47,7 @@ class BuildLibPlugin(ProtocolPlugin):
     }
 
     TRUNK_HEIGHT = 5, 9
-    FANOUT = 2, 4
+    FANOUT = 3, 5
 
     def gotClient(self):
         self.build_trees = False

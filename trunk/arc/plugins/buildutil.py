@@ -200,7 +200,7 @@ class BuildUtil(ProtocolPlugin):
     def commandPaste(self, parts, fromloc, overriderank):
         "/paste [x y z] - Builder\nRestore blocks saved earlier using /copy."
         if len(parts) < 4 and len(parts) != 1:
-            self.client.sendServerMessage("Please enter coordinates.")
+            self.client.sendServerMessage("Please click a block (or a set of coordinates)")
         else:
             if len(parts) == 1:
                 try:
@@ -262,7 +262,7 @@ class BuildUtil(ProtocolPlugin):
     def commandCopy(self, parts, fromloc, overriderank):
         "/copy [x y z x2 y2 z2] - Builder\nCopy blocks using specified offsets."
         if len(parts) < 7 and len(parts) != 1:
-            self.client.sendServerMessage("Please enter coordinates.")
+            self.client.sendServerMessage("Please click 2 blocks (or 2 set of coordinates)")
         else:
             if len(parts) == 1:
                 try:
@@ -311,6 +311,7 @@ class BuildUtil(ProtocolPlugin):
                     return
             def copyDoneCallback():
                 self.client.sendServerMessage("Your copy just completed.")
+            self.client.sendServerMessage("Copying... This may take a while.")
             d = threads.deferToThread(doBlocks)
             d.addCallback(copyDoneCallback)
 
@@ -329,7 +330,7 @@ class BuildUtil(ProtocolPlugin):
         if angle % 90 != 0:
             self.client.sendServerMessage("Angle must be divisible by 90.")
             return
-        rotations = angle/90
+        rotations = angle / 90
         self.client.sendServerMessage("Rotating %s degrees..." % angle)
         for rotation in range(rotations):
             tempblocks = set()
@@ -346,7 +347,7 @@ class BuildUtil(ProtocolPlugin):
             for x, y, z, block in self.client.bsaved_blocks:
                 tempx = x
                 tempz = z
-                x = zmax-tempz
+                x = zmax - tempz
                 z = tempx
                 tempblocks.add((x, y, z, block))
             self.client.bsaved_blocks = tempblocks
@@ -396,37 +397,37 @@ class BuildUtil(ProtocolPlugin):
     @config("rank", "builder")
     def commandRotatexy(self, parts, fromloc, overriderank):
         "/xyrotate angle - Builder\nAllows you to rotate what you copied\nalong the X/Y axis."
-        if len(parts)<2:
-            self.client.sendServerMessage("You must give an angle to rotate!")
+        if len(parts) < 2:
+            self.client.sendServerMessage("You must give an angle to rotate.")
             return
         try:
             angle = int(parts[1])
         except ValueError:
-            self.client.sendServerMessage("Angle must be an integer!")
+            self.client.sendServerMessage("Angle must be an integer.")
             return
         if angle % 90 != 0:
-            self.client.sendServerMessage("Angle must be divisible by 90!")
+            self.client.sendServerMessage("Angle must be divisible by 90.")
             return
-        rotations = angle/90
-        self.client.sendServerMessage("Rotating %s degrees..." %angle)
+        rotations = angle / 90
+        self.client.sendServerMessage("Rotating %s degrees..." % angle)
         for rotation in range(rotations):
             tempblocks = set()
-            xmax=ymax=0
+            xmax = ymax = 0
             try:
                 for x, y, z, block in self.client.bsaved_blocks:
                     if x > xmax:
-                        xmax=x
+                        xmax = x
                     if y > ymax:
-                        ymax=y
+                        ymax = y
             except:
                 self.client.sendServerMessage("You haven't used /copy yet.")
                 return
             for x, y, z, block in self.client.bsaved_blocks:
                 tempx = x
                 tempy = y
-                x = ymax-tempy
+                x = ymax - tempy
                 y = tempx
-                tempblocks.add((x,y,z,block))
+                tempblocks.add((x, y, z, block))
             self.client.bsaved_blocks = tempblocks
         if fromloc == "user":
             self.client.sendServerMessage("Your rotate just completed.")
@@ -435,37 +436,37 @@ class BuildUtil(ProtocolPlugin):
     @config("rank", "builder")
     def commandRotateyz(self, parts, fromloc, overriderank):
         "/yzrotate angle - Builder\nAllows you to rotate what you copied\nalong the Y/Z axis."
-        if len(parts)<2:
-            self.client.sendServerMessage("You must give an angle to rotate!")
+        if len(parts) < 2:
+            self.client.sendServerMessage("You must give an angle to rotate.")
             return
         try:
             angle = int(parts[1])
         except ValueError:
-            self.client.sendServerMessage("Angle must be an integer!")
+            self.client.sendServerMessage("Angle must be an integer.")
             return
         if angle % 90 != 0:
-            self.client.sendServerMessage("Angle must be divisible by 90!")
+            self.client.sendServerMessage("Angle must be divisible by 90.")
             return
-        rotations = angle/90
+        rotations = angle / 90
         self.client.sendServerMessage("Rotating %s degrees..." %angle)
         for rotation in range(rotations):
             tempblocks = set()
-            ymax=zmax=0
+            ymax = zmax = 0
             try:
                 for x, y, z, block in self.client.bsaved_blocks:
                     if y > ymax:
-                        ymax=y
+                        ymax = y
                     if z > zmax:
-                        zmax=z
+                        zmax = z
             except:
                 self.client.sendServerMessage("You haven't used /copy yet.")
                 return
             for x, y, z, block in self.client.bsaved_blocks:
                 tempy = y
                 tempz = z
-                y = zmax-tempz
+                y = zmax - tempz
                 z = tempy
-                tempblocks.add((x,y,z,block))
+                tempblocks.add((x, y, z, block))
             self.client.bsaved_blocks = tempblocks
         if fromloc == "user":
             self.client.sendServerMessage("Your rotate just completed.")
@@ -554,7 +555,7 @@ class BuildUtil(ProtocolPlugin):
                     for i in range(x, x2+1):
                         for j in range(y, y2+1):
                             for k in range(z, z2+1):
-                                if not self.client.AllowedToBuild(i, j, k) and fromloc != "user":
+                                if not self.client.AllowedToBuild(i, j, k) and overriderank:
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
                                 block = world.blockstore.raw_blocks[check_offset]
@@ -633,7 +634,7 @@ class BuildUtil(ProtocolPlugin):
                     for i in range(x, x2+1):
                         for j in range(y, y2+1):
                             for k in range(z, z2+1):
-                                if not self.client.AllowedToBuild(i, j, k) and fromloc != "user":
+                                if not self.client.AllowedToBuild(i, j, k) and overriderank:
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
                                 block = world.blockstore.raw_blocks[check_offset]
@@ -757,7 +758,7 @@ class BuildUtil(ProtocolPlugin):
                 return
             if len(parts) == 4:
                 # If they only provided the type argument, use the current player position
-                x, y, z = self.client.x>>5, self.client.y>>5, self.client.z>>5
+                x, y, z = self.client.x >> 5, self.client.y >> 5, self.client.z >> 5
             else:
                 try:
                     x = int(parts[4])
@@ -917,8 +918,8 @@ class BuildUtil(ProtocolPlugin):
         except IndexError:
             self.client.sendServerMessage("You have not clicked two blocks yet.")
             return
-        xRange, yRange, zRange = abs(x - x2) + 1 , abs(y-y2) + 1, abs(z-z2) + 1
-        self.client.sendServerMessage("X = %d, Y = %d, Z = %d" % (xRange, yRange, zRange) )
+        xRange, yRange, zRange = abs(x - x2) + 1 , abs(y - y2) + 1, abs(z - z2) + 1
+        self.client.sendServerMessage("X = %d, Y = %d, Z = %d" % (xRange, yRange, zRange))
 
     @config("category", "build")
     @config("rank", "op")
