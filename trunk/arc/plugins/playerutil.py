@@ -359,9 +359,13 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @username_command
     def commandTeleport(self, user, fromloc, overriderank):
         "/tp username - Guest\nAliases: teleport\nTeleports you to the users location."
-        x = user.x >> 5
-        y = user.y >> 5
-        z = user.z >> 5
+        try:
+            x = user.x >> 5
+            y = user.y >> 5
+            z = user.z >> 5
+        except AttributeError:
+            self.client.sendServerMessage("That user seems to have went offline before the teleportation can finish.")
+            return
         if (user.settings["tpprotect"] == True) and not self.client.isMod():
             self.client.sendServerMessage("%s has teleport protection enabled - you cannot teleport to him/her." % user.username)
             return
@@ -402,17 +406,17 @@ class PlayerUtilPlugin(ProtocolPlugin):
                     theList = [(key + ": ")]
                     for c in self.client.factory.worlds[key].clients:
                         user = str(c.username)
-                        if user in self.client.factory.spectators:
+                        if self.client.factory.isSpectator(user):
                             user = COLOUR_BLACK + user
-                        elif user in self.client.factory.owners:
+                        elif self.client.factory.isOwner(user):
                             user = COLOUR_GREEN + user
-                        elif user in self.client.factory.directors:
+                        elif self.client.factory.isDirector(user):
                             user = COLOUR_DARKRED + user
-                        elif user in self.client.factory.admins:
+                        elif self.client.factory.isAdmin(user):
                             user = COLOUR_RED + user
-                        elif user in self.client.factory.mods:
+                        elif self.client.factory.isMod(user):
                             user = COLOUR_DARKBLUE + user
-                        elif user in self.client.factory.mods:
+                        elif self.client.factory.isHelper(user):
                             user = COLOUR_DARKGREY + user
                         elif user in INFO_VIPLIST:
                             user = COLOUR_YELLOW + user

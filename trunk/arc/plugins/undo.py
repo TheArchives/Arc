@@ -64,12 +64,12 @@ class UndoPlugin(ProtocolPlugin):
                         for index in range(undolistlength):
                             originalblock = user.var_undolist[index][2]
                             block = user.var_undolist[index][1]
-                            i,j,k = user.var_undolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            i, j, k = user.var_undolist[index][0]
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You do not have permission to build here.")
                                 return
-                            del var_sublist[var_sublist.index(((i,j,k),block,originalblock))]
-                            user.var_redolist.insert(0,((i,j,k),originalblock,block))
+                            del var_sublist[var_sublist.index(((i, j, k), block, originalblock))]
+                            user.var_redolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -97,11 +97,11 @@ class UndoPlugin(ProtocolPlugin):
                             originalblock = user.var_undolist[index][2]
                             block = user.var_undolist[index][1]
                             i,j,k = user.var_undolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You do not have permission to build here.")
                                 return
-                            del var_sublist[var_sublist.index(((i,j,k),block,originalblock))]
-                            user.var_redolist.insert(0,((i,j,k),originalblock,block))
+                            del var_sublist[var_sublist.index(((i, j, k), block, originalblock))]
+                            user.var_redolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -126,12 +126,12 @@ class UndoPlugin(ProtocolPlugin):
                         for index in range(undolistlength):
                             originalblock = self.client.var_undolist[index][2]
                             block = self.client.var_undolist[index][1]
-                            i,j,k = self.client.var_undolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            i, j, k = self.client.var_undolist[index][0]
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You no longer have permission to build here.")
                                 return
-                            del self.client.sublist[self.client.sublist.index(((i,j,k),block,originalblock))]
-                            self.client.var_redolist.insert(0,((i,j,k),originalblock,block))
+                            del self.client.sublist[self.client.sublist.index(((i, j, k), block, originalblock))]
+                            self.client.var_redolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -154,12 +154,12 @@ class UndoPlugin(ProtocolPlugin):
                         for index in range(num):
                             originalblock = self.client.var_undolist[index][2]
                             block = self.client.var_undolist[index][1]
-                            i,j,k = self.client.var_undolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            i, j, k = self.client.var_undolist[index][0]
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You no longer have permission to build here.")
                                 return
-                            del self.client.sublist[self.client.sublist.index(((i,j,k),block,originalblock))]
-                            self.client.var_redolist.insert(0,((i,j,k),originalblock,block))
+                            del self.client.sublist[self.client.sublist.index(((i, j, k),block, originalblock))]
+                            self.client.var_redolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -206,12 +206,12 @@ class UndoPlugin(ProtocolPlugin):
                         for index in range(redolistlength):
                             originalblock = user.var_redolist[index][2]
                             block = user.var_redolist[index][1]
-                            i,j,k = user.var_redolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            i, j, k = user.var_redolist[index][0]
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You do not have permission to build here.")
                                 return
-                            del var_sublist[var_sublist.index(((i,j,k),block,originalblock))]
-                            user.var_undolist.insert(0,((i,j,k),originalblock,block))
+                            del var_sublist[var_sublist.index(((i, j, k), block, originalblock))]
+                            user.var_undolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -238,12 +238,12 @@ class UndoPlugin(ProtocolPlugin):
                         for index in range(num):
                             originalblock = user.var_redolist[index][2]
                             block = user.var_redolist[index][1]
-                            i,j,k = user.var_redolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            i, j, k = user.var_redolist[index][0]
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You do not have permission to build here.")
                                 return
-                            del var_sublist[var_sublist.index(((i,j,k),block,originalblock))]
-                            user.var_undolist.insert(0,((i,j,k),originalblock,block))
+                            del var_sublist[var_sublist.index(((i, j, k), block, originalblock))]
+                            user.var_undolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -269,11 +269,11 @@ class UndoPlugin(ProtocolPlugin):
                             originalblock = self.client.var_redolist[index][2]
                             block = self.client.var_redolist[index][1]
                             i,j,k = self.client.var_redolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You no longer have permission to build here.")
                                 return
-                            del self.client.sublist[self.client.sublist.index(((i,j,k),block,originalblock))]
-                            self.client.var_undolist.insert(0,((i,j,k),originalblock,block))
+                            del self.client.sublist[self.client.sublist.index(((i, j, k),block, originalblock))]
+                            self.client.var_undolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:
@@ -296,12 +296,12 @@ class UndoPlugin(ProtocolPlugin):
                         for index in range(num):
                             originalblock = self.client.var_redolist[index][2]
                             block = self.client.var_redolist[index][1]
-                            i,j,k = self.client.var_redolist[index][0]
-                            if not self.client.AllowedToBuild(i,j,k) and not overriderank:
+                            i, j, k = self.client.var_redolist[index][0]
+                            if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 self.client.sendServerMessage("You no longer have permission to build here.")
                                 return
-                            del self.client.sublist[self.client.sublist.index(((i,j,k),block,originalblock))]
-                            self.client.var_undolist.insert(0,((i,j,k),originalblock,block))
+                            del self.client.sublist[self.client.sublist.index(((i, j, k), block, originalblock))]
+                            self.client.var_undolist.insert(0, ((i, j, k), originalblock, block))
                             try:
                                 world[i, j, k] = originalblock
                             except AssertionError:

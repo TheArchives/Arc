@@ -38,71 +38,42 @@ class DynamitePlugin(ProtocolPlugin):
         world = self.client.world
         # Randomise the variables
         fanout = random.randint(2, 6)
+        unbreakables = [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD), chr(BLOCK_TNT)]
+        strongblocks = [chr(BLOCK_ROCK), chr(BLOCK_STONE), chr(BLOCK_OBSIDIAN), chr(BLOCK_WATER), chr(BLOCK_STILLWATER), chr(BLOCK_LAVA), chr(BLOCK_STILLLAVA), chr(BLOCK_BRICK), chr(BLOCK_GOLDORE), chr(BLOCK_IRONORE), chr(BLOCK_COAL), chr(BLOCK_SPONGE)]
         if self.build_dynamite and block == BLOCK_TNT:
-            def explode():
-                # Clear the explosion radius
-                for i in range(-fanout, fanout+1):
-                    for j in range(-fanout, fanout+1):
-                        for k in range(-fanout, fanout+1):
-                            if (i**2+j**2+k**2)**0.5 + 0.691 < fanout:
-                                try:
-                                    if not self.client.AllowedToBuild(x+i, y+j, z+k):
-                                        return
-                                    check_offset = world.blockstore.get_offset(x+i, y+j, z+k)
-                                    blocktype = world.blockstore.raw_blocks[check_offset]
-                                    unbreakables = [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD), chr(BLOCK_TNT)]
-                                    strongblocks = [chr(BLOCK_ROCK), chr(BLOCK_STONE), chr(BLOCK_OBSIDIAN), chr(BLOCK_WATER), chr(BLOCK_STILLWATER), chr(BLOCK_LAVA), chr(BLOCK_STILLLAVA), chr(BLOCK_BRICK), chr(BLOCK_GOLDORE), chr(BLOCK_IRONORE), chr(BLOCK_COAL), chr(BLOCK_SPONGE)]
-                                    if blocktype not in unbreakables and blocktype not in strongblocks:
+            # Calculate block change radius
+            for i in range(-fanout, fanout+1):
+                for j in range(-fanout, fanout+1):
+                    for k in range(-fanout, fanout+1):
+                        value = (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691
+                        if value < fanout:
+                            try:
+                                if not self.client.AllowedToBuild(x+i, y+j, z+k):
+                                    return
+                                check_offset = world.blockstore.get_offset(x+i, y+j, z+k)
+                                blocktype = world.blockstore.raw_blocks[check_offset]
+                                if blocktype not in unbreakables + strongblocks:
+                                    if not world.has_mine(x+i, y+j, z+k):
+                                        tobuild.append((i, j, k))
+                                if value < fanout - 1:
+                                    if blocktype not in unbreakables:
                                         if not world.has_mine(x+i, y+j, z+k):
-                                            tobuild.append((i, j, k, BLOCK_STILLLAVA))
-                                    if (i**2+j**2+k**2)**0.5 + 0.691 < fanout-1:
-                                        if blocktype not in unbreakables:
-                                            if not world.has_mine(x+i, y+j, z+k):
-                                                tobuild.append((i, j, k, BLOCK_STILLLAVA))
-                                except AssertionError: # OOB
-                                    pass
+                                            tobuild.append((i, j, k))
+                            except AssertionError: # OOB
+                                pass
+            def explode(block, save):
                 # OK, send the build changes
-                for dx, dy, dz, block in tobuild:
+                for dx, dy, dz in tobuild:
                     try:
-                        world[x+dx, y+dy, z+dz] = chr(block)
-                        self.client.sendBlock(x+dx, y+dy, z+dz, block)
-                        self.client.factory.queue.put((self.client, TASK_BLOCKSET, (x+dx, y+dy, z+dz, block)))
-                    except AssertionError: # OOB
-                        pass
-            def explode2():
-                # Clear the explosion radius
-                for i in range(-fanout, fanout+1):
-                    for j in range(-fanout, fanout+1):
-                        for k in range(-fanout, fanout+1):
-                            if (i**2+j**2+k**2)**0.5 + 0.691 < fanout:
-                                try:
-                                    if not self.client.AllowedToBuild(x+i, y+j, z+k):
-                                        return
-                                    check_offset = world.blockstore.get_offset(x+i, y+j, z+k)
-                                    blocktype = world.blockstore.raw_blocks[check_offset]
-                                    unbreakables = [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD)]
-                                    strongblocks = [chr(BLOCK_ROCK), chr(BLOCK_STONE), chr(BLOCK_OBSIDIAN), chr(BLOCK_WATER), chr(BLOCK_STILLWATER), chr(BLOCK_LAVA), chr(BLOCK_BRICK), chr(BLOCK_GOLDORE), chr(BLOCK_IRONORE), chr(BLOCK_COAL), chr(BLOCK_SPONGE)]
-                                    if blocktype not in unbreakables and blocktype not in strongblocks:
-                                        if not world.has_mine(x+i, y+j, z+k):
-                                            tobuild.append((i, j, k, BLOCK_AIR))
-                                    if (i**2+j**2+k**2)**0.5 + 0.691 < fanout-1:
-                                        if blocktype not in unbreakables:
-                                            if not world.has_mine(x+i, y+j, z+k):
-                                                tobuild.append((i, j, k, BLOCK_AIR))
-                                except AssertionError: # OOB
-                                    pass
-                # OK, send the build changes
-                for dx, dy, dz, block in tobuild:
-                    try:
-                        world[x+dx, y+dy, z+dz] = chr(block)
+                        if save: world[mx+dx, my+dy, mz+dz] = chr(block)
                         self.client.sendBlock(x+dx, y+dy, z+dz, block)
                         self.client.factory.queue.put((self.client, TASK_BLOCKSET, (x+dx, y+dy, z+dz, block)))
                     except AssertionError: # OOB
                         pass
             # Explode in 2 seconds
-            reactor.callLater(self.delay, explode)
+            reactor.callLater(self.delay, explode, BLOCK_STILLLAVA, False)
             # Explode2 in 3 seconds
-            reactor.callLater(self.delay+0.5, explode2)
+            reactor.callLater(self.delay+1, explode, BLOCK_AIR, True)
 
     @config("category", "build")
     @config("rank", "op")

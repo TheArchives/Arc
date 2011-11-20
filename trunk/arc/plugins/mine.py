@@ -8,17 +8,21 @@ from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
-class DynamitePlugin(ProtocolPlugin):
+class MinePlugin(ProtocolPlugin):
 
     commands = {
         "mine": "commandMine",
-        "clearmines": "commandClear",
+        "clearmines": "commandClearMines",
     }
 
     hooks = {
         "blockchange": "blockChanged",
         "poschange": "posChanged",
+        "newworld": "newWorld",
     }
+
+    def gotClient(self):
+        self.build_mines = False
 
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         if fromloc != "user":
@@ -27,13 +31,10 @@ class DynamitePlugin(ProtocolPlugin):
         if self.client.world.has_mine(x, y, z):
             self.client.sendServerMessage("You defused a mine!")
             self.client.world.delete_mine(x, y, z)
-        if self.placingmines and block==BLOCK_BLACK:
-            self.client.sendServerMessage("You placed a mine")
-            self.placingmines = False
-            def ActivateMine():
-                self.client.world.add_mine(x, y, z)
-                self.client.sendServerMessage("Your mine is now active!")
-            reactor.callLater(2, ActivateMine)
+        if self.build_mines and block == BLOCK_BLACK:
+            self.build_mines = False
+            self.client.world.add_mine(x, y, z)
+            self.client.sendServerMessage("Your mine is now active!")
 
     def posChanged(self, x, y, z, h, p):
         "Hook trigger for when the user moves"
@@ -43,85 +44,62 @@ class DynamitePlugin(ProtocolPlugin):
         mx = rx
         mz = rz
         my = ry - 2
-        try:
-            if self.client.world.has_mine(mx, my, mz) or self.client.world.has_mine(mx, my-1, mz):
-                if self.client.world.has_mine(mx, my-1, mz):
-                    self.client.world.delete_mine(mx, my-1, mz)            
-                    my = ry - 3
-                if self.client.world.has_mine(mx, my, mz):
-                    my = ry - 2
-                    self.client.world.delete_mine(mx, my, mz)
-                tobuild = []
-                # Randomise the variables
-                fanout = self.explosion_radius
-                def explode():
-                    # Clear the explosion radius
-                    for i in range(-fanout, fanout+1):
-                        for j in range(-fanout, fanout+1):
-                            for k in range(-fanout, fanout+1):
-                                if (i**2+j**2+k**2)**0.5 + 0.691 < fanout:
-                                    if not self.client.AllowedToBuild(mx+i, my+j, mz+k):
-                                        return
-                                    check_offset = self.client.world.blockstore.get_offset(mx+i, my+j, mz+k)
-                                    blocktype = self.client.world.blockstore.raw_blocks[check_offset]
-                                    unbreakables = [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD)]
-                                    if blocktype not in unbreakables:
-                                        if not self.client.world.has_mine(mx+i, my+j, mz+k):
-                                            tobuild.append((i, j, k, BLOCK_STILLLAVA))
-                    # OK, send the build changes
-                    for dx, dy, dz, block in tobuild:
+        tobuild = []
+        world = self.client.world
+        fanout = 3
+        if world.has_mine(mx, my, mz) or world.has_mine(mx, my-1, mz):
+            if world.has_mine(mx, my-1, mz):
+                world.delete_mine(mx, my-1, mz)
+                my = ry - 3
+            if world.has_mine(mx, my, mz):
+                my = ry - 2
+                world.delete_mine(mx, my, mz)
+            try:
+                for i in range(-fanout, fanout+1):
+                    for j in range(-fanout, fanout+1):
+                        for k in range(-fanout, fanout+1):
+                            if (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691 < fanout:
+                                if not self.client.AllowedToBuild(mx+i, my+j, mz+k):
+                                    return
+                                check_offset = world.blockstore.get_offset(mx+i, my+j, mz+k)
+                                blocktype = world.blockstore.raw_blocks[check_offset]
+                                if blocktype not in [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD)]:
+                                    if not world.has_mine(mx+i, my+j, mz+k):
+                                        tobuild.append((i, j, k))
+                def explode(block, save):
+                    # Send the explosion
+                    for dx, dy, dz in tobuild:
                         try:
-                            self.client.world[mx+dx, my+dy, mz+dz] = chr(block)
+                            if save: world[mx+dx, my+dy, mz+dz] = chr(block)
                             self.client.sendBlock(mx+dx, my+dy, mz+dz, block)
                             self.client.factory.queue.put((self.client, TASK_BLOCKSET, (mx+dx, my+dy, mz+dz, block)))
                         except AssertionError: # OOB
                             pass
-                def explode2():
-                    # Clear the explosion radius
-                    for i in range(-fanout, fanout+1):
-                        for j in range(-fanout, fanout+1):
-                            for k in range(-fanout, fanout+1):
-                                if (i**2+j**2+k**2)**0.5 + 0.691 < fanout:
-                                    if not self.client.AllowedToBuild(mx+i, my+j, mz+k):
-                                        return
-                                    check_offset = self.client.world.blockstore.get_offset(mx+i, my+j, mz+k)
-                                    blocktype = self.client.world.blockstore.raw_blocks[check_offset]
-                                    unbreakables = [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD)]
-                                    if blocktype not in unbreakables:
-                                        if not self.client.world.has_mine(mx+i, my+j, mz+k):
-                                            tobuild.append((i, j, k, BLOCK_AIR))
-                    # OK, send the build changes
-                    for dx, dy, dz, block in tobuild:
-                        try:
-                            self.client.world[mx+dx, my+dy, mz+dz] = chr(block)
-                            self.client.sendBlock(mx+dx, my+dy, mz+dz, block)
-                            self.client.factory.queue.put((self.client, TASK_BLOCKSET, (mx+dx, my+dy, mz+dz, block)))
-                        except AssertionError: # OOB
-                            pass
-                # Explode in 2 seconds
+                # Explode in 0.5 seconds
                 self.client.sendServerMessage("*CLICK*")
-                reactor.callLater(self.delay, explode)
-                # Explode2 in 3 seconds
-                reactor.callLater(self.delay+0.5, explode2)
-        except AssertionError:
-            # oob
-            pass                
+                reactor.callLater(0.5, explode, BLOCK_STILLLAVA, False)
+                # Explode2 in 1 seconds
+                reactor.callLater(1, explode, BLOCK_AIR, True)
+            except AssertionError:
+                # oob
+                pass
+
+    def newWorld(self, world):
+        "Hook to reset mine abilities in new worlds if not op."
+        if not self.client.isOp():
+            self.build_mines = False
 
     @config("category", "build")
     @config("rank", "op")
-    def commandMine(self, parts, fromloc, rankoverride):
-        "/mine - Op\nMakes the next black block you place a mine."
-        self.placingmines = True
-        self.client.sendServerMessage("You are now placing mine blocks.")
-        self.client.sendServerMessage("Place a black block.")
+    @on_off_command
+    def commandMine(self, onoff, fromloc, overriderank):
+        "/mine - Op\nMakes the next black block you place a mine. Toggle."
+        self.build_mines = True
+        self.client.sendServerMessage("You are now placing mine blocks; Place a black block!")
 
     @config("category", "build")
-    @config("rank", "admin")
-    def commandClear(self, parts, fromloc, rankoverride):
+    @config("rank", "worldowner")
+    def commandClearMines(self, parts, fromloc, overriderank):
+        "/clearmines - World Owner\nClears all mines in this world."
         self.client.world.clear_mines()
-        self.client.sendServerMessage("You cleared all mines")
-
-    def gotClient(self):
-        self.explosion_radius = 3
-        self.delay = .5
-        self.placingmines = False
+        self.client.sendServerMessage("All mines in this world have been cleared.")
