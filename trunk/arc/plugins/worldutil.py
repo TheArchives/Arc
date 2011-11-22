@@ -323,9 +323,9 @@ class WorldUtilPlugin(ProtocolPlugin):
             old_worldid = parts[1]
             new_worldid = parts[2]
             if old_worldid in self.client.factory.worlds:
-                self.client.sendServerMessage("World '%s' is booted, please shut it down!" % old_worldid)
+                self.client.sendServerMessage("World '%s' is booted, please shut it down first." % old_worldid)
             elif not self.client.factory.world_exists(old_worldid):
-                self.client.sendServerMessage("There is no world '%s'." % old_worldid)
+                self.client.sendServerMessage("World '%s' doesn't exist." % old_worldid)
             elif self.client.factory.world_exists(new_worldid):
                 self.client.sendServerMessage("There is already a world called '%s'." % new_worldid)
             else:
@@ -506,8 +506,8 @@ class WorldUtilPlugin(ProtocolPlugin):
             world = World.create(
                 "worlds/%s" % world_id,
                 sx, sy, sz, # Size
-                sx//2,grass_to+2, sz//2, 0, # Spawn
-                ([BLOCK_DIRT]*(grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR]*(sy-grass_to)) # Levels
+                sx // 2, grass_to + 2, sz // 2, 0, # Spawn
+                ([BLOCK_DIRT] * (grass_to - 1) + [BLOCK_GRASS] + [BLOCK_AIR] * (sy - grass_to)) # Levels
                 )
             self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             self.client.factory.worlds[world_id].status["all_build"] = False

@@ -43,7 +43,7 @@ class MsgblockPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("That is a message block, you cannot change it. (/mbdel?)")
                 return False # False = they weren't allowed to build
         if self.msgblock_message:
-            self.client.sendServerMessage("You placed a message block")
+            self.client.sendServerMessage("You placed a message block.")
             self.client.world.add_msgblock(x, y, z, self.msgblock_message)
 
     def posChanged(self, x, y, z, h, p):
@@ -62,7 +62,7 @@ class MsgblockPlugin(ProtocolPlugin):
 
     @config("rank", "op")
     def commandMsgblock(self, parts, fromloc, overriderank):
-        "/mb message - Op\nMakes the next block you place a message block."
+        "/mb message - Op\nMakes the next block you place a message block.\n Use /mb \\message to append to the last message, or use /mb message to make a new line."
         msg_part = (" ".join(parts[1:])).strip()
         if not msg_part:
             self.client.sendServerMessage("Please enter a message.")
@@ -98,12 +98,12 @@ class MsgblockPlugin(ProtocolPlugin):
 
     @config("rank", "op")
     def commandMsgblockdel(self, parts, fromloc, overriderank):
-        "/mbdel - Op\nAliases: mdel\nEnables msgblock-deleting mode"
+        "/mbdel - Op\nAliases: mdel\nEnables msgblock-deleting mode."
         self.client.sendServerMessage("You are now able to delete msgblocks. /mbdelend to stop")
         self.msgblock_remove = True
 
     @config("rank", "op")
     def commandMsgblockdelend(self, parts, fromloc, overriderank):
-        "/mbdelend - Op\nDisables msgblock-deleting mode"
+        "/mbdelend - Op\nDisables msgblock-deleting mode."
         self.client.sendServerMessage("Msgblock deletion mode ended.")
         self.msgblock_remove = False

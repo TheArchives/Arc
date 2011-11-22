@@ -1092,8 +1092,7 @@ class BuildLibPlugin(ProtocolPlugin):
             z, z2 = z2, z
         x_range = x2 - x
         z_range = z2 - z
-        limit = self.client.getBlbLimit()
-        if limit == 0:
+        if self.client.getBlbLimit() == 0:
             self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
             return
         # Draw all the blocks on, I guess
@@ -1151,7 +1150,7 @@ class BuildLibPlugin(ProtocolPlugin):
             z, z2 = z2, z
         x_range = x2 - x
         z_range = z2 - z
-        if limit == 0:
+        if self.client.getBlbLimit() == 0:
             self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
             return
         # Draw all the blocks on, I guess
@@ -1209,7 +1208,7 @@ class BuildLibPlugin(ProtocolPlugin):
             z1, z2 = z2, z1
         x_range = x2 - x1
         z_range = z2 - z1
-        if limit == 0:
+        if self.client.getBlbLimit() == 0:
             self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
             return
         block = BLOCK_AIR
@@ -1266,7 +1265,7 @@ class BuildLibPlugin(ProtocolPlugin):
             z1, z2 = z2, z1
         x_range = x2 - x1
         z_range = z2 - z1
-        if limit == 0:
+        if self.client.getBlbLimit() == 0:
             self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
             return
         block = BLOCK_WATER
@@ -1340,7 +1339,7 @@ class BuildLibPlugin(ProtocolPlugin):
             z, z2 = z2, z
         x_range = x2 - x
         z_range = z2 - z
-        if limit == 0:
+        if self.client.getBlbLimit() == 0:
             self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
             return
         # Draw all the blocks on, I guess
@@ -1397,7 +1396,7 @@ class BuildLibPlugin(ProtocolPlugin):
             z1, z2 = z2, z1
         x_range = x2 - x1
         z_range = z2 - z1
-        if limit == 0:
+        if self.client.getBlbLimit() == 0:
             self.client.sendServerMessage("Your BLB limit is zero, therefore you cannot use this command.")
             return
         block = BLOCK_LAVA
