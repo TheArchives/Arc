@@ -656,16 +656,16 @@ class WorldUtilPlugin(ProtocolPlugin):
         "/copyworld worldname newworldname removebackup - Mod\nAliases: cw\nCopies a SHUT DOWN world.\nSpecify True for removebackup to remove all backups in the new world."
         if len(parts) < 3:
             self.client.sendServerMessage("Please specify two worldnames.")
-            else:
-                old_worldid = parts[1].lower()
-                copied_worldid = parts[2].lower()
-                if len(parts) == 4:
-                    if parts[3].lower() == "true":
-                        rmbackup = True
-                    else:
-                        rmbackup = False
-                else:
+        else:
+            old_worldid = parts[1].lower()
+            copied_worldid = parts[2].lower()
+            if len(parts) == 4:
+                if parts[3].lower() == "true":
                     rmbackup = True
+                else:
+                    rmbackup = False
+            else:
+                rmbackup = True
         if old_worldid in self.client.factory.worlds:
             self.client.sendServerMessage("World '%s' is booted, please shut it down!" % old_worldid)
         elif not self.client.factory.world_exists(old_worldid):
