@@ -189,8 +189,7 @@ class WorldUtilPlugin(ProtocolPlugin):
                     extra = "_" + str(int(extra[1:])+1)
                     reactor.callLater(0.1, doRename)
                 else:
-                    name = name+extra
-                    break
+                    name = name + extra
             doRename()
         shutil.copytree("worlds/%s/backup/%s" % (parts[1], parts[2]) , "worlds/.trash/%s/%s" %(name, parts[2]))
         shutil.rmtree("worlds/%s/backup/%s" % (parts[1], parts[2]))
