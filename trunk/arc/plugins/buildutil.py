@@ -785,7 +785,7 @@ class BuildUtil(ProtocolPlugin):
                                 block = world.blockstore.raw_blocks[check_offset]
                                 if block == blockA:
                                     world[i, j, k] = blockB
-                                    self.client.runHook("blockchange", x, y, z, ord(block), ord(block), byuser)
+                                    self.client.runHook("blockchange", x, y, z, ord(block), ord(block), fromloc)
                                     self.client.queueTask(TASK_BLOCKSET, (i, j, k, blockB), world=world)
                                     self.client.sendBlock(i, j, k, blockB)
                                     yield

@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cmath
+import math
 from random import choice
 
 from twisted.internet import reactor
@@ -11,8 +11,10 @@ from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
+VALID_STEPS = ["F", "B", "G", "V", , "T", "[", "]", "+", "-", "<", ">", "{", "}"]
+
 class LinePlugin(ProtocolPlugin):
-    
+
     commands = {
         "lbook": "commandLbook",
         "rec_axiom": "commandRec_Axiom",
@@ -22,6 +24,7 @@ class LinePlugin(ProtocolPlugin):
 
     def gotClient(self):
         self.var_production = {}
+        self.var_axiom = ""
 
     @config("category", "info")
     def commandLbook(self, parts, fromloc, overriderank):
@@ -32,13 +35,13 @@ class LinePlugin(ProtocolPlugin):
                 self.client.sendSplitServerMessage("lsystem is a command system that makes use of a virtual drawer that is commanded by a series of characters. It theoretically can build anything.")
             elif parts[1].lower() == "2":
                 self.client.sendServerMessage("lbook [Page 2 of 12]")
-                self.client.sendSplitServerMessage("F: makes the drawer move forward while drawing a line of blocks; A: also makes the drawer move forward while drawing a line of blocks; B: makes the drawer move backward while drawing a line of blocks; G: makes the drawer move forward without drawing a line of blocks; V: makes the drawer move backward without drawing a line of blocks")
+                self.client.sendSplitServerMessage("F: makes the drawer move forward while drawing a line of blocks; B: makes the drawer move backward while drawing a line of blocks; G: makes the drawer move forward without drawing a line of blocks; V: makes the drawer move backward without drawing a line of blocks")
             elif parts[1].lower() == "3":
                 self.client.sendServerMessage("lbook [Page 3 of 12]")
                 self.client.sendSplitServerMessage("+ and -: rotates the drawer in different directions in the zx plane (plane parallel to the ground); < and >: rotates the drawer in different directions in the yz plane; { and }: rotates the drawer in different directions in the xy plane")
             elif parts[1].lower() == "4":
                 self.client.sendServerMessage("lbook [Page 4 of 12]")
-                self.client.sendSplitServerMessage("T : changes the block to the block indicated by the integer (from 0 to 49) that follows (example T13); N and M : these dont do anything, they are only used in replacement")
+                self.client.sendSplitServerMessage("T : changes the block to the block indicated by the integer (from 0 to 49, try /bindex blockname if you are not sure) that follows (example T13)")
             elif parts[1].lower() == "5":
                 self.client.sendServerMessage("lbook [Page 5 of 12]")
                 self.client.sendSplitServerMessage("You type '/rec_axiom' then a phrase of the characters to record the phrase the drawer will reference. (example: '/rec_axiom FGF+F') This initial phrase is called the axiom. You place two blocks, the first determines where the drawer starts and the second determines where it will be aimed toward at first.")
@@ -47,13 +50,13 @@ class LinePlugin(ProtocolPlugin):
                 self.client.sendSplitServerMessage("This is the system that allows you to replace characters in the reference phrase in order to create fractals, this includes trees. To give the system a phrase to replace a certain character with you type '/rec_production item productionrecipe' the item is the character to replace and the productionrecipe is the phrase to replace it with. (example: '/rec_production N F+FN')")
             elif parts[1].lower() == "7":
                 self.client.sendServerMessage("lbook [Page 7 of 12]")
-                self.client.sendSplitServerMessage("You can repeat this for any other characters you want replaced. Only the T character and numbers  can not be replaced. You can of course reassign characters to different replacements individually, but, for convienience, you can type '/rec_production reset' to clear all entries.")
+                self.client.sendSplitServerMessage("You can repeat this for any other characters you want replaced. Only the T character and numbers cannot be replaced. You can of course reassign characters to different replacements individually, but, for convienience, you can type '/rec_production reset' to clear all entries.")
             elif parts[1].lower() == "8":
                 self.client.sendServerMessage("lbook [Page 8 of 12]")
                 self.client.sendSplitServerMessage("You type '/lsystem blocktype standarddistance zxrotation yzrotation xyrotation level' to make the lsystem. The standarddistance is the distance (1 = the distance for an edge of a block) that the drawer travels for each F,A,B,G,V (it can be a decimal too, like 2.5 or 0.25).")
             elif parts[1].lower() == "9":
                 self.client.sendServerMessage("lbook [Page 9 of 12]")
-                self.client.sendSplitServerMessage("For the rotation entries each refers to how far each +,-,<,>,{,} rotates the drawer in it's respective plane. Finally the level is an integer from 0 to 5, it specifies how many times to run the replacements of the production on the reference phrase.")
+                self.client.sendSplitServerMessage("For the rotation entries each refers to how far each +, -, <, >, {, } rotates the drawer in it's respective plane. Finally the level is an integer from 0 to 5, it specifies how many times to run the replacements of the production on the reference phrase.")
             elif parts[1].lower() == "10":
                 self.client.sendServerMessage("lbook [Page 10 of 12]")
                 self.client.sendSplitServerMessage("(example If you had an axiom of F, and a productionrecipe for F of FF, a level of zero would yeild a reference phrase F, one: FF, two: FFFF). If entered properly the lsystem will start being made. A level of five, depending on the production, could take awile.")
@@ -62,11 +65,11 @@ class LinePlugin(ProtocolPlugin):
                 self.client.sendSplitServerMessage("You can use '//rec_axiom' to extend an existing axiom phrase. (example You have an axiom phrase of FGF, you use //rec_axiom {GT16F, this makes it FGF{GT16F)")
             elif parts[1].lower() == "12":
                 self.client.sendServerMessage("lbook [Page 12 of 12]")
-                self.client.sendSplitServerMessage("In production recipies you have the option of giving multiple phrases for an item(character), to do so you can do a '/rec_production item phrase,phrase,etc' and use '//rec_production item phrase,phrase,etc' to add more phrases for it. The lsystem will randomly choose between these phrases for each replacement of the character.")
+                self.client.sendSplitServerMessage("In production recepies you have the option of giving multiple phrases for an item(character), to do so you can do a '/rec_production item phrase, phrase, etc' and use '//rec_production item phrase, phrase, etc' to add more phrases for it. The lsystem will randomly choose between these phrases for each replacement of the character.")
             else:
                 self.client.sendServerMessage("There's no page for that.")
         else:
-            self.client.sendServerMessage("You forgot to specify a page number.")
+            self.client.sendServerMessage("You forgot to specify a page number. Enter /lbook 1 to start reading.")
 
     @config("category", "build")
     @config("rank", "op")
@@ -76,18 +79,16 @@ class LinePlugin(ProtocolPlugin):
             self.client.sendSplitServerMessage("Please enter an axiom to save (use //rec_axiom to add to an existing axiom)")
         else:
             for item in parts[1]:
-                if item != 'F' and item != 'B' and item != '[' and item != ']' and item != '+' and item != '-' and item != '<' and item != '>' and item != 'G' and item != 'V' and item != 'N' and item != 'M' and item != '{' and item != '}' and item != 'A' and not item.isdigit() and item != 'T':
-                    self.client.sendServerMessage("Please use only the characters F,A,B,[,],+,-,<,>,G,V,N,M,{,},T or numbers")
+                if item.upper() not in VALID_STEPS and not item.isdigit():
+                    self.client.sendServerMessage("Invalid step detected.")
+                    self.client.sendServerMessage("Step specified: %s" % parts[1:].join(""))
+                    self.client.sendServerMessage("Available steps: %s (and numbers)" % VALID_STEPS.join(" "))
                     return
             if parts[0] == '//rec_axiom':
-                try:
-                    self.client.var_axiom = self.client.var_axiom + parts[1]
-                except:
-                    self.client.sendServerMessage("You have not started recording an axiom yet")
-                    return
+                self.client.var_axiom = self.client.var_axiom + parts[1]
             else:
                 self.client.var_axiom = parts[1]
-            var_divisions64 = int(len(self.client.var_axiom)/64)
+            var_divisions64 = int(len(self.client.var_axiom) / 64)
             self.client.sendServerMessage("The axiom has been recorded as:")
             for i in range(var_divisions64):
                 self.client.sendServerMessage(self.client.var_axiom[i*64:(i+1)*64])
@@ -99,9 +100,9 @@ class LinePlugin(ProtocolPlugin):
         "/rec_production item production - Op\nRecords production recipes for lsystems."
         if len(parts) != 3:
             if len(parts) == 2:
-                if parts[1] == 'reset':
+                if parts[1] == "reset":
                     self.var_production = {}
-                    self.client.sendServerMessage("Your production recipes have been cleared")
+                    self.client.sendServerMessage("Your production recipes have been cleared.")
                     return
             self.client.sendServerMessage("Please enter an item and a production recipe for it to be")
             self.client.sendServerMessage("replaced with (type in 'reset' to reset all the recipes).")
@@ -231,13 +232,13 @@ class LinePlugin(ProtocolPlugin):
             if limit != -1:
                 # Stop them doing silly things
                 if (num_movements * standarddistance > limit) or limit == 0:
-                    self.client.sendServerMessage("Sorry, that area is too big for you to an lsystem on.")
+                    self.client.sendServerMessage("Sorry, that area is too big for you to execute a lsystem on.")
                     self.client.sendServerMessage("(Limit is %s)" % limit)
                     return
             world = self.client.world
             def generate_changes():
                 block = self.client.GetBlockValue(parts[1])
-                pointsseparation = cmath.sqrt(cmath.pow((x2-x),2)+cmath.pow((y2-y),2)+cmath.pow((z2-z),2))
+                pointsseparation = math.sqrt(math.pow((x2-x),2)+math.pow((y2-y),2)+math.pow((z2-z),2))
                 drawer_orientationvector = ((x2-x)/pointsseparation,(y2-y)/pointsseparation,(z2-z)/pointsseparation)
                 drawer_location = (float(x),float(y),float(z))
                 savedlocations = []
@@ -378,17 +379,17 @@ class LinePlugin(ProtocolPlugin):
                     elif item == "V":
                         drawer_location = (drawer_location[0]-drawer_orientationvector[0]*standarddistance,drawer_location[1]-drawer_orientationvector[1]*standarddistance,drawer_location[2]-drawer_orientationvector[2]*standarddistance)
                     elif item == "+":
-                        rad_rotation = cmath.radians(zxrotation)
-                        drawer_orientationvector = (drawer_orientationvector[0]*cmath.cos(rad_rotation) - drawer_orientationvector[2]*cmath.sin(rad_rotation),drawer_orientationvector[1],drawer_orientationvector[0]*cmath.sin(rad_rotation) + drawer_orientationvector[2]*cmath.cos(rad_rotation))
+                        rad_rotation = math.radians(zxrotation)
+                        drawer_orientationvector = (drawer_orientationvector[0]*math.cos(rad_rotation) - drawer_orientationvector[2]*math.sin(rad_rotation),drawer_orientationvector[1],drawer_orientationvector[0]*math.sin(rad_rotation) + drawer_orientationvector[2]*math.cos(rad_rotation))
                     elif item == "-":
-                        rad_rotation = cmath.radians(-zxrotation)
-                        drawer_orientationvector = (drawer_orientationvector[0]*cmath.cos(rad_rotation) - drawer_orientationvector[2]*cmath.sin(rad_rotation),drawer_orientationvector[1],drawer_orientationvector[0]*cmath.sin(rad_rotation) + drawer_orientationvector[2]*cmath.cos(rad_rotation))
+                        rad_rotation = math.radians(-zxrotation)
+                        drawer_orientationvector = (drawer_orientationvector[0]*math.cos(rad_rotation) - drawer_orientationvector[2]*math.sin(rad_rotation),drawer_orientationvector[1],drawer_orientationvector[0]*math.sin(rad_rotation) + drawer_orientationvector[2]*math.cos(rad_rotation))
                     elif item == ">":
-                        rad_rotation = cmath.radians(yzrotation)
-                        drawer_orientationvector = (drawer_orientationvector[0],drawer_orientationvector[1]*cmath.cos(rad_rotation) - drawer_orientationvector[2]*cmath.sin(rad_rotation),drawer_orientationvector[1]*cmath.sin(rad_rotation) + drawer_orientationvector[2]*cmath.cos(rad_rotation))
+                        rad_rotation = math.radians(yzrotation)
+                        drawer_orientationvector = (drawer_orientationvector[0],drawer_orientationvector[1]*math.cos(rad_rotation) - drawer_orientationvector[2]*math.sin(rad_rotation),drawer_orientationvector[1]*math.sin(rad_rotation) + drawer_orientationvector[2]*math.cos(rad_rotation))
                     elif item == "<":
-                        rad_rotation = cmath.radians(-yzrotation)
-                        drawer_orientationvector = (drawer_orientationvector[0],drawer_orientationvector[1]*cmath.cos(rad_rotation) - drawer_orientationvector[2]*cmath.sin(rad_rotation),drawer_orientationvector[1]*cmath.sin(rad_rotation) + drawer_orientationvector[2]*cmath.cos(rad_rotation))
+                        rad_rotation = math.radians(-yzrotation)
+                        drawer_orientationvector = (drawer_orientationvector[0],drawer_orientationvector[1]*math.cos(rad_rotation) - drawer_orientationvector[2]*math.sin(rad_rotation),drawer_orientationvector[1]*math.sin(rad_rotation) + drawer_orientationvector[2]*math.cos(rad_rotation))
                     elif item == "[":
                         savedlocations.append((drawer_location,drawer_orientationvector,block))
                     elif item == "]":
@@ -397,16 +398,12 @@ class LinePlugin(ProtocolPlugin):
                         except:
                             self.client.sendServerMessage("No saved location error ('[' but no ']')")
                             return
-                    elif item == "N":
-                        pass
-                    elif item == "M":
-                        pass
                     elif item == "{":
-                        rad_rotation = cmath.radians(xyrotation)
-                        drawer_orientationvector = (drawer_orientationvector[0]*cmath.cos(rad_rotation) - drawer_orientationvector[1]*cmath.sin(rad_rotation),drawer_orientationvector[0]*cmath.sin(rad_rotation) + drawer_orientationvector[1]*cmath.cos(rad_rotation),drawer_orientationvector[2])
+                        rad_rotation = math.radians(xyrotation)
+                        drawer_orientationvector = (drawer_orientationvector[0]*math.cos(rad_rotation) - drawer_orientationvector[1]*math.sin(rad_rotation),drawer_orientationvector[0]*math.sin(rad_rotation) + drawer_orientationvector[1]*math.cos(rad_rotation),drawer_orientationvector[2])
                     elif item == "}":
-                        rad_rotation = cmath.radians(-xyrotation)
-                        drawer_orientationvector = (drawer_orientationvector[0]*cmath.cos(rad_rotation) - drawer_orientationvector[1]*cmath.sin(rad_rotation),drawer_orientationvector[0]*cmath.sin(rad_rotation) + drawer_orientationvector[1]*cmath.cos(rad_rotation),drawer_orientationvector[2])
+                        rad_rotation = math.radians(-xyrotation)
+                        drawer_orientationvector = (drawer_orientationvector[0]*math.cos(rad_rotation) - drawer_orientationvector[1]*math.sin(rad_rotation),drawer_orientationvector[0]*math.sin(rad_rotation) + drawer_orientationvector[1]*math.cos(rad_rotation),drawer_orientationvector[2])
                     elif item == "T":
                         num = 0
                         try:

@@ -17,6 +17,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         "backup": "commandBackup",
         "backups": "commandBackups",
         "restore": "commandRestore",
+        "deletebackup": "commandDeleteBackup",
 
         "physics": "commandPhysics",
         "physflush": "commandPhysflush",
@@ -44,6 +45,8 @@ class WorldUtilPlugin(ProtocolPlugin):
         "mapdelete": "commandDelete",
         "undelete": "commandUnDelete",
         "deleted": "commandDeleted",
+        "copyworld": "commandCopyWorld",
+        "cw": "commandCopyWorld",
 
         "worlds": "commandWorlds",
         "maps": "commandWorlds",
@@ -123,11 +126,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             world_id = parts[1].lower()
             world_dir = ("worlds/%s/" % world_id)
             if len(parts) < 3:
-                try:
-                    backups = os.listdir(world_dir+"backup/")
-                except:
-                    self.client.sendServerMessage("Syntax: /restore worldname number")
-                    return
+                backups = os.listdir(world_dir+"backup/")
                 backups.sort(lambda x, y: int(x) - int(y))
                 backup_number = str(int(backups[-1]))
             else:
@@ -171,6 +170,31 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendServerList(["Backups for %s:" % world] + Num_backups + Name_backups)
         else:
             self.client.sendServerMessage("Sorry, but there are no backups for %s." % world)
+
+    @config("category", "world")
+    @config("rank", "worldowner")
+    def commandDeleteBackup(self, parts, fromloc, overriderank):
+        "/deletebackup worldname backupnum/name - World Owner\nDeletes a backup of the world."
+        if len(parts) < 3:
+            self.client.sendServerMessage("Please specify a worldname.")
+            return
+        if not os.path.exists("worlds/%s/backup/%s" % (parts[1], parts[2])):
+            self.client.sendServerMessage("Backup %s for world %s doesn't exist." % (parts[2], parts[1]))
+            return
+        name = parts[1]
+        extra = "_0"
+        if os.path.exists("worlds/.trash/%s" % name):
+            def doRename():
+                if os.path.exists("worlds/.trash/%s" % (name + extra)):
+                    extra = "_" + str(int(extra[1:])+1)
+                    reactor.callLater(0.1, doRename)
+                else:
+                    name = name+extra
+                    break
+            doRename()
+        shutil.copytree("worlds/%s/backup/%s" % (parts[1], parts[2]) , "worlds/.trash/%s/%s" %(name, parts[2]))
+        shutil.rmtree("worlds/%s/backup/%s" % (parts[1], parts[2]))
+        self.client.sendServerMessage("Backup deleted as %s." % name)
 
     @config("category", "world")
     @config("rank", "op")
@@ -298,11 +322,8 @@ class WorldUtilPlugin(ProtocolPlugin):
             if len(parts) == 2:
                 self.client.sendServerMessage("Please specify a template.")
                 return
-            elif len(parts) == 3 or len(parts) == 4:
-                template = parts[2]
             else:
-                self.client.sendServerMessage("Please specify a template.")
-                return
+                template = parts[2]
             world_id = parts[1].lower()
             result = self.client.factory.newWorld(world_id, template)
             if result:
@@ -625,9 +646,37 @@ class WorldUtilPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
                     return
                 else:
-                    self.client.sendServerMessage("You're WorldBanned from '%s'; so you're not allowed in." % world_id)
+                    self.client.sendServerMessage("You're WorldBanned from '%s', so you're not allowed in." % world_id)
                     return
             self.client.changeToWorld(world_id)
+
+    @config("category", "world")
+    @config("rank", "mod")
+    def commandCopyWorld(self, parts, fromloc, overriderank):
+        "/copyworld worldname newworldname removebackup - Mod\nAliases: cw\nCopies a SHUT DOWN world.\nSpecify True for removebackup to remove all backups in the new world."
+        if len(parts) < 3:
+            self.client.sendServerMessage("Please specify two worldnames.")
+            else:
+                old_worldid = parts[1].lower()
+                copied_worldid = parts[2].lower()
+                if len(parts) == 4:
+                    if parts[3].lower() == "true":
+                        rmbackup = True
+                    else:
+                        rmbackup = False
+                else:
+                    rmbackup = True
+        if old_worldid in self.client.factory.worlds:
+            self.client.sendServerMessage("World '%s' is booted, please shut it down!" % old_worldid)
+        elif not self.client.factory.world_exists(old_worldid):
+            self.client.sendServerMessage("World '%s' doesn't exist." % old_worldid)
+        elif self.client.factory.world_exists(copied_worldid):
+            self.client.sendServerMessage("There is already a world called '%s'." % copied_worldid)
+        else:
+            os.mkdir("worlds/%s/" % copied_worldid)
+            shutil.copytree(("worlds/%s" % old_worldid), ("worlds/%" % copied_worldid))
+            if rmbackup: shutil.rmtree("worlds/%/backup" % copied_worldid)
+            self.client.sendServerMessage("World '%s' copied to '%s'." % (old_worldid, copied_worldid))
 
     def commandHome(self, parts, fromloc, overriderank):
         "/home - Guest\nTakes you home, where else?"
@@ -695,7 +744,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         x = self.client.x >> 5
         y = self.client.y >> 5
         z = self.client.z >> 5
-        h = int(self.client.h * (360/255.0))
+        h = int(self.client.h * (360 / 255.0))
         self.client.world.spawn = (x, y, z, h)
         self.client.sendServerMessage("Set spawn point to %s, %s, %s" % (x, y, z))
 
