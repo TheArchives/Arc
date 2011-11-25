@@ -19,12 +19,12 @@ class CommandPlugin(ProtocolPlugin):
         "gcmd": "commandGuestCommand",
         "scmd": "commandSensorCommand",
         "gscmd": "commandGuestSensorCommand",
-        "cmdend": "commandCommandend",
-        "cmddel": "commandCommanddel",
-        "cmddelend": "commandCommanddelend",
-        "cmdshow": "commandShowcmdblocks",
-        "cmdinfo": "commandcmdinfo",
-        "cmddelcmd": "commandcmddelcmd",
+        "cmdend": "commandCommandEnd",
+        "cmddel": "commandCommandDel",
+        "cmddelend": "commandCommandDelEnd",
+        "cmdshow": "commandShowCMDBlocks",
+        "cmdinfo": "commandCMDInfo",
+        "cmddelcmd": "commandDelPreviousCMD",
         "r": "commandLastCommand",
         "lastcmd": "commandLastCommand",
     }
@@ -449,7 +449,7 @@ class CommandPlugin(ProtocolPlugin):
 
 
     @config("rank", "builder")
-    def commandCommand(self, parts, fromloc, permissionoverride):
+    def commandCommand(self, parts, fromloc, overriderank):
         "/cmd command [arguments] - Builder\nStarts creating a command block, or adds a command to the command\nblock. The command can be any server command. After you have\nentered all commands, type /cmd again to begin placing. Once\nplaced, the blocks will run the command when clicked as if the\none clicking had typed the commands."
         if len(parts) < 2:
             if self.command_cmd == list({}):
@@ -500,7 +500,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Command %s added." % var_string)
 
     @config("rank", "mod")
-    def commandGuestCommand(self, parts, fromloc, permissionoverride):
+    def commandGuestCommand(self, parts, fromloc, overriderank):
         "/gcmd command [arguments] - Mod\nMakes the next block you place a guest command block."
         if len(parts) < 2:
             if self.command_cmd == list({}):
@@ -587,7 +587,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Command %s added." % var_string)
 
     @config("rank", "builder")
-    def commandSensorCommand(self, parts, fromloc, permissionoverride):
+    def commandSensorCommand(self, parts, fromloc, overriderank):
         "/scmd command [arguments] - Builder\nStarts creating a command block, or adds a command to the command\nblock. The command can be any server command. After you have\nentered all commands, type /cmd again to begin placing. Once\nplaced, the blocks will run the command when clicked as if the\none clicking had typed the commands."
         if len(parts) < 2:
             if self.command_cmd == list({}):
@@ -638,7 +638,7 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Command %s added." % var_string)
 
     @config("rank", "mod")
-    def commandGuestSensorCommand(self, parts, fromloc, permissionoverride):
+    def commandGuestSensorCommand(self, parts, fromloc, overriderank):
         "/gscmd command [arguments] - Mod\nMakes the next block you place a guest sensor command block."
         if len(parts) < 2:
             if self.command_cmd == list({}):
@@ -724,11 +724,11 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Command %s added." % var_string)
 
     @config("rank", "builder")
-    def commandCommandend(self, parts, fromloc, permissionoverride):
+    def commandCommandEnd(self, parts, fromloc, overriderank):
         "/cmdend [save]- Builder\nStops placing command blocks (type save to save your commands)."
         if len(parts) == 2:
-            if parts[1] == 'save':
-                self.client.sendServerMessage("Current command block and its commands maintained")
+            if parts[1] == "save":
+                self.client.sendServerMessage("Current command block type and its commands kept.")
             else:
                 self.command_cmd = list({})
         else:
@@ -739,40 +739,43 @@ class CommandPlugin(ProtocolPlugin):
         self.client.sendSplitServerMessage("Note: you can type '/cmdend save' to keep the block you are making and it's commands.")
 
     @config("rank", "builder")
-    def commandCommanddel(self, parts, fromloc, permissionoverride):
-        "/cmddel - Builder\nEnables command deleting mode"
+    def commandCommandDel(self, parts, fromloc, overriderank):
+        "/cmddel - Builder\nEnables command deleting mode."
         self.client.sendServerMessage("You are now able to delete command blocks. /cmddelend to stop")
         self.command_remove = True
 
     @config("rank", "builder")
-    def commandcmddelcmd(self, parts, fromloc, permissionoverride):
-        "/cmddel - Builder\nDeletes the previous command for the block."
+    def commandDelPreviousCMD(self, parts, fromloc, overriderank):
+        "/cmddelcmd - Builder\nDeletes the previous command for the block."
         if len(self.command_cmd) > 0:
             del self.command_cmd[len(self.command_cmd)-1]
-            self.client.sendServerMessage("Previous command, for the block, deleted")
+            self.client.sendServerMessage("Previous command for the block deleted.")
         else:
-            self.client.sendServerMessage("There is no block command to delete")
+            self.client.sendServerMessage("There is no block command to delete.")
 
     @config("rank", "builder")
-    def commandCommanddelend(self, parts, fromloc, permissionoverride):
-        "/cmddelend - Builder\nDisables command deleting mode"
+    def commandCommandDelEnd(self, parts, fromloc, overriderank):
+        "/cmddelend - Builder\nDisables command deleting mode."
         self.client.sendServerMessage("Command deletion mode ended.")
         self.command_remove = False
 
     @config("rank", "builder")
-    def commandShowcmdblocks(self, parts, fromloc, permissionoverride):
+    def commandShowCMDBlocks(self, parts, fromloc, overriderank):
        "/cmdshow - Builder\nShows all command blocks as yellow, only to you."
-       for offset in self.client.world.commands.keys():
+       for offset in self.client.world.cmdblocks.keys():
            x, y, z = self.client.world.get_coords(offset)
            self.client.sendPacked(TYPE_BLOCKSET, x, y, z, BLOCK_YELLOW)
-       self.client.sendServerMessage("All commands appearing yellow temporarily.")
+       self.client.sendServerMessage("All cmdblocks appearing yellow temporarily.")
 
     @config("rank", "builder")
     @on_off_command
-    def commandcmdinfo(self, onoff, fromloc, permissionoverride):
-       "/cmdinfo - Builder\nTells you the commands in a cmdblock"
-       self.cmdinfo = onoff == "on"
-       self.client.sendServerMessage("Command block info is now %s." %onoff)
+    def commandCMDInfo(self, onoff, fromloc, overriderank):
+        "/cmdinfo - Builder\nTells you the commands in a cmdblock"
+        if onoff == "on":
+            self.cmdinfo = True
+        else:
+            self.cmdinfo = False
+        self.client.sendServerMessage("Command block info is now %s." % onoff)
 
     def runcommands(self):
         try:
