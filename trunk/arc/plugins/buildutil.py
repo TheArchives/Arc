@@ -309,7 +309,7 @@ class BuildUtil(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds copy error.")
                     return
-            def copyDoneCallback():
+            def copyDoneCallback(result):
                 self.client.sendServerMessage("Your copy just completed.")
             self.client.sendServerMessage("Copying... This may take a while.")
             d = threads.deferToThread(doBlocks)
