@@ -209,7 +209,7 @@ class ChatBot(irc.IRCClient):
             elif channel.lower() == self.factory.irc_channel.lower():
                 if msg.lower().lstrip(self.nickname.lower()).startswith("$"+self.nickname.lower()):
                     msg_command = msg.split()
-                    msg_command = msg_command.lower()
+                    msg_command[1] = msg_command[1].lower()
                     if len(msg_command) > 1:
                         if msg_command[1] in self.ncommands and len(msg_command) > 1:
                             if msg_command[1] == ("who"):
