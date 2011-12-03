@@ -59,7 +59,6 @@ class BuildUtil(ProtocolPlugin):
         "preblockchange": "preBlockChanged",
         "blockchange": "blockChanged",
         "rankchange": "sendAdminBlockUpdate",
-        "canbreakadmin": "canBreakAdminBlocks",
     }
 
     def gotClient(self):
@@ -85,28 +84,15 @@ class BuildUtil(ProtocolPlugin):
 
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
-        if not self.canBreakAdminBlocks():
-            def check_block(block):
-                if ord(block) == BLOCK_GROUND_ROCK:
-                    self.client.sendError("Don't build admincrete!")
-                    self.client.world[x, y, z] = chr(BLOCK_AIR)
-            self.client.world[x,y,z].addCallback(check_block)
         # See if they are in solid-building mode
         if self.building_solid and block == BLOCK_ROCK:
             return BLOCK_GROUND_ROCK
         if block in self.block_overrides:
             return self.block_overrides[block]
 
-    def canBreakAdminBlocks(self):
-        "Shortcut for checking permissions."
-        if hasattr(self.client, "world"):
-            return self.client.isOp()
-        else:
-            return False
-
     def sendAdminBlockUpdate(self):
         "Sends a packet that updates the client's admin-building ability"
-        self.client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the server...", self.canBreakAdminBlocks() and 100 or 0)
+        self.client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the server...", self.client.isOp() and 100 or 0)
 
     @config("category", "build")
     def commandBind(self, parts, fromloc, overriderank):

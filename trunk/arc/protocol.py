@@ -283,13 +283,12 @@ class ArcServerProtocol(Protocol):
                     self.sendError("Wrong protocol.")
                     break
                 # Send them back our info.
-                breakable_admins = self.runHook("canbreakadmin")
                 self.sendPacked(
                     TYPE_INITIAL,
                     7, # Protocol version
                     self.packString(self.factory.server_name),
                     self.packString(self.factory.server_message),
-                    100 if breakable_admins else 0,
+                    100 if (self.isOp() if hasattr(self, "world") else False) else 0,
                 )
                 # Then... stuff
                 for client in self.factory.usernames.values():
@@ -303,20 +302,23 @@ class ArcServerProtocol(Protocol):
                 self.factory.runHook("onPlayerConnect", {"client": self}) # Run the player connect hook
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
-                if block == 255:
-                    block = 0
-                if block > 49:
-                    self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
-                    self.sendError("Invalid blocks are not allowed!")
-                    return
-                if 6 < block < 12:
-                    if not block == 9 and not block == 11:
-                        self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
-                        self.sendError("Invalid blocks are not allowed!")
-                        return
                 if self.identified == False:
                     self.factory.logger.info("Kicked '%s'; did not send a login before building" % (self.transport.getPeer().host))
                     self.sendError("Provide an authentication before building.")
+                    return
+                if block == 255:
+                    block = 0
+                if block > 49: # Out of block range
+                    self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
+                    self.sendError("Invalid blocks are not allowed!")
+                    return
+                if block in [6, 7, 8, 10, 12]: # Water and Lava
+                    self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
+                    self.sendError("Invalid blocks are not allowed!")
+                    return
+                if block == 7 and not self.isOp():
+                    self.factory.logger.info("Kicked '%s'; Tried to place admincrete." % self.transport.getPeer().host)
+                    self.sendError("Don't build admincrete!")
                     return
                 try:
                 # If we're read-only, reverse the change
