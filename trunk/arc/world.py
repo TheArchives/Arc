@@ -3,13 +3,13 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import gzip, os, shutil, sys, traceback
-
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Empty
 
+from twisted.internet.defer import Deferred
+
 from arc.blockstore import BlockStore
 from arc.constants import *
-from arc.deferred import Deferred
 from arc.globals import *
 from arc.logger import ColouredLogger
 from arc.blocktracker import Tracker

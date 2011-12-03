@@ -2,24 +2,14 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-
-# this thread:
-#  receives changes by ATOMIC updates to 'changed' eg. self.changed.add(offset)
-#  sends changes by queueing updates in blockstore eg. self.blockstore.in_queue.put([TASK_BLOCKSET, (x, y, z), chr(block), True])
-#  reads but doesn't not modify self.blockstore.raw_blocks[]
-
-# optimised by only checking blocks near changes, advantages are a small work set and very upto date
-
-
 import sys, time
 from threading import Thread
 
 from twisted.internet import reactor
 
 from arc.constants import *
+from arc.globals import Popxrange
 from arc.logger import ColouredLogger
-
-import logging
 
 debug = (True if "--debug" in sys.argv else False)
 
@@ -45,22 +35,16 @@ CHR_SAND_SPOUT = chr(BLOCK_SAND_SPOUT)
 LIMIT_CHECKS = 256*256*256 
 LIMIT_UNFLOOD = 256*256*256
 
-class Popxrange():  # there is probably a way to do this without this class but where?
-    def __init__(self, start, end):
-        self._i = iter(xrange(start, end))
-    def pop(self):
-        try:
-            return self._i.next()
-        except StopIteration:
-            raise KeyError
-    def __len__(self):
-        return self._i.__length_hint__()
-
 class Physics(Thread):
     """
     Given a BlockStore, works out what needs doing (water, grass etc.)
     and send the changes back to the BlockStore.
     """
+    # This thread:
+    # * Receives changes by ATOMIC updates to 'changed' eg. self.changed.add(offset)
+    # * Sends changes by queueing updates in the blockstore
+    # * Reads but doesn't modify self.blockstore.raw_blocks[]
+    # Optimised by only checking blocks near changes, advantages are a small work set and very up-to-date
 
     def __init__(self, blockstore):
         Thread.__init__(self)

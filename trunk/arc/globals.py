@@ -346,6 +346,18 @@ def sanitizeMessage(message, replaceSets):
     return message
 
 def find(f, seq):
-    
     for it in (item for item in seq if f(item)):
         return it
+
+class Popxrange(): # There is probably a way to do this without this class but where?
+    def __init__(self, start, end):
+        self._i = iter(xrange(start, end))
+
+    def pop(self):
+        try:
+            return self._i.next()
+        except StopIteration:
+            raise KeyError
+
+    def __len__(self):
+        return self._i.__length_hint__()
