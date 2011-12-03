@@ -6,8 +6,6 @@ import gzip, os, shutil, sys, traceback
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Empty
 
-from twisted.internet.defer import Deferred
-
 from arc.blockstore import BlockStore
 from arc.constants import *
 from arc.globals import *

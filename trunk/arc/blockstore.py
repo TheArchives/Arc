@@ -7,8 +7,6 @@ from array import array
 from Queue import Queue
 from threading import Thread
 
-from twisted.internet import reactor
-
 from arc.constants import *
 from arc.globals import *
 from arc.logger import ColouredLogger
