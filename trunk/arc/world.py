@@ -41,7 +41,7 @@ class World(object):
         self.ops = set()
         self.builders = set()
         self.status = dict()
-        self.status["cfgversion"] = "1.0.0"
+        self.status["cfgversion"] = ".".join([str(s) for s in CFGVERSION["world.meta"]])
         self.status["owner"] = "n/a"
         self.status["all_build"] = True
         self.status["private"] = False
