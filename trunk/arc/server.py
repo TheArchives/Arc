@@ -796,6 +796,7 @@ class ArcFactory(Factory):
         self.worlds[world_id].flush()
         self.worlds[world_id].save_meta()
         del self.worlds[world_id]
+        filename = "worlds/%s" % world_id
         world = self.worlds[world_id] = World(filename, factory=self)
         world.source = filename
         world.clients = set()
