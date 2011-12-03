@@ -863,6 +863,7 @@ class ArcFactory(Factory):
                             world = source_client.world
                         except AttributeError:
                             self.logger.warn("Source client for message has no world. Ignoring.")
+                            self.logger.warn("%s, %s, %s" % (str(source_client), str(task), str(data)))
                             continue
                     # Someone built/deleted a block
                     if task is TASK_BLOCKSET:
