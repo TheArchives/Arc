@@ -62,7 +62,6 @@ class ArcServerProtocol(Protocol):
             self.sendError("You are banned: %s" % self.factory.ipBanReason(ip))
             return
         self.factory.logger.debug("Assigned ID %i" % self.id)
-        self.factory.joinWorld(self.factory.default_name, self)
         self.sent_first_welcome = False
         self.read_only = False
         self.username = None
@@ -260,6 +259,10 @@ class ArcServerProtocol(Protocol):
                 if self.identified == True:
                     self.factory.logger.info("Kicked '%s'; already logged in to server" % (self.username))
                     self.sendError("You already logged in! Foolish bot owners.")
+                # Right protocol?
+                if protocol != 7:
+                    self.sendError("Wrong protocol.")
+                    break
                 # Check their password
                 correct_pass = hashlib.md5(self.factory.salt + self.username).hexdigest()[-32:].strip("0")
                 mppass = mppass.strip("0")
@@ -278,10 +281,7 @@ class ArcServerProtocol(Protocol):
                 if not self.factory.duplicate_logins and self.username.lower() in self.factory.usernames:
                     self.factory.usernames[self.username.lower()].duplicateKick()
                 self.factory.usernames[self.username.lower()] = self
-                # Right protocol?
-                if protocol != 7:
-                    self.sendError("Wrong protocol.")
-                    break
+                self.factory.joinWorld(self.factory.default_name, self)
                 # Send them back our info.
                 self.sendPacked(
                     TYPE_INITIAL,
@@ -312,7 +312,7 @@ class ArcServerProtocol(Protocol):
                     self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
-                if block in [6, 7, 8, 10, 12]: # Water and Lava
+                if block in range(6, 10) and block != 9: # Water and Lava
                     self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
