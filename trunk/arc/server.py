@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, ctypes, datetime, gc, os, random, re, shutil, string, sys, time, traceback
+import cPickle, datetime, gc, os, re, shutil, string, sys, time, traceback
 from collections import defaultdict
 import ConfigParser
 from Queue import Queue, Empty
@@ -24,7 +24,6 @@ from arc.irc_client import ChatBotFactory
 from arc.logger import ColouredLogger, ChatLogHandler
 from arc.plugins import *
 from arc.protocol import ArcServerProtocol
-from arc.timer import ResettableTimer
 from arc.world import World
 
 class ArcFactory(Factory):
@@ -749,7 +748,7 @@ class ArcFactory(Factory):
 
     def loadWorld(self, filename, world_id):
         """
-        Loads the given world file under the given world ID, or a random one.
+        Loads the given world file under the given world ID.
         Returns the ID of the new world.
         """
         # Check if the world actually exists
@@ -785,7 +784,7 @@ class ArcFactory(Factory):
         Reboots a world in a crash case
         """
         if world_id == self.default_name:
-            if self.default_backup not in self.client.factory.worlds:
+            if self.default_backup not in self.worlds:
                 self.loadWorld("worlds/%s" % self.default_backup, self.default_backup)
         for client in list(list(self.worlds[world_id].clients))[:]:
             if world_id == self.default_name:

@@ -312,8 +312,7 @@ class BuildUtil(ProtocolPlugin):
             def copyDoneCallback(r):
                 self.client.sendServerMessage("Your copy just completed.")
             self.client.sendServerMessage("Copying... This may take a while.")
-            d = threads.deferToThread(doBlocks)
-            d.addCallback(copyDoneCallback)
+            threads.deferToThread(doBlocks).addCallback(copyDoneCallback)
 
     @config("category", "build")
     @config("rank", "builder")
