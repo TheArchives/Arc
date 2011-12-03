@@ -252,8 +252,9 @@ class ChatBot(irc.IRCClient):
                                 self.msg(user, "The Rules")
                                 try:
                                     r = open('config/rules.txt', 'r')
-                                except:
-                                    r = open('config/rules.example.txt', 'r')
+                                except IOError:
+                                    self.msg(user, "07There are no rules for this server.")
+                                    return
                                 for line in r:
                                     line = line.replace("\n", "")
                                     self.msg(user, line)
@@ -271,7 +272,7 @@ class ChatBot(irc.IRCClient):
                                     self.msg(self.factory.irc_channel, "07URL: N/A (minecraft.net is offline)")
                                 self.msg(self.factory.irc_channel, "07Site: "+self.factory.info_url)
                             elif msg_command[1] == "lastseen":
-                                if len(msg_command) <2:
+                                if len(msg_command) < 2:
                                     self.msg(self.factory.irc_channel, "07Please enter a username to look for.")
                                 else:
                                     if msg_command[2].lower() not in self.factory.lastseen:
