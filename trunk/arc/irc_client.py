@@ -274,7 +274,7 @@ class ChatBot(irc.IRCClient):
                                 if len(msg_command) <2:
                                     self.msg(self.factory.irc_channel, "07Please enter a username to look for.")
                                 else:
-                                    if msg_command[2] not in self.factory.lastseen:
+                                    if msg_command[2].lower() not in self.factory.lastseen:
                                         self.msg(self.factory.irc_channel, "07There are no records of %s." % msg_command[2])
                                     else:
                                         t = time.time() - self.factory.lastseen[msg_command[2]]
