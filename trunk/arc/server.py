@@ -972,13 +972,6 @@ class ArcFactory(Factory):
                             client.sendPlayerLeave(data[0])
                             if not source_client.username is None and not self.useLowLag:
                                 client.sendNormalMessage("%s%s&e has gone offline." % (source_client.userColour(), source_client.username))
-                            else:
-                                if not self.useLowLag:
-                                    try:
-                                        del self.usernames[source_client]
-                                    except Exception as e:
-                                        self.logger.warn("Unable to clear out ghost user. %s" % str(e))
-                                        self.logger.warn(traceback.format_exc())
                         if not source_client.username is None:
                             if self.irc_relay and world and not self.useLowLag:
                                 self.irc_relay.sendServerMessage("07%s has gone offline." % source_client.username)
