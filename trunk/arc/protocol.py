@@ -26,7 +26,6 @@ class ArcServerProtocol(Protocol):
         # We use the buffer because TCP is a stream protocol :)
         self.buffer = ""
         self.loading_world = False
-        self.chatlogger = self.factory.chatlogger
         self.logger = self.factory.logger
         # Load plugins for ourselves
         self.hooks = {}
@@ -54,8 +53,6 @@ class ArcServerProtocol(Protocol):
             if not self.isHelper():
                 self.sendError("The server is full.")
                 return
-        # Open the Whisper Log, Adminchat log and WorldChat Log
-        # TODO: Use a chatlog handler, this is stupid and breaks things.
         # Check for IP bans
         ip = self.transport.getPeer().host
         if self.factory.isIpBanned(ip):
@@ -69,7 +66,6 @@ class ArcServerProtocol(Protocol):
         self.initial_position = None
         self.last_block_changes = []
         self.last_block_position = (-1, -1, -1)
-        self.gone = 0
         self.frozen = False
 
     def registerCommand(self, command, func):
@@ -143,11 +139,11 @@ class ArcServerProtocol(Protocol):
 
     def sendWorldMessage(self, message):
         "Sends a message to everyone in the current world."
-        self.queueTask(TASK_WORLDMESSAGE, (255, self.world, COLOUR_YELLOW+message))
+        self.factory.sendMessageToAll(COLOUR_YELLOW+message, "world", self)
 
     def sendPlainWorldMessage(self, message):
         "Sends a message to everyone in the current world, without any added color."
-        self.queueTask(TASK_WORLDMESSAGE, (255, self.world, message))
+        self.factory.sendMessageToAll(message, "world", self)
 
     def connectionLost(self, reason):
         # Leave the world
@@ -407,7 +403,7 @@ class ArcServerProtocol(Protocol):
                     self.title = rank[user]+" "
                 else:
                     self.title = ""
-                self.usertitlename = self.title + self.username
+                usertitlename = self.title + self.username
                 override = self.runHook("chatmsg", message)
                 goodchars = self.factory.printable
                 for c in message.lower():
@@ -473,6 +469,7 @@ class ArcServerProtocol(Protocol):
                     self.factory.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (self.transport.getPeer().host, message))
                     self.sendError("Provide an authentication before chatting.")
                     return
+                time = datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")
                 if message.startswith("/"):
                     # It's a command
                     parts = [x.strip() for x in message.split() if x.strip()]
@@ -565,53 +562,39 @@ class ArcServerProtocol(Protocol):
                     except ValueError:
                         self.sendServerMessage("Please include a username and a message to send.")
                     else:
-                        username = username.lower()
-                        if username in self.factory.usernames:
+                        if username.lower() in self.factory.usernames:
                             self.factory.usernames[username].sendWhisper(self.username, text)
                             self.sendWhisper(self.username, text)
-                            self.factory.logger.info("@"+username+" (from "+self.username+"): "+text)
-                            self.factory.chatlogger.whisper(self.usertitlename, username, text)
+                            self.factory.logger.info("%s to %s: %s" % (self.username, username, text))
+                            self.factory.chatlogs["whisper"].write({"self": self.username, "other": username, "text": text})
+                            self.factory.chatlogs["main"].write({"self": self.username, "other": username, "text": text}, formatter=MSGLOGFORMAT["whisper"])
                         else:
                             self.sendServerMessage("%s is currently offline." % username)
                 elif message.startswith("!"):
                     # It's a world message.
-                    if len(message) == 1:
+                    if len(message) < 2:
                         self.sendServerMessage("Please include a message to send.")
                     else:
-                        try:
-                            text = message[1:]
-                        except ValueError:
-                            self.sendServerMessage("Please include a message to send.")
-                        else:
-                            self.sendWorldMessage ("!"+self.userColour()+self.usertitlename+":"+COLOUR_WHITE+" "+text)
-                            self.factory.logger.info("!"+self.userColour()+self.usertitlename+"&f in &c"+str(self.world.id)+"&f: "+text)
-                            self.factory.chatlogger.world(self.usertitlename, str(self.world.id), text)
-                            if self.factory.irc_relay:
-                                self.factory.irc_relay.sendServerMessage(COLOUR_YELLOW+"!"+self.userColour()+self.usertitlename+COLOUR_BLACK+" in "+str(self.world.id)+": "+text)
+                        text = message[1:]
+                        self.factory.sendMessageToAll(text, "world", self)
                 elif message.startswith("#"):
                     # It's a staff-only message.
                     if len(message) == 1:
-                        self.sendServerMessage("Please include a message to send.")
-                    else:
-                        try:
-                            text = message[1:]
-                        except ValueError:
-                            if self.isMod():
-                                self.sendServerMessage("Please include a message to send.")
-                            else:
-                                self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.username, message)))
                         if self.isMod():
-                            self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, self.userColour(), self.username, text, False)))
-                            self.factory.chatlogger.staff(self.username, text)
-                            self.logger.info("# %s: %s" % (self.username, text))
+                            self.sendServerMessage("Please include a message to send.")
                         else:
-                            self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
+                            self.factory.sendMessageToAll(text, "chat", self, usertitlename)
+                    else:
+                        text = message[1:]
+                        self.factory.sendMessageToAll(text, "staff", self)
+                        self.factory.chatlogs["staff"].write({"time": time, "username": self.username, "text": text})
+                        self.factory.chatlogs["main"].write({"time": time, "username": self.username, "text": text}, formatter=MSGLOGFORMAT["staff"])
                 else:
                     if self.isSilenced():
                         self.sendServerMessage("You are silenced and cannot speak.")
                     else:
-                        if override is not True:
-                            self.factory.queue.put((self, TASK_MESSAGE, (self.id, self.userColour(), self.usertitlename, message)))
+                        if not override:
+                            self.factory.sendMessageToAll(text, "chat", self, usertitlename)
             else:
                 if type == 2:
                     self.factory.logger.warn("Beta client attempted to connect.")
@@ -705,12 +688,11 @@ class ArcServerProtocol(Protocol):
     def sendPlayerDir(self, id, h, p):
         self.sendPacked(TYPE_PLAYERDIR, id, h, p)
 
-    def sendMessage(self, id, colour, username, text, direct=False, action=False):
+    def sendMessage(self, id, colour, username, text, action=False):
         "Sends a message to the user, splitting it up if needed."
         # See if it's muted.
         replacement = self.runHook("recvmessage", colour, username, text, action)
-        if replacement is False:
-            return
+        if replacement is False: return
         # See if we should highlight the names
         if action:
             prefix = "%s* %s%s%s " % (COLOUR_YELLOW, colour, username, COLOUR_WHITE)
@@ -1026,7 +1008,7 @@ class ArcServerProtocol(Protocol):
                                 else:
                                     self.sendServerMessage("You must be an owner to build here.")
                                     return False
-        if self.world.id == self.factory.default_name and self.isHelper() and not self.isMod() and not self.world.status["all_build"]:
+        if self.world.id == self.factory.default_name and not self.isMod() and not self.world.status["all_build"]:
             self.sendBlock(x, y, z)
             self.sendServerMessage("Only Builder/Op and Mod+ may edit '%s'." % self.factory.default_name)
             return
@@ -1048,7 +1030,7 @@ class ArcServerProtocol(Protocol):
             except KeyError:
                 self.sendServerMessage("'%s' is not a valid block type." % value)
                 return None
-                    # Check the block is valid
+        # Check the block is valid
         if ord(block) > 49:
             self.sendServerMessage("'%s' is not a valid block type." % value)
             return None
@@ -1103,11 +1085,11 @@ class ArcServerProtocol(Protocol):
             if self.isSpectator():
                 limit = 0
             elif self.isOwner():
-                limit = 8796093022208
+                limit = -1
             elif self.isDirector():
-                limit = 2199023255552
+                limit = 8796093022208
             elif self.isAdmin():
-                limit = 1073741824
+                limit = 2199023255552
             elif self.isMod():
                 limit = 2097152
             elif self.isHelper():

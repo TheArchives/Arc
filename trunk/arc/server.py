@@ -35,7 +35,6 @@ class ArcFactory(Factory):
     def __init__(self, debug=False):
         self.printable = string.printable
         self.logger = ColouredLogger(debug)
-        self.chatlogger = ChatLogHandler()
         self.cfginfo = {"version": defaultdict(str)}
         # Load up the server plugins right away
         self.logger.info("Loading server plugins..")
@@ -63,6 +62,9 @@ class ArcFactory(Factory):
         self.hooks = {}
         self.saving = False
         self.save_count = 1
+        self.chatlogs = {}
+        for k, v in MSGLOGFORMAT.items():
+            self.chatlogs[k] = ChatLogHandler("logs/%s.log" % k, v)
         # Load the config
         self.loadConfig()
         # Read in the greeting
@@ -167,8 +169,6 @@ class ArcFactory(Factory):
         self.queue = Queue()
         self.clients = {}
         self.usernames = {}
-        # Open the adminchat log.
-        self.adlog = open("logs/server.log", "a")
 
     def loadConfig(self, reload=False):
         configParsers = dict()
@@ -486,11 +486,7 @@ class ArcFactory(Factory):
                 self.unloadWorld(name)
             else:
                 if len(world.clients) == 0: # Nobody's in it
-                    try:
-                        world.status["last_access_count"] += 1
-                    except Exception as e: # Test
-                        self.logger.warn("Error when incrementing ASD count in world %s." % world.id)
-                        self.logger.warn(e)
+                    world.status["last_access_count"] += 1
 
     def loadMeta(self):
         "Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"
@@ -856,15 +852,14 @@ class ArcFactory(Factory):
                 try:
                     if isinstance(source_client, World):
                         world = source_client
-                    elif str(source_client).startswith("<StdinPlugin"):
+                    elif isinstance(source_client, StdinPlugin): # Console
                         world = self.worlds[self.default_name]
                     else:
                         try:
                             world = source_client.world
                         except AttributeError:
-                            self.logger.warn("Source client for message has no world. Ignoring.")
-                            self.logger.warn("%s, %s, %s" % (str(source_client), str(task), str(data)))
-                            continue
+                            world = self.worlds[self.default_name]
+                    time = datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")
                     # Someone built/deleted a block
                     if task is TASK_BLOCKSET:
                         value = self.runHook("onBlockset", {"client": source_client, "data": data})
@@ -902,50 +897,6 @@ class ArcFactory(Factory):
                                 breakable_admins = client.runHook("canbreakadmin")
                                 client.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.server_name, world.id)), "Respawning world '%s'..." % world.id, 100 if breakable_admins else 0)
                                 client.sendLevel()
-                    # Someone spoke!
-                    elif task is TASK_MESSAGE:
-                        # More Word Filter
-                        id, colour, username, text = data
-                        value = self.runHook("onMessage", {"id": id, "colour": colour, "username": username, "text": text})
-                        if value:
-                            text = self.messagestrip(text)
-                            data = (id, colour, username, text)
-                            for client in self.clients.values():
-                                client.sendMessage(*data)
-                            id, colour, username, text = data
-                            self.logger.info("%s%s&f: %s" % (colour, username, text))
-                            self.chatlog.write("[%s] %s: %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), colour+username, text))
-                            self.chatlog.flush()
-                            if self.irc_relay and world:
-                                self.irc_relay.sendMessage(username, text)
-                    # Someone spoke!
-                    elif task is TASK_IRCMESSAGE:
-                        id, colour, username, text = data
-                        value = self.runHook("onIRCMessage", {"id": id, "colour": colour, "username": username, "text": text})
-                        if value:
-                            for client in self.clients.values():
-                                client.sendMessage(*data)
-                            self.logger.info("<%s> %s" % (username, text))
-                            self.chatlog.write("[%s] <%s> %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), username, text))
-                            self.chatlog.flush()
-                            if self.irc_relay and world:
-                                self.irc_relay.sendMessage(username, text)
-                    # Someone actioned!
-                    elif task is TASK_ACTION:
-                        # More Word Filter
-                        id, colour, username, text = data
-                        value = self.runHook("onAction", {"id": id, "colour": colour, "username": username, "text": text})
-                        if value:
-                            text = self.messagestrip(text)
-                            data = (id, colour, username, text)
-                            for client in self.clients.values():
-                                client.sendAction(*data)
-                            id, colour, username, text = data
-                            self.logger.info("&d* %s %s" % (username, text))
-                            self.chatlog.write("[%s] * %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), colour+username, text))
-                            self.chatlog.flush()
-                            if self.irc_relay and world:
-                                self.irc_relay.sendAction(username, text)
                     # Someone connected to the server
                     elif task is TASK_PLAYERCONNECT:
                         for client in self.usernames:
@@ -987,56 +938,6 @@ class ArcFactory(Factory):
                         if self.irc_relay and world and not self.useLowLag:
                             self.irc_relay.sendServerMessage("07%s joined '%s'" % (source_client.username, world.id))
                         self.logger.info("%s%s&f has now joined '%s'" % (source_client.userColour(), source_client.username, world.id))
-                    elif task == TASK_STAFFMESSAGE:
-                        # Give all staff the message
-                        id, colour, username, text, IRC = data
-                        value = self.runHook("onStaffMessage", {"id": id, "colour": colour, "username": username, "text": text, "IRC": IRC})
-                        if value:
-                            message = self.messagestrip(text);
-                            for user, client in self.usernames.items():
-                                if self.isMod(user):
-                                    client.sendMessage(100, COLOUR_YELLOW+"#"+colour, username, message, False, False)
-                            if self.staffchat and self.irc_relay and len(data)>3:
-                                self.irc_relay.sendServerMessage("#"+username+": "+text,True,username,IRC)
-                            self.logger.info("#"+colour+username+"&f: "+text)
-                            self.adlog.write("["+datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+"] #"+username+": "+text+"\n")
-                            self.adlog.flush()
-                    elif task == TASK_GLOBALMESSAGE:
-                        # Give all world people the message
-                        id, world, message = data
-                        value = self.runHook("onGlobalMessage", {"id": id, "world": world, "message": message})
-                        if value:
-                            message = self.messagestrip(message);
-                            for client in world.clients:
-                                client.sendNormalMessage(message)
-                    elif task == TASK_WORLDMESSAGE:
-                        # Give all world people the message
-                        id, world, message = data
-                        value = self.runHook("onWorldMessage", {"id": id, "world": world, "message": message})
-                        if value:
-                            for client in world.clients:
-                                client.sendNormalMessage(message)
-                    elif task == TASK_SERVERMESSAGE:
-                        # Give all people the message
-                        message = data
-                        value = self.runHook("onServerMessage", {"message": message})
-                        if value:
-                            message = self.messagestrip(message);
-                            for client in self.clients.values():
-                                client.sendNormalMessage(COLOUR_DARKBLUE + message)
-                            self.logger.info(message)
-                            if self.irc_relay and world:
-                                self.irc_relay.sendServerMessage(message)
-                    elif task in [TASK_ONMESSAGE, TASK_ADMINMESSAGE]:
-                        # Give all people the message
-                        id, world, text = data
-                        value = self.runHook("onOnMessage", {"id": id, "world": world, "text": text})
-                        if value:
-                            message = self.messagestrip(text)
-                            for client in self.clients.values():
-                                client.sendNormalMessage(COLOUR_YELLOW + message)
-                            if self.irc_relay and world:
-                                self.irc_relay.sendServerMessage(message)
                     elif task == TASK_PLAYERRESPAWN:
                         # We need to immediately respawn the user to update their nick.
                         self.runHook("onPlayerRespawn", {"client": source_client})
@@ -1045,28 +946,62 @@ class ArcFactory(Factory):
                                 id, username, x, y, z, h, p = data
                                 client.sendPlayerLeave(id)
                                 client.sendNewPlayer(id, username, x, y, z, h, p)
-                    elif task == TASK_SERVERURGENTMESSAGE:
-                        # Give all people the message
-                        message = data
-                        value = self.runHook("onServerUrgentMessage", {"message": message})
+                    # Messages
+                    elif task is TASK_MESSAGE:
+                        # More Word Filter
+                        id, colour, username, text, channel, theWorld = data
+                        value = self.runHook("onMessage", {"id": id, "colour": colour, "username": username, "text": text, "channel": channel})
                         if value:
-                            for client in self.clients.values():
-                                client.sendNormalMessage(COLOUR_DARKRED + message)
-                            self.logger.info(message)
-                            if self.irc_relay and world:
-                                self.irc_relay.sendServerMessage(message)
-                    elif task == TASK_AWAYMESSAGE:
-                        # Give all world people the message
-                        message = data
-                        value = self.runHook("onAwayMessage", {"client": source_client, "message": message})
-                        if value:
-                            for client in self.clients.values():
-                                client.sendNormalMessage(COLOUR_DARKPURPLE + message)
-                            self.logger.info("AWAY - %s" %message)
-                            self.chatlog.write("[%s] %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), "", message))
-                            self.chatlog.flush()
-                            if self.irc_relay and world:
-                                self.irc_relay.sendAction("", message)
+                            text = self.messagestrip(text)
+                            # Send the message to everybody
+                            if channel == "world":
+                                if theWorld != None:
+                                    for client in self.worlds[theWorld].clients: # World was overriden
+                                        client.sendNormalMessage("%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
+                                else:
+                                    for client in world.clients:
+                                        client.sendNormalMessage("%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
+                            else:
+                                for client in self.clients.values():
+                                    if channel == "staff" and client.isMod():
+                                        client.sendMessage(id, COLOUR_YELLOW+"#"+colour, username, text)
+                                    elif channel == "action":
+                                        client.sendAction(id, colour, username, text)
+                                    elif channel == "server":
+                                        client.sendNormalMessage(text)
+                                    else:
+                                        client.sendMessage(id, colour, username, text)
+                            # Log them
+                            log = True
+                            if channel == "chat":
+                                self.logger.info("%s&f: %s" % (username, text))
+                            elif channel == "irc":
+                                self.logger.irc("%s%s" % (("" if username == "" else ("<"+username+"> ")), text))
+                            elif channel == "staff":
+                                self.logger.info("#%s: %s" % (username, text))
+                            elif channel == "action":
+                                self.logger.info("* %s %s" % (username, text))
+                            elif channel == "world":
+                                w = (str(world.id) if theWorld == None else theWorld)
+                                self.logger.info("%s in %s: %s" % (username, w, text))
+                                self.chatlogs["world"].write({"time": time, "username": username, "world": w, "text": text})
+                                self.chatlogs["main"].write({"time": time, "username": username, "world": w, "text": text}, formatter=MSGLOGFORMAT["world"])
+                                log = False
+                            elif channel == "server":
+                                self.logger.info(text)
+                                if username == "Server": log = False
+                            else: # This message has no channel, just dump everything we see
+                                self.logger.warn("Message has no channel. Data: (%s, %s, %s, %s, %s)" % (id, colour, username, text, channel))
+                                continue
+                            if log:
+                                self.chatlogs[channel].write({"time": time, "username": username, "text": text})
+                                self.chatlogs["main"].write({"time": time, "username": username, "text": text}, formatter=MSGLOGFORMAT[channel])
+                            # Relay it to the IRC
+                            if self.irc_relay and world and channel not in ["irc", "staff", "world"]:
+                                if channel == "action":
+                                    self.irc_relay.sendAction(username, text)
+                                else:
+                                    self.irc_relay.sendMessage(username, text)
                 except Exception as e:
                     self.logger.error(traceback.format_exc())
         except Empty:
@@ -1075,9 +1010,17 @@ class ArcFactory(Factory):
         for world in self.worlds.values():
             world.read_queue()
 
-    def sendMessageToAll(self, message, channel="message", client=None):
+    def sendMessageToAll(self, message, channel="chat", client=None, user="Server", world=None):
         "Quick method for sending message to all clients."
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+        if client == None:
+            id = 127
+            colour = COLOUR_WHITE
+            username = user
+        else:
+            id = client.id
+            colour = client.userColour()
+            username = (user if user != "Server" else client.username)
+        self.queue.put((client, TASK_MESSAGE, (id, colour, username, message, channel, world)))
 
     def newWorld(self, new_name, template="default"):
         "Creates a new world from some template."

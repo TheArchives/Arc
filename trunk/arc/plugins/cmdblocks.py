@@ -9,7 +9,6 @@ from twisted.internet import reactor
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
-from arc.timer import ResettableTimer
 
 class CommandPlugin(ProtocolPlugin):
 

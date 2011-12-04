@@ -87,19 +87,11 @@ class ChatBot(irc.IRCClient):
                     if command[1].startswith("#"):
                         if self.factory.staffchat:
                             # It's an staff-only message.
-                            if len(command[1]) == 1:
+                            if len(command[1]) < 1:
                                 self.msg(user, "07Please include a message to send.")
                             else:
-                                try:
-                                    text = " ".join(command[1:])[1:]
-                                except ValueError:
-                                    self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_DARKGREEN, "Console", message)))
-                                else:
-                                    self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, COLOUR_PURPLE, command[0],text,True)))
-                                    self.adlog = open("logs/server.log", "a")
-                                    self.adlog = open("logs/world.log", "a")
-                                    self.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #" + command[0] + ": "+text+"\n")
-                                    self.adlog.flush()
+                                text = " ".join(command[1:])[1:]
+                                self.factory.sendMessageToAll(text, "staff", user=(COLOUR_PURPLE+user))
                     elif command[1].lower() in self.ocommands and len(command) > 1:
                         theCommand = command[1].lower()
                         if theCommand == ("help"):
@@ -307,17 +299,11 @@ class ChatBot(irc.IRCClient):
                         try:
                            world = message[0][1:len(message[0])]
                            out = "\n ".join(message[1:])
-                           text = COLOUR_PURPLE+"IRC: "+COLOUR_WHITE+"<!"+user+">"+COLOUR_WHITE+out
                         except ValueError:
                             self.msg(self.factory.irc_channel, "07Please include a message to send.")
                         else:
                             if world in self.factory.worlds:
-                                self.factory.queue.put((self.factory.worlds[world], TASK_WORLDMESSAGE, (255, self.factory.worlds[world], text),))
-                                self.logger.debug("WORLD - "+user+" in "+str(self.factory.worlds[world].id)+": "+out)
-                                self.wclog = open("logs/server.log", "a")
-                                self.wclog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | !"+user+" in "+str(self.factory.worlds[world].id)+": "+out+"\n")
-                                self.wclog.flush()
-                                self.wclog.close()
+                                self.factory.sendMessageToAll(out, "world", user=user, world=world)
                             else:
                                 self.msg(self.factory.irc_channel, "07That world does not exist. Try !world message")
                 elif self.prefix == "none":
@@ -393,10 +379,7 @@ class ChatBot(irc.IRCClient):
                         moddedmsg = msg[:51].replace(" ", "")
                         if moddedmsg[len(moddedmsg)-2] == "&":
                             msg = msg.replace("&", "*")
-                    self.factory.queue.put((self, TASK_IRCMESSAGE, (127, "[IRC] " + COLOUR_PURPLE, user, msg)))
-                    self.logger.debug("[IRC] <%s> %s" % (user, msg))
-                    self.factory.chatlog.write("[%s] <*%s> %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M"), user, msg))
-                    self.factory.chatlog.flush()
+                    self.factory.sendMessageToAll(msg, "irc", user=user)
         except:
             self.logger.error(traceback.format_exc())
             self.msg(self.factory.irc_channel, "Internal Server Error (See the Console for more details)")
@@ -407,7 +390,7 @@ class ChatBot(irc.IRCClient):
         msg = msg.replace(".!", " !")
         user = user.split('!', 1)[0]
         msg = "".join([char for char in msg if ord(char) < 128 and char != "" or "0"])
-        self.factory.queue.put((self, TASK_ACTION, (127, COLOUR_PURPLE, user, msg)))
+        self.factory.sendMessageToAll(message, "action", user=user)
         self.logger.info("* %s %s" % (user, msg))
         self.factory.chatlog.write("[%s] * %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), user, msg))
         self.factory.chatlog.flush()
@@ -447,7 +430,7 @@ class ChatBot(irc.IRCClient):
         username = username.replace("&f", "14")
         self.msg(self.factory.irc_channel, "%s: %s" % (username, message))
 
-    def sendServerMessage(self, message,admin=False,user="",IRC=False):
+    def sendServerMessage(self, message, admin=False, user=""):
         message = message.replace("./", " /")
         message = message.replace(".!", " !")
         message = message.replace("&0", "01")
@@ -502,31 +485,31 @@ class ChatBot(irc.IRCClient):
             self.ops.remove(old_nick)
             self.ops.append(new_nick)
         msg = "%s%s is now known as %s" % (COLOUR_YELLOW, old_nick, new_nick)
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+        self.factory.sendMessageToAll(msg, "irc", user="")
 
     def userKicked(self, kickee, channel, kicker, message):
         "Called when I observe someone else being kicked from a channel."
         if kickee in self.ops:
             self.ops.remove(kickee)
         msg = "%s%s was kicked from %s by %s" % (COLOUR_YELLOW, kickee, channel, kicker)
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+        self.factory.sendMessageToAll(msg, "irc", user="")
         if not kickee == message:
             msg = "%sReason: %s" % (COLOUR_YELLOW, message)
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
 
     def userLeft(self, user, channel):
         "Called when I see another user leaving a channel."
         if user in self.ops:
             self.ops.remove(user)
         msg = "%s%s has left %s" % (COLOUR_YELLOW, user.split("!")[0], channel)
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+        self.factory.sendMessageToAll(msg, "irc", user="")
 
     def userJoined(self, user, channel):
         "Called when I see another user joining a channel."
         if user in self.ops:
             self.ops.remove(user)
         msg = "%s%s has joined %s" % (COLOUR_YELLOW, user.split("!")[0], channel)
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+        self.factory.sendMessageToAll(msg, "irc", user="")
 
     def modeChanged(self, user, channel, set, modes, args):
         "Called when someone changes a mode."
@@ -540,7 +523,7 @@ class ChatBot(irc.IRCClient):
                 msg = "%s%s was opped on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
                 msg = "%sUsers opped on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if not name in self.ops:
                     self.ops.append(name)
@@ -552,7 +535,7 @@ class ChatBot(irc.IRCClient):
                 msg = "%s%s was deopped on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
                 msg = "%sUsers deopped on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if name in self.ops:
                     self.ops.remove(name)
@@ -561,7 +544,7 @@ class ChatBot(irc.IRCClient):
                 msg = "%s%s was voiced on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
                 msg = "%sUsers voiced on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if not name in self.ops:
                     self.ops.append(name)
@@ -573,20 +556,20 @@ class ChatBot(irc.IRCClient):
                 msg = "%s%s was devoiced on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
                 msg = "%sUsers devoiced on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if name in self.ops:
                     self.ops.remove(name)
         elif set and modes.startswith("b"):
             msg = "%sBan set in %s by %s" % (COLOUR_YELLOW, channel, setUser)
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
             msg = "%s(%s)" % (COLOUR_YELLOW, " ".join(args))
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
         elif not set and modes.startswith("b"):
             msg = "%sBan lifted in %s by %s" % (COLOUR_YELLOW, channel, setUser)
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
             msg = "%s(%s)" % (COLOUR_YELLOW, " ".join(args))
-            self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+            self.factory.sendMessageToAll(msg, "irc", user="")
     
     def irc_QUIT(self, user, params):
         userhost = user
@@ -595,8 +578,7 @@ class ChatBot(irc.IRCClient):
         if userhost in self.ops:
             self.ops.remove(userhost)
         msg = "%s%s has quit IRC." % (COLOUR_YELLOW, user)
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
-
+        self.factory.sendMessageToAll(msg, "irc", user=user)
         allowed = True
         goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
         for character in msg:
@@ -669,7 +651,7 @@ class ChatBot(irc.IRCClient):
             if moddedmsg[len(moddedmsg)-2] == "&":
                 msg = msg.replace("&", "*")
         msg = "%s(%s%s)" % (COLOUR_YELLOW, quitMessage, COLOUR_YELLOW)
-        self.factory.queue.put((self, TASK_IRCMESSAGE, (127, COLOUR_PURPLE, "IRC", msg)))
+        self.factory.sendMessageToAll(msg, "irc", user="")
 
 class ChatBotFactory(protocol.ClientFactory):
     # the class of the protocol to build when new connection is made
@@ -743,7 +725,7 @@ class ChatBotFactory(protocol.ClientFactory):
             message = message.replace(".#", " #")
             self.instance.sendAction(username, message)
 
-    def sendServerMessage(self, message,admin=False,user="",IRC=False):
+    def sendServerMessage(self, message, admin=False, user=""):
         if self.instance:
             message = message.replace("&0", "01")
             message = message.replace("&1", "02")
@@ -765,4 +747,4 @@ class ChatBotFactory(protocol.ClientFactory):
             message = message.replace(".!", " !")
             message = message.replace(".@", " @")
             message = message.replace(".#", " #")
-            self.instance.sendServerMessage(message, admin, user, IRC)
+            self.instance.sendServerMessage(message, admin, user)

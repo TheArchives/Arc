@@ -8,7 +8,6 @@ from arc.constants import *
 from arc.decorators import *
 from arc.globals import *
 from arc.plugins import ProtocolPlugin
-from arc.timer import ResettableTimer
 
 class PlayerUtilPlugin(ProtocolPlugin):
 

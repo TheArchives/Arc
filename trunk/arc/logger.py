@@ -2,7 +2,9 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import logging, string, sys, time, os
+import os, string, sys, time
+
+from arc.globals import makefiles
 
 class ColouredLogger(object):
     """
@@ -10,6 +12,7 @@ class ColouredLogger(object):
     It handles colours, printing, and logging to console.log and
         the individual level log files.
     """
+
     cols = {
         "&0": "",
         "&1": "",
@@ -49,62 +52,66 @@ class ColouredLogger(object):
 
     nocol = cols
 
-    def __init__(self, debug=False, level=logging.INFO):
+    def __init__(self, debug=False, level=20):
         "Constructor, set everything up"
-        self.debugswitch = debug
-        try:
-            self.logfile = "logs/console/console.log"
-            self.infolog = "logs/levels/info.log"
-            self.errorlog = "logs/levels/error.log"
-            self.warnlog = "logs/levels/warn.log"
-            self.criticallog = "logs/levels/critical.log"
-            self.debuglog = "logs/levels/debug.log"
-            self.commandlog = "logs/commands.log"
-            self.irclog = "logs/irc.log"
-        except Exception as a:
-            pass
+        self.isDebug = debug
+        self.logs = {
+            "main":     "logs/console/console.log",
+            "info":     "logs/levels/info.log",
+            "warn":     "logs/levels/warn.log",
+            "error":    "logs/levels/error.log",
+            "critical": "logs/levels/critical.log",
+            "debug":    "logs/levels/debug.log",
+            "command":  "logs/commands.log",
+            "irc":      "logs/irc.log"
+            }
+        makefiles([f for f in self.logs.values()])
+        self.loginstances = {}
+        for k, v in self.logs.items():
+            self.loginstances[k] = open(v, "a")
         try:
             from colorama import Fore, Back, Style
-            self.cols = {
-                # Standard Minecraft colours
-                "&0": Fore.BLACK + Back.WHITE + Style.NORMAL,            # Black, inverse
-                "&1": Fore.BLUE + Back.RESET + Style.DIM,                # Blue, dark
-                "&2": Fore.GREEN + Back.RESET + Style.DIM,               # Green, dark
-                "&3": Fore.CYAN + Back.RESET + Style.DIM,                # Cyan, dark
-                "&4": Fore.RED + Back.RESET + Style.DIM,                 # Red, dark
-                "&5": Fore.MAGENTA + Back.RESET + Style.DIM,             # Magenta, dark
-                "&6": Fore.YELLOW + Back.RESET + Style.DIM,              # Yellow, dark
-                "&7": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, light
-                "&8": Fore.WHITE + Back.RESET + Style.NORMAL,            # Grey, dark
-                "&9": Fore.BLUE + Back.RESET + Style.NORMAL,             # Blue, light
-                "&a": Fore.GREEN + Back.RESET + Style.NORMAL,            # Green, light
-                "&b": Fore.CYAN + Back.RESET + Style.NORMAL,             # Cyan, light
-                "&c": Fore.RED + Back.RESET + Style.NORMAL,              # Red, light
-                "&d": Fore.MAGENTA + Back.RESET + Style.NORMAL,          # Magenta, light
-                "&e": Fore.YELLOW + Back.RESET + Style.NORMAL,           # Yellow, light
-                "&f": Fore.WHITE + Back.RESET + Style.BRIGHT,            # White, normal
-                # Special colours for highlighting text in the console
-                "\x01" + "0": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. Inverse inverse black on black?
-                "\x01" + "1": Fore.BLUE + Back.WHITE + Style.DIM,        # Blue, dark, inverse
-                "\x01" + "2": Fore.GREEN + Back.WHITE + Style.DIM,       # Green, dark, inverse
-                "\x01" + "3": Fore.CYAN + Back.WHITE + Style.DIM,        # Cyan, dark, inverse
-                "\x01" + "4": Fore.RED + Back.WHITE + Style.DIM,         # Red, dark, inverse
-                "\x01" + "5": Fore.MAGENTA + Back.WHITE + Style.DIM,     # Magenta, dark, inverse
-                "\x01" + "6": Fore.YELLOW + Back.WHITE + Style.DIM,      # Yellow, dark, inverse
-                "\x01" + "7": Fore.WHITE + Back.WHITE + Style.NORMAL,    # Grey, light, inverse
-                "\x01" + "8": Fore.WHITE + Back.WHITE + Style.DIM,       # Grey, dark, inverse
-                "\x01" + "9": Fore.BLUE + Back.WHITE + Style.NORMAL,     # Blue, light, inverse
-                "\x01" + "a": Fore.GREEN + Back.WHITE + Style.NORMAL,    # Green, light, inverse
-                "\x01" + "b": Fore.CYAN + Back.WHITE + Style.NORMAL,     # Cyan, light, inverse
-                "\x01" + "c": Fore.RED + Back.WHITE + Style.NORMAL,      # Red, light, inverse
-                "\x01" + "d": Fore.MAGENTA + Back.WHITE + Style.NORMAL,  # Magenta, light, inverse
-                "\x01" + "e": Fore.YELLOW + Back.WHITE + Style.NORMAL,   # Yellow, light, inverse
-                "\x01" + "f": Fore.WHITE + Back.RESET + Style.BRIGHT,    # A reset. White on white?
-                # Extra colours which don't exist ingame
-                "\x01" + "g": Fore.MAGENTA + Back.RESET + Style.BRIGHT,  # Magenta, bright
-            }
         except:
             pass
+        else:
+            self.cols = {
+                # Standard Minecraft colours
+                "&0": Fore.BLACK + Back.WHITE + Style.NORMAL,           # Black, inverse
+                "&1": Fore.BLUE + Back.RESET + Style.DIM,               # Blue, dark
+                "&2": Fore.GREEN + Back.RESET + Style.DIM,              # Green, dark
+                "&3": Fore.CYAN + Back.RESET + Style.DIM,               # Cyan, dark
+                "&4": Fore.RED + Back.RESET + Style.DIM,                # Red, dark
+                "&5": Fore.MAGENTA + Back.RESET + Style.DIM,            # Magenta, dark
+                "&6": Fore.YELLOW + Back.RESET + Style.DIM,             # Yellow, dark
+                "&7": Fore.WHITE + Back.RESET + Style.NORMAL,           # Grey, light
+                "&8": Fore.WHITE + Back.RESET + Style.NORMAL,           # Grey, dark
+                "&9": Fore.BLUE + Back.RESET + Style.NORMAL,            # Blue, light
+                "&a": Fore.GREEN + Back.RESET + Style.NORMAL,           # Green, light
+                "&b": Fore.CYAN + Back.RESET + Style.NORMAL,            # Cyan, light
+                "&c": Fore.RED + Back.RESET + Style.NORMAL,             # Red, light
+                "&d": Fore.MAGENTA + Back.RESET + Style.NORMAL,         # Magenta, light
+                "&e": Fore.YELLOW + Back.RESET + Style.NORMAL,          # Yellow, light
+                "&f": Fore.WHITE + Back.RESET + Style.BRIGHT,           # White, normal
+                # Special colours for highlighting text in the console
+                "\x01" + "0": Fore.WHITE + Back.RESET + Style.BRIGHT,   # A reset. Inverse inverse black on black?
+                "\x01" + "1": Fore.BLUE + Back.WHITE + Style.DIM,       # Blue, dark, inverse
+                "\x01" + "2": Fore.GREEN + Back.WHITE + Style.DIM,      # Green, dark, inverse
+                "\x01" + "3": Fore.CYAN + Back.WHITE + Style.DIM,       # Cyan, dark, inverse
+                "\x01" + "4": Fore.RED + Back.WHITE + Style.DIM,        # Red, dark, inverse
+                "\x01" + "5": Fore.MAGENTA + Back.WHITE + Style.DIM,    # Magenta, dark, inverse
+                "\x01" + "6": Fore.YELLOW + Back.WHITE + Style.DIM,     # Yellow, dark, inverse
+                "\x01" + "7": Fore.WHITE + Back.WHITE + Style.NORMAL,   # Grey, light, inverse
+                "\x01" + "8": Fore.WHITE + Back.WHITE + Style.DIM,      # Grey, dark, inverse
+                "\x01" + "9": Fore.BLUE + Back.WHITE + Style.NORMAL,    # Blue, light, inverse
+                "\x01" + "a": Fore.GREEN + Back.WHITE + Style.NORMAL,   # Green, light, inverse
+                "\x01" + "b": Fore.CYAN + Back.WHITE + Style.NORMAL,    # Cyan, light, inverse
+                "\x01" + "c": Fore.RED + Back.WHITE + Style.NORMAL,     # Red, light, inverse
+                "\x01" + "d": Fore.MAGENTA + Back.WHITE + Style.NORMAL, # Magenta, light, inverse
+                "\x01" + "e": Fore.YELLOW + Back.WHITE + Style.NORMAL,  # Yellow, light, inverse
+                "\x01" + "f": Fore.WHITE + Back.RESET + Style.BRIGHT,   # A reset. White on white?
+                # Extra colours which don't exist ingame
+                "\x01" + "g": Fore.MAGENTA + Back.RESET + Style.BRIGHT, # Magenta, bright
+            }
 
     def stdout(self, data):
         "Output to stdout, parsing colours."
@@ -115,7 +122,7 @@ class ColouredLogger(object):
             sys.stdout.write(data + "\n")
         except Exception as e:
             print("Unable to write directly to stdout! Data: %s" % origdata)
-            print("%s" % e)
+            print(str(e))
 
     def stderr(self, data):
         "Output to stderr, parsing colours."
@@ -127,25 +134,23 @@ class ColouredLogger(object):
         except Exception as e:
             self.stdout(data)
 
-    def log(self, data, file=None):
-        if file is None:
-            file = self.logfile
+    def log(self, data, file):
         "Outputs to the console.log file"
+        if file not in self.logs.keys():
+            raise ValueError
         for element in self.nocol.keys():
             data = string.replace(data, element, self.nocol[element]) # Do not log colour codes in file
-        file = open(file, "a")
-        file.write(data + "\n")
-        file.flush()
-        os.fsync(file.fileno())
-        file.close()
+        self.loginstances[file].write(data + "\n")
+        self.loginstances[file].flush()
+        os.fsync(self.loginstances[file].fileno())
 
     def info(self, data):
         "INFO level output"
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - &2INFO&f - "
         done = "&f" + atime + status + data
-        self.log(done)
-        self.log(done, self.infolog)
+        self.log(done, "info")
+        self.log(done, "main")
         self.stdout(done)
 
     def warn(self, data):
@@ -153,8 +158,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - &eWARN&f - "
         done = "&f" + atime + status + data
-        self.log(done)
-        self.log(done, self.warnlog)
+        self.log(done, "warn")
+        self.log(done, "main")
         self.stderr(done)
 
     warning = warn
@@ -164,8 +169,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - &cERROR&f - "
         done = "&f" + atime + status + data
-        self.log(done)
-        self.log(done, self.errorlog)
+        self.log(done, "error")
+        self.log(done, "main")
         self.stdout(done)
 
     def critical(self, data):
@@ -173,8 +178,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - " + "\x01" + "c" + "CRITICAL&f - "
         done = "&f" + atime + status + data
-        self.log(done)
-        self.log(done, self.criticallog)
+        self.log(done, "critical")
+        self.log(done, "main")
         self.stdout(done)
         
     def command(self, data):
@@ -182,8 +187,8 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - " + "\x01" + "g" + "COMMAND&f - "
         done = "&f" + atime + status + data
-        self.log(done)
-        self.log(done, self.commandlog)
+        self.log(done, "command")
+        self.log(done, "main")
         self.stdout(done)
 
     def irc(self, data):
@@ -191,19 +196,23 @@ class ColouredLogger(object):
         atime = time.strftime("%d %b (%H:%M:%S)")
         status = " - " + "\x01" + "d" + "IRC&f - "
         done = "&f" + atime + status + data
-        self.log(done)
-        self.log(done, self.irclog)
+        self.log(done, "irc")
+        self.log(done, "main")
         self.stdout(done)
 
     def debug(self, data):
         "DEBUG level output"
-        if self.debugswitch:
+        if self.isDebug:
             atime = time.strftime("%d %b (%H:%M:%S)")
             status = " - &9DEBUG &f - "
             done = "&f" + atime + status + data
-            self.log(done)
-            self.log(done, self.debuglog)
+            self.log(done, "debug")
+            self.log(done, "main")
             self.stdout(done)
+
+    def __del__(self):
+        for k in self.loginstances.keys():
+            self.loginstances[k].close()
 
 class ChatLogHandler(object):
     """
@@ -211,28 +220,15 @@ class ChatLogHandler(object):
     listening for logs to get in.
     """
 
-    def __init__(self):
-        self.worldlog = "logs/world.log"
-        self.whisperlog = "logs/whisper.log"
-        self.stafflog = "logs/staff.log"
-        self._write(self.worldlog, "\n -------------------------------------------- \n")
-        self._write(self.whisperlog, "\n -------------------------------------------- \n")
-        self._write(self.stafflog, "\n -------------------------------------------- \n")
+    def __init__(self, file, formatter):
+        self.instance = open(file, "a")
+        self.formatter = formatter
+        self.instance.write("\n -------------------------------------------- \n")
 
-    def world(self, player, world, message):
-        data = "[%s] %s (in %s): %s" % (time.strftime("%d %b (%H:%M:%S)"), player, world, message)
-        self._write(self.worldlog, data)
+    def write(self, d, formatter=None):
+        self.instance.write((self.formatter if formatter == None else formatter) + "\n" % d)
+        self.instance.flush()
+        os.fsync(self.instance.fileno())
 
-    def staff(self, player, message):
-        data = "[%s] %s: %s" % (time.strftime("%d %b (%H:%M:%S)"), player, message)
-        self._write(self.stafflog, data)
-
-    def whisper(self, player, target, message):
-        data = "[%s] %s -> %s: %s" % (time.strftime("%d %b (%H:%M:%S)"), player, target, message)
-        self._write(self.whisperlog, data)
-
-    def _write(self, file, data):
-        file = open(file, "a")
-        file.write("%s\n" % data)
-        file.flush()
-        file.close()
+    def __del__(self):
+        self.instance.close()

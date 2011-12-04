@@ -98,8 +98,6 @@ FORMAT_LENGTHS = {
     "i": 4,
 }
 
-from format import Format
-
 TYPE_INITIAL = 0
 TYPE_KEEPALIVE = 1
 TYPE_PRECHUNK = 2
@@ -115,6 +113,8 @@ TYPE_PLAYERDIR = 11
 TYPE_PLAYERLEAVE = 12
 TYPE_MESSAGE = 13
 TYPE_ERROR = 14
+
+from arc.format import Format
 
 TYPE_FORMATS = {
     TYPE_INITIAL: Format("bssb"),
@@ -141,28 +141,16 @@ TASK_NEWPLAYER = 4
 TASK_PLAYERLEAVE = 5
 TASK_PLAYERDIR = 6
 TASK_WORLDCHANGE = 7
-TASK_ADMINMESSAGE = 8
-TASK_WORLDMESSAGE = 9
-TASK_ACTION = 10
-TASK_SERVERMESSAGE = 11
-TASK_PHYSICSON = 12
-TASK_PHYSICSOFF = 13
-TASK_FLUSH = 14
-TASK_BLOCKGET = 15
-TASK_STOP = 16
-TASK_PLAYERCONNECT = 17
-TASK_UNFLOOD = 18
-TASK_FWATERON = 19
-TASK_FWATEROFF = 20
-TASK_PLAYERRESPAWN = 21
-TASK_SERVERURGENTMESSAGE = 22
-TASK_STAFFMESSAGE = 23
-TASK_ONMESSAGE = 24
-TASK_OPMESSAGE = 25
-TASK_IRCMESSAGE = 26
-TASK_AWAYMESSAGE = 27
-TASK_GLOBALMESSAGE = 28
-TASK_INSTANTRESPAWN = 29
+TASK_PHYSICSON = 8
+TASK_PHYSICSOFF = 9
+TASK_FLUSH = 10
+TASK_BLOCKGET = 11
+TASK_STOP = 12
+TASK_PLAYERCONNECT = 13
+TASK_UNFLOOD = 14
+TASK_FWATERON = 15
+TASK_FWATEROFF = 16
+TASK_PLAYERRESPAWN = 17
 
 COLOUR_BLACK = "&0"
 COLOUR_DARKBLUE = "&1"
@@ -474,60 +462,68 @@ BLOCK_MOSSYROCK = 48
 BLOCK_OBSIDIAN = 49
 BLOCK_OPSIDIAN = 49
 
-BlockList = []
-while len(BlockList) != 50:
-    BlockList.append('')
-BlockList[0]="air"
-BlockList[1]="rock"
-BlockList[2]="grass"
-BlockList[3]="dirt"
-BlockList[4]="stone"
-BlockList[5]="wood"
-BlockList[6]="plant"
-BlockList[7]="adminblock"
-BlockList[8]="water"
-BlockList[9]="still water"
-BlockList[10]="lava"
-BlockList[11]="still lava"
-BlockList[12]="sand"
-BlockList[13]="gravel"
-BlockList[14]="goldore"
-BlockList[15]="ironore"
-BlockList[16]="coal"
-BlockList[17]="log"
-BlockList[18]="leaves"
-BlockList[19]="sponge"
-BlockList[20]="glass"
-BlockList[21]="red"
-BlockList[22]="orange"
-BlockList[23]="yellow"
-BlockList[24]="lime"
-BlockList[25]="green"
-BlockList[26]="turquoise"
-BlockList[27]="cyan"
-BlockList[28]="blue"
-BlockList[29]="indigo"
-BlockList[30]="violet"
-BlockList[31]="purple"
-BlockList[32]="magenta"
-BlockList[33]="pink"
-BlockList[34]="black"
-BlockList[35]="grey"
-BlockList[36]="white"
-BlockList[37]="yellow flower"
-BlockList[38]="red flower"
-BlockList[39]="brown mushroom"
-BlockList[40]="red mushroom"
-BlockList[41]="gold"
-BlockList[42]="iron"
-BlockList[43]="step"
-BlockList[44]="doublestep"
-BlockList[45]="brick"
-BlockList[46]="tnt"
-BlockList[47]="bookcase"
-BlockList[48]="moss"
-BlockList[49]="obsidian"
-
+BlockList = [
+    "air",
+    "rock",
+    "grass",
+    "dirt",
+    "stone",
+    "wood",
+    "plant",
+    "adminblock",
+    "water",
+    "still water",
+    "lava",
+    "still lava",
+    "sand",
+    "gravel",
+    "goldore",
+    "ironore",
+    "coal",
+    "log",
+    "leaves",
+    "sponge",
+    "glass",
+    "red",
+    "orange",
+    "yellow",
+    "lime",
+    "green",
+    "turquoise",
+    "cyan",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "magenta",
+    "pink",
+    "black",
+    "grey",
+    "white",
+    "yellow flower",
+    "red flower",
+    "brown mushroom",
+    "red mushroom",
+    "gold",
+    "iron",
+    "step",
+    "doublestep",
+    "brick",
+    "tnt",
+    "bookcase",
+    "moss",
+    "obsidian"
+]
+MSGLOGFORMAT = {
+    "chat": "[%{time}s] %{username}s: %{text}s",
+    "staff": "[%{time}s] #%{username}s: %{text}s",
+    "irc": "[%{time}s] %{username}s %{text}s",
+    "action": "[%{time}s] * %{username}s %{text}s",
+    "whisper": "[%{time}s] %{self}s to %{other}s: %{text}s",
+    "world": "[%{time}s] %{username}s in %{world}s: %{text}s",
+    "main": "",
+    "server": ""
+}
 MSGREPLACE = {
     "escape_commands": {"./": " /", ".!": " !"},
 }

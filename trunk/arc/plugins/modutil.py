@@ -95,18 +95,12 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("rank", "director")
     def commandSRB(self, parts, fromloc, overriderank):
         "/srb [reason] - Director\nPrints out a reboot message."
-        if len(parts) == 1:
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, ("05[Server Reboot] Be back in a few.")))
-        else:
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, ("05[Server Reboot] Be back in a few: "+(" ".join(parts[1:])))))
+        self.client.factory.sendMessageToAll("%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(parts[1:]) if len(parts) > 1 else "Be back soon.")), "server", self.client)
 
     @config("rank", "director")
     def commandSRS(self, parts, fromloc, overriderank):
         "/srs [reason] - Director\nPrints out a shutdown message."
-        if len(parts) == 1:
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, ("05[Server Shutdown] See you later.")))
-        else:
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, ("05[Server Shutdown] See you later: "+(" ".join(parts[1:])))))
+        self.client.factory.sendMessageToAll("%s[Server Shutdown] %s" % (COLOUR_DARKRED, (" ".join(parts[1:]) if len(parts) > 1 else "See you later.")), "server", self.client)
 
     @config("rank", "admin")
     def commandUrgent(self, parts, fromloc, overriderank):
@@ -114,17 +108,14 @@ class ModUtilPlugin(ProtocolPlugin):
         if len(parts) == 1:
             self.client.sendServerMessage("Please type a message.")
         else:
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "05[Urgent] "+(" ".join(parts[1:]))))
+            self.client.factory.sendMessageToAll("%s[URGENT] %s" % (COLOUR_DARKRED, " ".join(parts[1:])), "server", self.client)
 
     @config("category", "player")
     @config("rank", "op")
     def commandWorldBanned(self, user, fromloc, overriderank):
-        "/worldbanned - Op\nShows who is worldbanned."
-        done = ""
-        for element in self.client.world.worldbans.keys():
-            done = done + " " + element
-        if len(done):
-            self.client.sendServerList(["WorldBanned:"] + done.split(' '))
+        "/worldbanned - Op\nShows who is WorldBanned."
+        if len(self.client.world.worldbans.keys()):
+            self.client.sendServerList(["WorldBanned:"] + self.client.world.worldbans.keys())
         else:
             self.client.sendServerList(["WorldBanned: No one."])
 

@@ -11,21 +11,13 @@ from arc.logger import ColouredLogger
 
 import logging
 
-debug = (True if "--debug" in sys.argv else False)
-
 class StdinPlugin(threading.Thread):
 
     def __init__(self, factory):
         threading.Thread.__init__(self)
-        self.logger = ColouredLogger(debug)
         self.factory = factory
+        self.logger = self.factory.logger
         self.stop = False
-        self.whisperlog = open("logs/server.log", "a")
-        self.whisperlog = open("logs/whisper.log", "a")
-        self.wclog = open("logs/server.log", "a")
-        self.wclog = open("logs/staff.log", "a")
-        self.adlog = open("logs/server.log", "a")
-        self.adlog = open("logs/world.log", "a")
 
     def run(self):
         try:
@@ -222,17 +214,11 @@ class StdinPlugin(threading.Thread):
                                 if len(message) == 1:
                                     print("Please type an action.")
                                 else:
-                                    self.factory.queue.put((self, TASK_ACTION, (1, "&2", "Console", " ".join(message[1:]))))
+                                    self.factory.sendMessageToAll(" ".join(message[1:]), "action")
                             elif message[0] == ("srb"):
-                                if len(message) == 1:
-                                    self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, ("[Server Reboot] Be back in a few.")))
-                                else:
-                                    self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, ("[Server Reboot] Be back in a few: %s" % (" ".join(message[1:])))))
+                                self.factory.sendMessageToAll("%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "Be back soon.")), "server")
                             elif message[0] == ("srs"):
-                                if len(message) == 1:
-                                    self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, ("[Server Shutdown] See you later.")))
-                                else:
-                                    self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, ("[Server Shutdown] See you later: %s" %(" ".join(message[1:])))))
+                                self.factory.sendMessageToAll("%s[Server Shutdown] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "See you later.")), "server")
                             elif message[0] == ("ircrehash"):
                                 print("Rehashing the IRC Bot..")
                                 self.factory.reloadIrcBot()
@@ -258,12 +244,12 @@ class StdinPlugin(threading.Thread):
                                 if len(message) == 1:
                                     print("Please type a message.")
                                 else:
-                                    self.factory.queue.put((self, TASK_SERVERMESSAGE, ("[MSG] "+(" ".join(message[1:])))))
+                                    self.factory.sendMessageToAll(" ".join(message[1:]), "server")
                             elif message[0] == ("u"):
                                 if len(message) == 1:
                                     print("Please type a message.")
                                 else:
-                                    self.factory.queue.put((self, TASK_SERVERURGENTMESSAGE, "[Urgent] "+(" ".join(message[1:]))))
+                                    self.factory.sendMessageToAll("[URGENT] %s" % (" ".join(message[1:])), "server")
                             elif message[0] == ("plr"):
                                 if len(message) == 1:
                                     print("Please provide a plugin name.")
@@ -317,49 +303,32 @@ class StdinPlugin(threading.Thread):
                             else:
                                 username = username.lower()
                                 if username in self.factory.usernames:
-                                    self.factory.usernames[username].sendWhisper("Console", text)
-                                    self.logger.info("@Console to "+username+": "+text)
-                                    self.whisperlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | @Console to "+username+": "+text+"\n")
-                                    self.whisperlog.flush()
+                                    self.factory.usernames[username].sendWhisper(self.username, text)
+                                    self.factory.logger.info("Console to %s: %s" % (username, text))
+                                    self.factory.chatlogs["whisper"].write({"self": "Console", "other": username, "text": text})
+                                    self.factory.chatlogs["main"].write({"self": "Console", "other": username, "text": text}, formatter=MSGLOGFORMAT["whisper"])
                                 else:
                                     print("%s is currently offline." % username)
                         elif message.startswith("!"):
                             # It's a world message.
+                            if len(message) < 2:
+                                self.sendServerMessage("Please include a message and a world to send to.")
+                            else:
+                                world, out = message[1:len(message)-1].split(" ")
+                                if world not in self.factory.worlds.keys():
+                                    print("World %s is not booted." % world)
+                                else:
+                                    self.factory.sendMessageToAll(out, "world", user="Console")
+                        elif message.startswith("#"):
+                            # It's an staff-only message.
                             if len(message) == 1:
                                 print("Please include a message to send.")
                             else:
-                                try:
-                                   world, out = message[1:len(message)-1].split(" ")
-                                   text = COLOUR_YELLOW+"!"+COLOUR_GREEN+"Console:"+COLOUR_WHITE+" "+out
-                                except ValueError:
-                                    print("Please include a message to send.")
-                                else:
-                                    if world in self.factory.worlds:
-                                        self.factory.queue.put ((self.factory.worlds[world],TASK_WORLDMESSAGE,(255, self.factory.worlds[world], text),))
-                                        if self.factory.irc_relay:
-                                            self.factory.irc_relay.sendServerMessage("!Console in "+str(world)+": "+out)
-                                        self.factory.logger.info("!Console in "+str(self.factory.worlds[world].id)+": "+out)
-                                        self.wclog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | !Console in "+str(self.factory.worlds[world].id)+": "+out+"\n")
-                                        self.wclog.flush()
-                                    else:
-                                        print("That world does not exist. Try !world message")
-                        elif message.startswith("#"):
-                            # It's an staff-only message.
-                            if len(message) <= 2:
-                                print("Please include a message to send.")
-                            else:
-                                try:
-                                    text = message[1:]
-                                except ValueError:
-                                    self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_GREEN, "Console", message)))
-                                else:
-                                    text = text[:len(text)-1]
-                                    self.factory.queue.put((self, TASK_STAFFMESSAGE, (0, COLOUR_GREEN, "Console", text,False)))
-                                    self.logger.info("#Console: "+text)
-                                    self.adlog.write(datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")+" | #Console: "+text+"\n")
-                                    self.adlog.flush()
+                                text = message[1:]
+                                text = text[:len(text)-1]
+                                self.factory.sendMessageToAll(text, "staff", user="Console")
                         else:
-                            self.factory.queue.put((self, TASK_MESSAGE, (0, COLOUR_GREEN, "Console", message[0:len(message)-1])))
+                            self.factory.sendMessageToAll(message[0:len(message)-1], "chat", user="Console")
             except:
                 print traceback.format_exc()
                 self.logger.error(traceback.format_exc())

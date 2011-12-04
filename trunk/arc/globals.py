@@ -261,9 +261,9 @@ def Credits():
     Temp.append("Thanks to the following people for making Arc possible...")
     Temp.append("Mojang Specifications (Minecraft): Notch, c418, ez, jeb, kappe, mollstam...")
     Temp.append("Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
-    Temp.append("Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, NotMeh, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
+    Temp.append("Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
     Temp.append("Devs (blockBox): fizyplankton, tyteen4a03, UberFoX")
-    Temp.append("Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius (Red_Link), blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
+    Temp.append("Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius, blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
     return Temp
 
 def makefile(filename):
@@ -297,6 +297,10 @@ def makedatfile(filename):
             cPickle.dump("", f)
             del cPickle
     del os
+
+def makefiles(l):
+    for f in l:
+        makefile(f)
 
 def invertDict(OldDict):
     NewDict = dict()

@@ -39,5 +39,5 @@ class LavaPlugin(ProtocolPlugin):
                     if not self.died:
                         self.died = True
                         self.client.teleportTo(self.client.world.spawn[0], self.client.world.spawn[1], self.client.world.spawn[2], self.client.world.spawn[3])
-                        self.client.factory.queue.put((self.client.world,TASK_WORLDMESSAGE, (255, self.client.world, COLOUR_DARKRED+self.client.username+" has died from lava.")))
+                        self.client.factory.sendMessageToAll("%s%s has died from lava." % (COLOUR_DARKRED, self.client.username), "server", self.client)
                         reactor.callLater(1, self.gotClient)

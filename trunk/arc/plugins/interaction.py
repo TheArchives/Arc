@@ -4,12 +4,11 @@
 
 import cPickle, math, random, traceback
 
+from twisted.internet import reactor
+
 from arc.constants import *
 from arc.decorators import *
-from arc.irc_client import *
 from arc.plugins import ProtocolPlugin
-from arc.timer import ResettableTimer
-#from arc.serverplugins import inbox
 
 class InteractionPlugin(ProtocolPlugin):
     "Commands for player interactions."
@@ -36,43 +35,35 @@ class InteractionPlugin(ProtocolPlugin):
         "c": "commandClear",
         "clear": "commandClear",
         "clearinbox": "commandClear",
-
-        "rainbow": "commandRainbow",
-        "fabulous": "commandRainbow",
-        "fab": "commandRainbow",
-        "mefab": "commandMeRainbow",
-        "merainbow": "commandMeRainbow",
     }
 
     def gotClient(self):
-        self.num = int(0)
-        # Check with the server plugin if we have a message waiting
-        # The method will get back to you later
-        # self.client.factory.serverPlugins["OfflineMessagePlugin"].checkMessage(self.client.username)
-
-    def sendgo(self):
-        self.client.sendPlainWorldMessage("&2[COUNTDOWN] GO!")
         self.num = 0
+        self.hasCountdown = False
+        self.gone = False
 
-    def sendcount(self, count):
-        if not int(self.num) - int(count) == 0:
-            self.client.sendPlainWorldMessage("&2[COUNTDOWN] %s" % (int(self.num) - int(count)))
+    def checkCount(self):
+        if self.num == 0:
+            self.client.sendPlainWorldMessage("&2[COUNTDOWN] GO!")
+            self.hasCountdown = False
+        else:
+            self.num -= 1
+            self.client.sendPlainWorldMessage("&2[COUNTDOWN] %s" % self.num)
+            reactor.callLater(1, self.checkCount)
 
     @config("category", "player")
     def commandBack(self, parts, fromloc, overriderank):
         "/back - Guest\nPrints out message of you coming back."
-        self.client.factory.queue.put((self.client, TASK_AWAYMESSAGE, "%s is now %sback." % (self.client.username, COLOUR_DARKGREEN)))
-        self.client.gone = 0
 
     @config("category", "player")
     def commandAway(self, parts, fromloc, overriderank):
-         "/away reason - Guest\nAliases: afk, brb\nPrints out message of you going away."
-         if len(parts) == 1:
-            self.client.factory.queue.put((self.client, TASK_AWAYMESSAGE, "%s has gone AFK" % self.client.username))
-            self.client.gone = 1
-         else:
-            self.client.factory.queue.put((self.client, TASK_AWAYMESSAGE, "%s has gone AFK (%s)" % (self.client.username, " ".join(parts[1:]))))
-            self.client.gone = 1
+        "/away reason - Guest\nAliases: afk, brb\nPrints out message of you going away. Toggle."
+        if self.gone:
+            self.client.factory.sendMessageToAll("is now %sback." % (COLOUR_DARKGREEN), "action", self.client)
+            self.gone = False
+        else:
+            self.client.factory.sendMessageToAll("has gone AFK. %s" % (("(%s)" % " ".join(parts[1:])) if len(parts) > 1 else ""), "action", self.client)
+            self.gone = True
 
     @config("category", "player")
     def commandMe(self, parts, fromloc, overriderank):
@@ -83,7 +74,7 @@ class InteractionPlugin(ProtocolPlugin):
             if self.client.isSilenced():
                 self.client.sendServerMessage("You are Silenced and lost your tongue.")
             else:
-                self.client.factory.queue.put((self.client, TASK_ACTION, (self.client.id, self.client.userColour(), self.client.username, " ".join(parts[1:]))))
+                self.client.factory.sendMessageToAll(" ".join(parts[1:]), "action", self.client)
 
     @config("rank", "mod")
     def commandSay(self, parts, fromloc, overriderank):
@@ -91,7 +82,7 @@ class InteractionPlugin(ProtocolPlugin):
         if len(parts) == 1:
             self.client.sendServerMessage("Please type a message.")
         else:
-            self.client.factory.queue.put((self.client, TASK_SERVERMESSAGE, ("[MSG] %s" % " ".join(parts[1:]))))
+            self.client.factory.sendMessageToAll(COLOUR_YELLOW+" ".join(parts[1:]), "server", self.client)
 
     @config("category", "player")
     def commandSlap(self, parts, fromloc, overriderank):
@@ -100,8 +91,8 @@ class InteractionPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please enter the name for the slappee.")
         else:
             stage = 0
-            name = ''
-            object = ''
+            name = ""
+            object = ""
             for i in range(1, len(parts)):
                 if parts[i] == "with":
                     stage = 1
@@ -116,12 +107,7 @@ class InteractionPlugin(ProtocolPlugin):
                         if (i != len(parts)-1):
                             object += " "
                 else:
-                    if stage == 1:
-                        self.client.sendWorldMessage("* %s%s slaps %s with %s!" % (COLOUR_PURPLE, self.client.username, name, object))
-                        self.client.factory.irc_relay.sendServerMessage("%s slaps %s with %s!" % (self.client.username, name, object))
-                    else:
-                        self.client.sendWorldMessage("* %s%s slaps %s with a giant smelly trout!" % (COLOUR_PURPLE, self.client.username, name))
-                        self.client.factory.irc_relay.sendServerMessage("* %s slaps %s with a giant smelly trout!" % (self.client.username, name))
+                    self.client.factory.sendMessageToAll("slaps %s with %s!" % (name, (object if stage == 1 else "a giant smelly trout")), "action", self.client)
 
     @config("category", "player")
     def commandPunch(self, parts, fromloc, overriderank):
@@ -130,8 +116,8 @@ class InteractionPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please enter the name for the punchee.")
         else:
             stage = 0
-            name = ''
-            object = ''
+            name = ""
+            object = ""
             for i in range(1, len(parts)):
                 if parts[i] == "by":
                     stage = 1
@@ -146,12 +132,7 @@ class InteractionPlugin(ProtocolPlugin):
                         if (i != len(parts)-1):
                             object += " "
                 else:
-                    if stage == 1:
-                        self.client.sendWorldMessage("* %s%s punches %s in the %s!" % (COLOUR_PURPLE, self.client.username, name, object))
-                        self.client.factory.irc_relay.sendServerMessage("%s punches %s in the %s!" % (self.client.username, name, object))
-                    else:
-                        self.client.sendWorldMessage("* %s%s punches %s in the face!" % (COLOUR_PURPLE, self.client.username, name))
-                        self.client.factory.irc_relay.sendServerMessage("* %s punches %s in the face!" % (self.client.username, name))
+                    self.client.factory.sendMessageToAll("punches %s in the %s!" % (name, (object if stage == 1 else "face")), "action", self.client)
 
     @config("rank", "mod")
     @username_command
@@ -161,31 +142,12 @@ class InteractionPlugin(ProtocolPlugin):
         user.teleportTo(user.world.spawn[0], user.world.spawn[1], user.world.spawn[2], user.world.spawn[3])
         if killer == user.username:
             user.sendServerMessage("You have died.")
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has died" % (user.username)))
+            self.client.factory.sendMessageToAll("%s%s has died." % (COLOUR_DARKRED, self.client.username), "server", self.client)
         else:
             user.sendServerMessage("You have been killed by %s." % self.client.username)
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been killed by %s." % (user.username, killer)))
+            self.client.factory.sendMessageToAll("%s%s has been killed by %s." % (COLOUR_DARKRED, user.username, self.client.username), "server", self.client)
             if params:
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
-            else:
-                return
-
-    @config("rank", "mod")
-    @only_username_command
-    def commandSmack(self, username, fromloc, overriderank, params=[]):
-        "/smack username [reason] - Mod\Smacks the user for reason (optional)"
-        smacker = self.client.username
-        if user.isMod():
-            self.client.sendServerMessgae("You can't smack staff!")
-        else:
-            if user.world == "default":
-                user.teleportTo(self.factory.worlds["default"].spawn[0], self.factory.worlds["default"].spawn[1], self.factory.worlds["default"].spawn[2])
-            else:
-                user.changeToWorld("default")
-            user.sendServerMessage("You have been smacked by %s." % self.client.username)
-            self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "%s has been smacked by %s." % (user.username, smacker)))
-            if params:
-                self.client.factory.queue.put((self.client, TASK_SERVERURGENTMESSAGE, "Reason: %s" % (" ".join(params))))
+                self.client.factory.sendMessageToAll("%sReason: %s" % (COLOUR_DARKRED, " ".join(params)), "server", self.client)
 
     def commandRoll(self, parts, fromloc, overriderank):
         "/roll max - Guest\nRolls a random number from 1 to max. Announces to world."
@@ -201,8 +163,8 @@ class InteractionPlugin(ProtocolPlugin):
 
     @config("rank", "builder")
     def commandCount(self, parts, fromloc, overriderank):
-        "/count [number] - Builder\nAliases: countdown\nCounts down from 3 or from number given (up to 15)"
-        if self.num != 0:
+        "/count [number] - Builder\nAliases: countdown\nCounts down from 3 or from number given"
+        if self.hasCountdown:
             self.client.sendServerMessage("You can only have one count at a time!")
             return
         if len(parts) > 1:
@@ -213,13 +175,9 @@ class InteractionPlugin(ProtocolPlugin):
                 return
         else:
             self.num = 3
-        if self.num > 15:
-            self.client.sendServerMessage("You can't count from higher than 15!")
-            self.num = 0
-            return
-        counttimer = ResettableTimer(self.num, 1, self.sendgo, self.sendcount)
-        self.client.sendPlainWorldMessage("&2[COUNTDOWN] %s" %self.num)
-        counttimer.start()
+        self.hasCountdown = True
+        self.client.sendPlainWorldMessage("&2[COUNTDOWN] %s" % self.num)
+        reactor.callLater(1, self.checkCount)
 
     def commandSendMessage(self,parts, fromloc, overriderank):
         "/s username message - Guest\nAliases: sendmessage\nSends an message to the users Inbox."
@@ -229,7 +187,6 @@ class InteractionPlugin(ProtocolPlugin):
             try:
                 from_user = self.client.username
                 to_user = parts[1]
-                
                 if to_user in messages:
                     messages[to_user]+= "\n" + from_user + ": " + mess
                 else:
@@ -294,47 +251,3 @@ class InteractionPlugin(ProtocolPlugin):
         cPickle.dump(messages, file)
         file.close()
         self.client.sendServerMessage("All your messages have been deleted.")
-
-    @config("disabled", True)
-    def commandRainbow(self, parts, fromloc, overriderank):
-        "/rainbow - Guest\nAliases: fabulous, fab\nMakes your text rainbow."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Please include a message to rainbowify.")
-        else:
-            stringInput = parts[1:]
-            input  = ""
-            for a in stringInput:
-                input = input + a + " "
-            output = ""
-            colorNum = 0
-            for x in input:
-                if x != " ":
-                    output = output + self.colors[colorNum] + x
-                    colorNum = colorNum + 1
-                    if colorNum >= 9:
-                        colorNum = 0
-                if x == " ":
-                    output = output + x
-            self.client.factory.queue.put((self.client, TASK_ONMESSAGE, " "+self.client.userColour()+self.client.username+": "+output))
-
-    @config("disabled", True)
-    def commandMeRainbow(self, parts, fromloc, overriderank):
-        "/mefab - Guest\nAliases: merainbow\nSends an action in rainbow colors."
-        if len(parts) == 1:
-            self.client.sendServerMessage("Please include an action to rainbowify.")
-        else:
-            stringInput = parts[1:]
-            input  = ""
-            for a in stringInput:
-                input = input + a + " "
-            output = ""
-            colorNum = 0
-            for x in input:
-                if x != " ":
-                    output = output + colors[colorNum] + x
-                    colorNum = colorNum + 1
-                    if colorNum >= 9:
-                        colorNum = 0
-                if x == " ":
-                    output = output + x
-            self.client.factory.queue.put((self.client, TASK_ONMESSAGE, "* "+self.client.userColour()+self.client.username+": "+output))
