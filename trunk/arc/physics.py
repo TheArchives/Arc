@@ -80,7 +80,7 @@ class Physics(Thread):
                     else:
                         # Unflooding complete.
                         self.blockstore.unflooding = False
-                        self.blockstore.world_message(COLOUR_YELLOW + "Unflooding complete.")
+                        self.blockstore.message(COLOUR_YELLOW + "Unflooding complete.")
                         self.changed.clear()
                         self.working = set()
                 else:
@@ -107,7 +107,7 @@ class Physics(Thread):
                     except KeyError:
                         pass
                     #if overflow and (time.time() - self.last_lag > self.LAG_INTERVAL):
-                        #self.blockstore.admin_message("Physics is currently lagging in %(id)s.")
+                        #self.blockstore.message("Physics is currently lagging in %(id)s.")
                         #self.last_lag = time.time()
                     self.logger.debug("Ended physics run for '%s' with %d updates and %d checks remaining." % (self.blockstore.world_name, updates, len(self.working)))
             else:

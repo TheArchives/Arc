@@ -118,11 +118,8 @@ class World(object):
                     elif task[0] is TASK_BLOCKSET:
                         self.factory.queue.put((self, TASK_BLOCKSET, task[1]))
                     # Or there's a world message
-                    elif task[0] is TASK_WORLDMESSAGE:
-                        self.factory.queue.put((self, TASK_WORLDMESSAGE, (255, self, task[1])))
-                    # Or a message for the admins
-                    elif task[0] is TASK_ADMINMESSAGE:
-                        self.factory.queue.put((self, TASK_ADMINMESSAGE, (task[1] % {"id": self.id},)))
+                    elif task[0] is TASK_MESSAGE:
+                        self.factory.sendMessageToAll(task[1], "world", user="")
                     # ???
                     else:
                         raise ValueError("Unknown World task: %s" % task)

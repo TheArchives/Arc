@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import gzip, logging, os, struct
+import gzip, os, struct
 from array import array
 from Queue import Queue
 from threading import Thread
@@ -11,8 +11,6 @@ from arc.constants import *
 from arc.globals import *
 from arc.logger import ColouredLogger
 from arc.physics import Physics
-
-import logging
 
 class BlockStore(Thread):
     """
@@ -130,13 +128,9 @@ class BlockStore(Thread):
         y = offset // (self.x * self.z)
         return x, y, z
 
-    def world_message(self, message):
+    def message(self, message):
         "Sends a message out to users about this World."
-        self.out_queue.put([TASK_WORLDMESSAGE, message])
-
-    def admin_message(self, message):
-        "Sends a message out to admins about this World."
-        self.out_queue.put([TASK_ADMINMESSAGE, message])
+        self.out_queue.put([TASK_MESSAGE, message])
 
     def __setitem__(self, (x, y, z), block):
         "Set a block in this level to the given value."
