@@ -82,7 +82,6 @@ def main():
             logger.warning("Controller cannot listen on port %s. Disabled." % factory.controller_port)
             logger.warning("Error: %s" % a)
             del controller
-    money_logger.addHandler(fh)
     config = ConfigParser()
     config.read("config/main.conf") # This can't fail because it has been checked before
     factory.heartbeats = dict()
