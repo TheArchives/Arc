@@ -523,7 +523,7 @@ MSGLOGFORMAT = {
     "whisper": "[%{time}s] %{self}s to %{other}s: %{text}s",
     "world": "[%{time}s] %{username}s in %{world}s: %{text}s",
     "main": "",
-    "server": ""
+    "server": "[%{time}s] %{text}s"
 }
 MSGREPLACE = {
     "escape_commands": {"./": " /", ".!": " !"},

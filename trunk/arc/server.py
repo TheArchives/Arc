@@ -989,7 +989,6 @@ class ArcFactory(Factory):
                                 log = False
                             elif channel == "server":
                                 self.logger.info(text)
-                                if username == "Server": log = False
                             else: # This message has no channel, just dump everything we see
                                 self.logger.warn("Message has no channel. Data: (%s, %s, %s, %s, %s)" % (id, colour, username, text, channel))
                                 continue
