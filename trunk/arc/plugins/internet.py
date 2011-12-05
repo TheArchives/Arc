@@ -32,7 +32,10 @@ class InternetPlugin(ProtocolPlugin):
         self.tuser = ""
         self.tpass = ""
         makefile("logs/twitter.log")
-        if not getattr(self.client.factory, "twlog"): self.client.factory.twlog = open("logs/twitter.log", "a")
+        try:
+            getattr(self.client.factory, "twlog")
+        except AttributeError:
+            self.client.factory.twlog = open("logs/twitter.log", "a")
         self.url = ""
 
     @config("custom_cmdlog_msg", "just logged into Twitter.")
