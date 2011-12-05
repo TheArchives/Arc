@@ -216,7 +216,7 @@ class StdinPlugin(threading.Thread):
                                 else:
                                     self.factory.sendMessageToAll(" ".join(message[1:]), "action")
                             elif message[0] == ("srb"):
-                                self.factory.sendMessageToAll("%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "Be back soon.")), "server")
+                                self.factory.sendMessageToAll("%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "Be back soon.")), "server", user="")
                             elif message[0] == ("srs"):
                                 self.factory.sendMessageToAll("%s[Server Shutdown] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "See you later.")), "server")
                             elif message[0] == ("ircrehash"):

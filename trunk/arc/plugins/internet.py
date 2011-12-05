@@ -32,7 +32,7 @@ class InternetPlugin(ProtocolPlugin):
         self.tuser = ""
         self.tpass = ""
         makefile("logs/twitter.log")
-        self.twlog = open("logs/twitter.log", "a")
+        if not self.client.factory.twlog: self.client.factory.twlog = open("logs/twitter.log", "a")
         self.url = ""
 
     @config("custom_cmdlog_msg", "just logged into Twitter.")
@@ -47,8 +47,8 @@ class InternetPlugin(ProtocolPlugin):
                 self.tpass = str(parts[2])
                 self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
                 self.client.sendServerMessage("Password: "+COLOUR_RED+self.tpass)
-                self.twlog.write(self.tuser+"("+self.client.username+")"+" has logged into twitter.\n")
-                self.twlog.flush()
+                self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has logged into twitter.\n")
+                self.client.factory.twlog.flush()
         else:
             self.client.sendServerMessage("You can't use twitter from a cmdblock!")
 
@@ -63,8 +63,8 @@ class InternetPlugin(ProtocolPlugin):
                 data = urllib.urlencode({"status": " ".join(parts[1:]) + " #Arc"})
                 urllib.urlopen(("http://%s:%s@twitter.com/statuses/update.xml" % (self.tuser, self.tpass)), data)
                 self.client.sendServerMessage("You have successfully tweeted.")
-                self.twlog.write(self.tuser+"("+self.client.username+")"+" has tweeted: "+msg+"\n")
-                self.twlog.flush()
+                self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has tweeted: "+msg+"\n")
+                self.client.factory.twlog.flush()
         else:
             self.client.sendServerMessage("You can't use twitter from a cmdblock!")
 

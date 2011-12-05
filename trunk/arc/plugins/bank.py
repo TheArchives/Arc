@@ -17,8 +17,6 @@ class MoneyPlugin(ProtocolPlugin):
         "removebank": "commandRemoveAccount",
     }
 
-    money_logger = logging.getLogger('TransactionLogger')
-
     #System methods, not for commands
     def loadBank(self):
         file = open('config/data/balances.dat', 'r')
@@ -44,7 +42,7 @@ class MoneyPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Welcome to the Bank!")
             self.client.sendServerMessage("We have created your account for %s." % user)
             self.client.sendServerMessage("Your balance is now %d %s." % (bank[user], self.client.factory.currency))
-            self.money_logger.info("%s created a new account!" % user)
+            self.client.factory.logger.info("%s created a new account!" % user)
 
     @config("rank", "director")
     def commandSetAccount(self, parts, fromloc, overriderank):
@@ -99,7 +97,7 @@ class MoneyPlugin(ProtocolPlugin):
             bank[user] = bank[user] - amount
             self.dumpBank(bank)
             self.client.sendServerMessage("You sent %d %s." % (amount, self.client.factory.currency))
-            self.money_logger.info("%(user)s sent %(amount)d %(currency)s to %(target)s" % {'user': user, 'amount': amount, 'currency': self.client.factory.currency, 'target': target})
+            self.client.factory.logger.info("%(user)s sent %(amount)d %(currency)s to %(target)s" % {'user': user, 'amount': amount, 'currency': self.client.factory.currency, 'target': target})
             #factory.usernames uses all lowercased for some reason
             if target in self.client.factory.usernames:
                 self.client.factory.usernames[target].sendServerMessage("You received %(amount)d %(currency)s from %(user)s." % {'amount': amount, 'currency': self.client.factory.currency, 'user': user})

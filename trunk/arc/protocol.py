@@ -594,7 +594,7 @@ class ArcServerProtocol(Protocol):
                         self.sendServerMessage("You are silenced and cannot speak.")
                     else:
                         if not override:
-                            self.factory.sendMessageToAll(text, "chat", self, usertitlename)
+                            self.factory.sendMessageToAll(message, "chat", self, usertitlename)
             else:
                 if type == 2:
                     self.factory.logger.warn("Beta client attempted to connect.")

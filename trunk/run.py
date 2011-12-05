@@ -82,11 +82,6 @@ def main():
             logger.warning("Controller cannot listen on port %s. Disabled." % factory.controller_port)
             logger.warning("Error: %s" % a)
             del controller
-    # TODO: Well...
-    money_logger = logging.getLogger('TransactionLogger')
-    fh = logging.FileHandler('logs/server.log')
-    formatter = logging.Formatter("%(asctime)s: %(message)s")
-    fh.setFormatter(formatter)
     money_logger.addHandler(fh)
     config = ConfigParser()
     config.read("config/main.conf") # This can't fail because it has been checked before
