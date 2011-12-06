@@ -204,7 +204,7 @@ class ChatBot(irc.IRCClient):
                     msg_command[1] = msg_command[1].lower()
                     if len(msg_command) > 1:
                         if msg_command[1] in self.ncommands and len(msg_command) > 1:
-                            if msg_command[1] == ("who"):
+                            if msg_command[1] == "who":
                                 self.msg(self.factory.irc_channel, "07Who's Online?")
                                 none = True
                                 for key in self.factory.worlds:
@@ -216,31 +216,31 @@ class ChatBot(irc.IRCClient):
                                         none = False
                                 if none:
                                     self.msg(self.factory.irc_channel, "07No users are online.")
-                            elif msg_command[1] == ("worlds"):
+                            elif msg_command[1] == "worlds":
                                 self.msg(self.factory.irc_channel, "07Worlds Booted:")
                                 worlds = ", ".join([id for id, world in self.factory.worlds.items()])
                                 self.msg(self.factory.irc_channel, "07Online Worlds: "+worlds)
-                            elif msg_command[1] == ("staff"):
-                                self.msg(self.factory.irc_channel,"07Please see your PM for the Staff List.")
-                                self.msg(user, "The Server Staff - Owners: %s" % (", ".join(self.factory.owners)))
+                            elif msg_command[1] == "staff":
+                                self.msg(self.factory.irc_channel, "07Please see your PM for the Staff List.")
+                                self.msg(user, "The Server Staff")
                                 list = Staff(self, self.factory)
                                 for each in list:
                                     self.msg(user, " ".join(each))
-                            elif msg_command[1] == ("credits"):
-                                self.msg(self.factory.irc_channel,"07Please see your PM for the Credits.")
+                            elif msg_command[1] == "credits":
+                                self.msg(self.factory.irc_channel, "07Please see your PM for the Credits.")
                                 self.msg(user, "The Credits")
                                 list = Credits()
                                 for each in list:
                                     self.msg(user,"".join(each))
-                            elif msg_command[1] == ("help"):
+                            elif msg_command[1] == "help":
                                 self.msg(self.factory.irc_channel, "07Help Center")
                                 self.msg(self.factory.irc_channel, "07Commands: Use '$"+self.nickname+" cmdlist'")
                                 self.msg(self.factory.irc_channel, "07WorldChat: Use '!world message'")
                                 self.msg(self.factory.irc_channel, "07IRCChat: Use '$message'")
                                 self.msg(self.factory.irc_channel, "07About: Use '$"+self.nickname+" about'")
                                 self.msg(self.factory.irc_channel, "07Credits: Use '$"+self.nickname+" credits'")
-                            elif msg_command[1] == ("rules"):
-                                self.msg(self.factory.irc_channel,"07Please see your PM for the Rules.")
+                            elif msg_command[1] == "rules":
+                                self.msg(self.factory.irc_channel, "07Please see your PM for the Rules.")
                                 self.msg(user, "The Rules")
                                 try:
                                     r = open('config/rules.txt', 'r')
@@ -250,12 +250,12 @@ class ChatBot(irc.IRCClient):
                                 for line in r:
                                     line = line.replace("\n", "")
                                     self.msg(user, line)
-                            elif msg_command[1] == ("cmdlist"):
+                            elif msg_command[1] == "cmdlist":
                                 self.msg(self.factory.irc_channel, "07Command List")
                                 self.msg(self.factory.irc_channel, "07about cmdlist credits help rules staff who worlds")
                                 self.msg(self.factory.irc_channel, "07Use '$"+self.nickname+" command arguments' to do it.")
                                 self.msg(self.factory.irc_channel, "07NOTE: Admin Commands are by PMing "+self.nickname+" - only for ops.")
-                            elif msg_command[1] == ("about"):
+                            elif msg_command[1] == "about":
                                 self.msg(self.factory.irc_channel, "07About the Server, powered by The Archives %s | Credits: Use '$%s credits'" % (VERSION, self.nickname))
                                 self.msg(self.factory.irc_channel, "07Name: %s; Owners: %s" % (self.factory.server_name, ", ".join(self.factory.owners)))
                                 try:
@@ -277,7 +277,7 @@ class ChatBot(irc.IRCClient):
                                         desc = "%id, %ih, %im" % (days, hours, mins)
                                         self.msg(self.factory.irc_channel, "07%s was last seen %s ago." % (msg_command[2], desc))
                             else:
-                                self.msg(self.factory.irc_channel, "07Sorry, "+msg_command[1]+" is not a command!")
+                                self.msg(self.factory.irc_channel, "07Sorry, %s is not a command!" % msg_command[1])
                             self.logger.info("%s just used: %s" % (user, " ".join(msg_command[1:])))
                         elif msg_command[1] in self.ocommands and len(msg_command) > 1:
                             if user in self.ops:

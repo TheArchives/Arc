@@ -66,9 +66,6 @@ class ColouredLogger(object):
             "irc":      "logs/irc.log"
             }
         makefiles([f for f in self.logs.values()])
-        self.loginstances = {}
-        for k, v in self.logs.items():
-            self.loginstances[k] = open(v, "a")
         try:
             from colorama import Fore, Back, Style
         except:
@@ -140,9 +137,11 @@ class ColouredLogger(object):
             raise ValueError
         for element in self.nocol.keys():
             data = string.replace(data, element, self.nocol[element]) # Do not log colour codes in file
-        self.loginstances[file].write(data + "\n")
-        self.loginstances[file].flush()
-        os.fsync(self.loginstances[file].fileno())
+        with open(self.logs[file], "a") as f:
+            f.write(data + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+            f.close()
 
     def info(self, data):
         "INFO level output"
@@ -210,10 +209,6 @@ class ColouredLogger(object):
             self.log(done, "main")
             self.stdout(done)
 
-    def __del__(self):
-        for k in self.loginstances.keys():
-            self.loginstances[k].close()
-
 class ChatLogHandler(object):
     """
     A Chat Log handler. Given a file and a format, starts
@@ -221,14 +216,16 @@ class ChatLogHandler(object):
     """
 
     def __init__(self, file, formatter):
-        self.instance = open(file, "a")
+        self.file = file
         self.formatter = formatter
-        self.instance.write("\n -------------------------------------------- \n")
+        self._write("\n -------------------------------------------- \n")
 
     def write(self, d, formatter=None):
-        self.instance.write((self.formatter if formatter == None else formatter) + "\n" % d)
-        self.instance.flush()
-        os.fsync(self.instance.fileno())
+        self._write((self.formatter if formatter == None else formatter) + "\n" % d)
 
-    def __del__(self):
-        self.instance.close()
+    def _write(self, t):
+        f = open(self.file, "a") 
+        f.write(t)
+        f.flush()
+        os.fsync(f.fileno())
+        f.close()

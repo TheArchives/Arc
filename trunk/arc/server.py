@@ -996,9 +996,11 @@ class ArcFactory(Factory):
                                 self.chatlogs[channel].write({"time": time, "username": username, "text": text})
                                 self.chatlogs["main"].write({"time": time, "username": username, "text": text}, formatter=MSGLOGFORMAT[channel])
                             # Relay it to the IRC
-                            if self.irc_relay and world and channel not in ["irc", "staff", "world"]:
+                            if self.irc_relay and world and channel not in ["irc", "staff"]:
                                 if channel == "action":
                                     self.irc_relay.sendAction(username, text)
+                                elif channel == "world":
+                                    self.irc.relay.sendMessage("%s!%s in %s" % (COLOUR_YELLOW, colour+username+COLOUR_BLACK, world), text)
                                 else:
                                     self.irc_relay.sendMessage(username, text)
                 except Exception as e:
