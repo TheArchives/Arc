@@ -14,20 +14,20 @@ class Tracker(Thread):
     def __init__(self, world, buffersize=500, directory=getcwd()):
         """ Set up database pool, buffers, and other preperations """
         Thread.__init__(self)
+        self.deamon = True
         self.database = adbapi.ConnectionPool('sqlite3', path.join(directory, world+'.db'), check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
-        #self.exists = self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'")
-        #if len(self.exists) == 0: # This code raises an AttributeError
-        self.d = self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER,\
-        matafter INTEGER, name VARCHAR(50), date DATE)')
-        self.run = True
-        #TODO - Pragma statements
+        def c(r):
+            if isinstance(r, Exception) or len(r) == 0: # Contradictationay conditions :P
+                self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER, matafter INTEGER, name VARCHAR(50), date DATE)')
+            self.run = True
+        self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'").addBoth(c)
 
     def add(self, data):
         """ Adds data to the tracker.
         NOTE the format for a single data entry is this -s
-        (matbefore,matafter,name,date) """
+        (matbefore, matafter, name, date) """
         self.databuffer.append(data)
         if len(self.databuffer) > self.buffersize:
             self._flush()
@@ -51,7 +51,7 @@ class Tracker(Thread):
     def getblockedits(self, offset):
         """ Gets the players that have edited a specified block """
         self._flush()
-        edits = self.database.runQuery("SELECT * FROM history WHERE block_offset = (?)",[offset])
+        edits = self.database.runQuery("SELECT * FROM history WHERE block_offset = (?)", [offset])
         return edits
 
     def getplayeredits(self, username, filter="all", blocktype="all"):
@@ -71,7 +71,7 @@ class Tracker(Thread):
             block = blocktype
         else:
             block = ""
-        theQuery = "SELECT * FROM history AS history WHERE name LIKE (?)" + (filter_query if filter_query != "" else "")
+        theQuery = "SELECT * FROM history AS history WHERE name LIKE (?)" + filter_query
         if blocktype != "all":
             if filter == "all":
                 playeredits = self.database.runQuery(theQuery, [username], [block], [block])

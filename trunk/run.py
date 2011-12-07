@@ -4,7 +4,7 @@
 
 #!/usr/bin/python
 
-import datetime, logging, sys, time, traceback, os
+import datetime, sys, time, traceback, os
 from ConfigParser import RawConfigParser as ConfigParser
 
 from twisted.internet import reactor
@@ -21,7 +21,6 @@ logger = ColouredLogger(debug)
 
 makefile("logs/")
 makefile("logs/console/")
-makefile("logs/console/console.log")
 makefile("arc/archives/")
 makefile("logs/chat.log")
 makefile("logs/server.log")
@@ -54,18 +53,6 @@ def doExit():
 
 def main():
     global logger
-
-    #logging.basicConfig(
-    #    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    #    level=("--debug" in sys.argv) and logging.DEBUG or logging.INFO,
-    #    datefmt="%m/%d/%Y %H:%M:%S",
-    #)
-
-    #rotate = logging.handlers.TimedRotatingFileHandler(
-    #    filename="logs/console/console.log", when="H",
-    #    interval=6, backupCount=14,
-    #)
-    #logging.root.addHandler(rotate)
 
     logger.info("Starting up &bArc&f v%s" % VERSION)
     factory = ArcFactory(debug)

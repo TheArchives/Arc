@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, datetime, hashlib, logging, os, traceback, shutil
+import cPickle, datetime, hashlib, os, traceback, shutil
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
@@ -308,7 +308,7 @@ class ArcServerProtocol(Protocol):
                     self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
-                if block in range(6, 10) and block != 9: # Water and Lava
+                if block in [8, 10]: # Active Water and Lava
                     self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (self.transport.getPeer().host, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
@@ -692,7 +692,7 @@ class ArcServerProtocol(Protocol):
         "Sends a message to the user, splitting it up if needed."
         # See if it's muted.
         replacement = self.runHook("recvmessage", colour, username, text, action)
-        if replacement is False: return
+        if replacement == False: return
         # See if we should highlight the names
         if action:
             prefix = "%s* %s%s%s " % (COLOUR_YELLOW, colour, username, COLOUR_WHITE)

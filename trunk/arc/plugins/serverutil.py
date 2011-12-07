@@ -93,6 +93,7 @@ class ServerUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("System information plugin disabled, unable to display system information.")
 
     @config("rank", "owner")
+    @config("disabled_cmdblocks", True)
     def commandRestartLoop(self, parts, fromloc, overriderank):
         "/restartloop loop time - Owner\nRestarts a factory loop.\nUSE AT YOUR OWN RISK!"
         if len(parts) < 2:

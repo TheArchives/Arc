@@ -86,6 +86,9 @@ class McBansPlugin(ProtocolPlugin):
                                 self.client.sendSplitServerMessage("'%s' is not a help topic." % command)
                                 self.client.sendSplitServerMessage("Try /mcbans help on its own.")
                     elif selection == "ban":
+                        if fromloc != "user":
+                            self.sendServerMessage("This command cannot be used in a command block.")
+                            return
                         if self.client.isAdmin():
                             if len(parts) > 2:
                                 player = parts[2].lower()
@@ -251,6 +254,9 @@ class McBansPlugin(ProtocolPlugin):
                         else:
                             self.client.sendServerMessage("Syntax: /mcbans lookup [type] [player]")
                     elif selection == "confirm":
+                        if fromloc != "user":
+                            self.client.sendServerMessage("This command cannot be used in a command block.")
+                            return
                         if len(parts) > 2:
                             key = parts[2]
                             data = handler.confirm(self.client.username, key)

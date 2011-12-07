@@ -14,8 +14,6 @@ from arc.blocktracker import Tracker
 
 debug = (True if "--debug" in sys.argv else False)
 
-import logging
-
 class World(object):
     """
     Represents... well, a World.

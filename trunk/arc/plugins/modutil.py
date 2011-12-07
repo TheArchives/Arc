@@ -122,6 +122,7 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "op")
     @username_command
+    @config("disabled_cmdblocks", True)
     def commandBanish(self, user, fromloc, overriderank):
         "/worldkick username - Op\nAliases: banish\nBanishes the user to the default world."
         if user.isWorldOwner() and not self.client.isMod():
@@ -141,6 +142,7 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "op")
     @only_username_command
+    @config("disabled_cmdblocks", True)
     def commandWorldBan(self, username, fromloc, overriderank):
         "/worldban username - Op\nWorldBan a user from this world."
         if self.client.world.isWorldBanned(username):
@@ -207,6 +209,7 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "helper")
     @username_command
+    @config("disabled_cmdblocks", True)
     def commandKick(self, user, fromloc, overriderank, params=[]):
         "/kick username [reason] - Helper\nKicks the user off the server."
         username = user.username
@@ -218,6 +221,7 @@ class ModUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandBanBoth(self, parts, fromloc, overriderank):
         "/banb username reason - Mod\nName and IP ban a user from this server, and on MCBans."
         if len(parts) <= 2:
@@ -270,6 +274,7 @@ class ModUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandBan(self, parts, fromloc, overriderank):
         "/ban username reason - Mod\nBans the player from this server."
         if len(parts) <= 2:
@@ -286,6 +291,7 @@ class ModUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandIpban(self, parts, fromloc, overriderank):
         "/ipban username reason - Mod\nBan a user's IP from this server."
         if parts[1] not in self.client.factory.usernames:
@@ -366,6 +372,7 @@ class ModUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandFreeze(self, parts, fromloc, overriderank):
         "/freeze username - Mod\nAliases: stop\nFreezes the user, preventing them from moving."
         try:
@@ -384,6 +391,7 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "admin")
     @username_command
+    @config("disabled_cmdblocks", True)
     def commandOverload(self, client, fromloc, overriderank):
         "/overload username - Admin\nSends the users client a massive fake world."
         client.sendOverload()
@@ -391,6 +399,7 @@ class ModUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandSend(self, parts, fromloc, overriderank):
         "/send username world - Mod\nSends the users client to another world."
         if len(parts) < 2:
@@ -415,6 +424,7 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "mod")
     @only_username_command
+    @config("disabled_cmdblocks", True)
     def commandSilence(self, username, byuser, overriderank):
         "/silence username - Mod\nDisallows the user to talk."
         if self.client.factory.isMod(username):

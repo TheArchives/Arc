@@ -9,8 +9,6 @@ from arc.constants import *
 from arc.globals import *
 from arc.logger import ColouredLogger
 
-import logging
-
 class StdinPlugin(threading.Thread):
 
     def __init__(self, factory):

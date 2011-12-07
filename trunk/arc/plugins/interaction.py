@@ -136,6 +136,7 @@ class InteractionPlugin(ProtocolPlugin):
 
     @config("rank", "mod")
     @username_command
+    @config("disabled_cmdblocks", True)
     def commandKill(self, user, fromloc, overriderank, params=[]):
         "/kill username [reason] - Mod\nKills the user for reason (optional)."
         killer = self.client.username

@@ -208,6 +208,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "op")
+    @config("disabled_cmdblocks", True)
     def commandRank(self, parts, fromloc, overriderank):
         "/rank username rankname - Op\nAliases: setrank, promote\nMakes username the rank of rankname."
         if len(parts) < 3:
@@ -217,6 +218,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "op")
+    @config("disabled_cmdblocks", True)
     def commandDeRank(self, parts, fromloc, overriderank):
         "/derank username rankname - Op\nAliases: demote\nMakes username lose the rank of rankname."
         if len(parts) < 3:
@@ -226,6 +228,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "op")
+    @config("disabled_cmdblocks", True)
     def commandOldRanks(self, parts, fromloc, overriderank):
         "/rankname username [world] - Op\nAliases: writer, builder, op, helper, mod, admin, director\nThis is here for Myne users."
         if len(parts) < 2:
@@ -239,6 +242,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @config("rank", "op")
+    @config("disabled_cmdblocks", True)
     def commandOldDeRanks(self, parts, fromloc, overriderank):
         "/derankname username [world] - Op\nAliases: dewriter, debuilder, deop, dehelper, demod, deadmin, dedirector\nThis is here for Myne users."
         if len(parts) < 2:
@@ -253,6 +257,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "mod")
     @only_username_command
+    @config("disabled_cmdblocks", True)
     def commandSpec(self, username, fromloc, overriderank):
         "/spec username - Mod\nMakes the user as a spec."
         self.client.sendServerMessage(Spec(self, username, fromloc, overriderank))
@@ -260,6 +265,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("category", "player")
     @config("rank", "mod")
     @only_username_command
+    @config("disabled_cmdblocks", True)
     def commandDeSpec(self, username, fromloc, overriderank):
         "/unspec username - Mod\nAliases: despec\nRemoves the user as a spec."
         self.client.sendServerMessage(DeSpec(self, username, fromloc, overriderank))
@@ -295,7 +301,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
     @config("rank", "op")
     @username_command
     def commandFetch(self, user, fromloc, overriderank):
-        "/fetch username - Op\nAliases: bring\nTeleports a user to be where you are"
+        "/fetch username - Op\nAliases: bring\nTeleports a user to be where you are."
         # Shift the locations right to make them into block coords
         rx = self.client.x >> 5
         ry = self.client.y >> 5
@@ -477,6 +483,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
 
     @config("category", "player")
     @only_username_command
+    @config("disabled_cmdblocks", True)
     def commandMute(self, username, fromloc, overriderank):
         "/mute username - Guest\nStops you hearing messages from 'username'."
         self.muted.add(username)

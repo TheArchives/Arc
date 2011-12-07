@@ -13,8 +13,6 @@ from twisted.web.client import getPage
 from arc.constants import *
 from arc.logger import ColouredLogger
 
-import logging
-
 debug = (True if "--debug" in sys.argv else False)
 
 class Heartbeat(object):
@@ -27,14 +25,13 @@ class Heartbeat(object):
     def __init__(self, factory):
         self.factory = factory
         self.logger = factory.logger
-        self.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
         self.loop = LoopingCall(self.sendHeartbeat)
         self.loop.start(25) # In the future for every spoofed heartbeat it would deduct by 2 seconds, but not now
         self.logger.info("Heartbeat sending process initiated.")
         self.factory.runHook("heartbeatBuilt")
 
-    def buildHeartbeatData(self):
-        # To be extended
+    @property
+    def hbdata(self):
         return urllib.urlencode({
             "port": self.factory.server_port,
             "users": len(self.factory.clients),
@@ -57,23 +54,26 @@ class Heartbeat(object):
             if self.factory.hbs != []: # Did we fill in the spoof heartbeat bit?
                 reactor.callLater(3, self.sendHeartbeat) # Server has not finished loading yet - come back in 3 seconds maybe?
             return
-        d = dict()
-        d[0] = getPage(self.hburl, method="POST", postdata=self.buildHeartbeatData(), headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-        d[0].addCallback(self.heartbeatSentCallback, 0)
-        d[0].addErrback(self.heartbeatFailedCallback, 0)
-        for element, valueset in self.factory.heartbeats.iteritems():
+        try:
+            self._sendHeartbeat()
+        except ImportError:
+            self.logger.info("WoM heartbeat has SSL enabled, and OpenSSL is not installed on the system. Falling back to minecraft.net heartbeat.")
+            self._sendHeartbeat(True)
+
+    def _sendHeartbeat(self, overrideurl=False):
+        hburl = "http://direct.worldofminecraft.com/hb.php" if (self.factory.wom_heartbeat and not overrideurl) else "http://www.minecraft.net/heartbeat.jsp"
+        getPage(hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30).addCallback(self.heartbeatSentCallback, 0).addErrback(self.heartbeatFailedCallback, 0)
+        for k, v in self.factory.heartbeats.items():
             spoofdata = urllib.urlencode({
-                "port": valueset[1],
+                "port": v[1],
                 "users": len(self.factory.clients),
                 "max": self.factory.max_clients,
-                "name": valueset[0],
+                "name": v[0],
                 "public": self.factory.public,
                 "version": 7,
                 "salt": self.factory.salt,
                 })
-            d[element] = getPage(self.hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-            d[element].addCallback(self.heartbeatSentCallback, element)
-            d[element].addErrback(self.heartbeatFailedCallback, element)
+            getPage(hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30).addCallback(self.heartbeatSentCallback, k).addErrback(self.heartbeatFailedCallback, k)
 
     def heartbeatSentCallback(self, result, id):
         if id == 0:

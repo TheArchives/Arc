@@ -18,7 +18,9 @@ class BlockTrackerPlugin(ProtocolPlugin):
         "restoreplayer": "commandRestorePlayer",
         "cb": "commandCheckBlock",
         "cp": "commandCheckPlayer",
-        "rp": "commandRestorePlayer"
+        "rp": "commandRestorePlayer",
+        "undo": "commandUndo",
+        "redo": "commandRedo",
     }
 
     hooks = {
@@ -29,12 +31,11 @@ class BlockTrackerPlugin(ProtocolPlugin):
     def gotClient(self):
         self.isChecking = False
         self.num = 0
-        
 
     def sendCallbackRestorePlayer(self, data):
         j = len(data)
         done = []
-        if self.num is "all":
+        if self.num == -1:
             for i in range(j):
                 done.append(data.pop())
             i = len(done)
@@ -110,7 +111,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 before_block = 0
             else:
                 before_block = ord(before_block)
-            self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username, time.mktime(time.localtime())))
+            self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username.lower(), time.mktime(time.localtime())))
 
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         if self.isChecking:
@@ -161,24 +162,26 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Syntax: /checkplayer playername")
 
     @config("category", "build")
-    @config("rank", "mod")
     def commandRestorePlayer(self, parts, fromloc, overriderank):
-        "/restoreplayer username n - Mod\n: Reverse n edits on the current world by username."
-        if len(parts) > 2:
-            if parts[2] != "all":
-                try:
-                    self.num = int(parts[2])
-                except Exception:
-                    self.client.sendServerMessage("n must be a number or \"all\"!")
-                else:
-                    if self.num > 0:
-                        edits = self.client.world.blocktracker.getplayeredits(parts[1])
-                        edits.addCallback(self.sendCallbackRestorePlayer)
-                    else:
-                        self.client.sendServerMessage("n must be greater than 0!")
-            else:
-                self.num = "all"
-                edits = self.client.world.blocktracker.getplayeredits(parts[1])
-                edits.addCallback(self.sendCallbackRestorePlayer)
+        "/undo n [username] - Guest\nAliases: restoreplayer, rp\nReverse n edits on the current world by yourself.\nFor Mod+, you can also specify a username."
+        if len(parts) < 2:
+            self.client.sendServerMessage("Syntax: /undo number|all [username]")
+            return
+        if parts[1] == "all":
+            self.num = -1
         else:
-            self.client.sendServerMessage("Syntax: /restoreplayer playername number|all")
+            try:
+                self.num = int(parts[2])
+            except:
+                self.client.sendServerMessage("n must be a number or \"all\"!")
+                return
+            if self.num < 0:
+                self.client.sendServerMessage("n must be greater than 0!")
+                return
+        username = self.client.username.lower()
+        if len(parts) == 3 and not self.client.isMod():
+            self.client.sendServerMessage("You cannot undo other's block changes!")
+            return
+        else:
+            username = parts[2].lower()
+        self.client.world.blocktracker.getplayeredits(username).addCallback(self.sendCallbackRestorePlayer)

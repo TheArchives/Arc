@@ -40,51 +40,45 @@ class InternetPlugin(ProtocolPlugin):
 
     @config("custom_cmdlog_msg", "just logged into Twitter.")
     @config("category", "info")
+    @config("disabled_cmdblocks", True)
     def commandTlogin(self, parts, fromloc, overriderank):
         "/tlog username password - Guest\nReplace username and password to login to Twitter."
-        if fromloc == "user":
-            if len(parts) < 3:
-                self.client.sendServerMessage("Please input a username and password.")
-            else:
-                self.tuser = str(parts[1])
-                self.tpass = str(parts[2])
-                self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
-                self.client.sendServerMessage("Password: "+COLOUR_RED+self.tpass)
-                self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has logged into twitter.\n")
-                self.client.factory.twlog.flush()
+        if len(parts) < 3:
+            self.client.sendServerMessage("Please input a username and password.")
         else:
-            self.client.sendServerMessage("You can't use twitter from a cmdblock!")
+            self.tuser = str(parts[1])
+            self.tpass = str(parts[2])
+            self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
+            self.client.sendServerMessage("Password: "+COLOUR_RED+self.tpass)
+            self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has logged into twitter.\n")
+            self.client.factory.twlog.flush()
 
     @config("category", "info")
+    @config("disabled_cmdblocks", True)
     def commandTweet(self, parts, fromloc, overriderank):
         "/tweet tweet - Guest\nSend a tweet to Twitter after using /tlog."
-        if fromloc == "user":
-            if self.tuser == "":
-                self.client.sendServerMessage("Please do /tlog first.")
-            else:
-                msg = urllib.quote(" ".join(parts[1:]) + " #Arc")
-                data = urllib.urlencode({"status": " ".join(parts[1:]) + " #Arc"})
-                urllib.urlopen(("http://%s:%s@twitter.com/statuses/update.xml" % (self.tuser, self.tpass)), data)
-                self.client.sendServerMessage("You have successfully tweeted.")
-                self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has tweeted: "+msg+"\n")
-                self.client.factory.twlog.flush()
+        if self.tuser == "":
+            self.client.sendServerMessage("Please do /tlog first.")
         else:
-            self.client.sendServerMessage("You can't use twitter from a cmdblock!")
+            msg = urllib.quote(" ".join(parts[1:]) + " #Arc")
+            data = urllib.urlencode({"status": " ".join(parts[1:]) + " #Arc"})
+            urllib.urlopen(("http://%s:%s@twitter.com/statuses/update.xml" % (self.tuser, self.tpass)), data)
+            self.client.sendServerMessage("You have successfully tweeted.")
+            self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has tweeted: "+msg+"\n")
+            self.client.factory.twlog.flush()
 
     @config("category", "info")
+    @config("disabled_cmdblocks", True)
     def commandTDetails(self, parts, fromloc, overriderank):
         "/tdetails - Guest\nGives you your Twitter login details, from /tlog."
-        if fromloc == "user":
-            if self.tuser == "":
-                self.client.sendServerMessage("Username: "+COLOUR_RED+"Not entered!")
-            else:
-                self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
-            if self.tpass == "":
-                self.client.sendServerMessage("Password: "+COLOUR_RED+"Not entered!")
-            self.twlog.write(self.tuser+"("+self.client.username+")"+" has checked their Twitter details.\n")
-            self.twlog.flush()
+        if self.tuser == "":
+            self.client.sendServerMessage("Username: "+COLOUR_RED+"Not entered!")
         else:
-            self.client.sendServerMessage("You can't use twitter from a cmdblock!")
+            self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
+        if self.tpass == "":
+            self.client.sendServerMessage("Password: "+COLOUR_RED+"Not entered!")
+        self.twlog.write(self.tuser+"("+self.client.username+")"+" has checked their Twitter details.\n")
+        self.twlog.flush()
 
     @config("category", "build")
     @config("rank", "admin")

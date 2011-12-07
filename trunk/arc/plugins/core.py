@@ -20,6 +20,7 @@ class CorePlugin(ProtocolPlugin):
     
     @config("rank", "admin")
     @only_string_command("plugin name")
+    @config("disabled_cmdblocks", True)
     def commandPluginreload(self, plugin_name, fromloc, overriderank):
         try:
             self.client.factory.unloadPlugin(plugin_name)
@@ -31,6 +32,7 @@ class CorePlugin(ProtocolPlugin):
     
     @config("rank", "admin")
     @only_string_command("plugin name")
+    @config("disabled_cmdblocks", True)
     def commandPluginload(self, plugin_name, fromloc, overriderank):
         try:
             self.client.factory.loadPlugin(plugin_name)
@@ -41,6 +43,7 @@ class CorePlugin(ProtocolPlugin):
     
     @config("rank", "admin")
     @only_string_command("plugin name")
+    @config("disabled_cmdblocks", True)
     def commandPluginunload(self, plugin_name, fromloc, overriderank):
         try:
             self.client.factory.unloadPlugin(plugin_name)

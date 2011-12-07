@@ -10,6 +10,8 @@ from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
+SPECIAL_CMDS = ["wait", "if", "exit", "getinput", "getnum", "getblock", "getyn", "self"] # not actual commands but can be used in cmdblocks
+
 class CommandPlugin(ProtocolPlugin):
 
     commands = {
@@ -68,7 +70,7 @@ class CommandPlugin(ProtocolPlugin):
             self.lastcommand = message
         if self.cmdinfolines is not None:
             if message.lower() == "next":
-                self.infoindex+=10
+                self.infoindex += 10
                 index = int(self.infoindex)
                 cmdlist = self.cmdinfolines[index:index+10]
                 if len(cmdlist) < 10:
@@ -85,11 +87,11 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage(x)
                 return True
             elif message.lower() == "back":
-                self.infoindex-=10
+                self.infoindex -= 10
                 try:
                     cmdlist = self.cmdinfolines[self.infoindex:self.infoindex+10]
                 except:
-                    self.infoindex+=10
+                    self.infoindex += 10
                     self.client.sendServerMessage("Reached the beginning.")
                     return
                 self.client.sendServerMessage("Page %s of %s:" % (int((self.infoindex+1)/10), int(len(self.cmdinfolist)/10)))
@@ -192,13 +194,13 @@ class CommandPlugin(ProtocolPlugin):
             reactor.callLater(0.01, self.runcommands)
             return True
         if self.inputyn:
-            if message=="y":
-                self.customvars[self.inputyn] = message
+            if message in ["y", "yes"]:
+                self.customvars[self.inputyn] = "y"
                 self.inputyn = None
                 reactor.callLater(0.01, self.runcommands)
                 return True
-            elif message=="n":
-                self.customvars[self.inputyn] = message
+            elif message in ["n", "no"]:
+                self.customvars[self.inputyn] = "n"
                 self.inputyn = None
                 reactor.callLater(0.01, self.runcommands)
                 return True
@@ -214,7 +216,7 @@ class CommandPlugin(ProtocolPlugin):
         if self.client.world.has_cmdblock(x, y, z):
             if self.cmdinfo:
                 cmdlist = self.client.world.get_cmdblock(x, y, z)
-                if len(cmdlist)<11:
+                if len(cmdlist) < 11:
                     self.client.sendServerMessage("Page 1 of 1:")
                     for x in cmdlist:
                         self.client.sendServerMessage(x)
@@ -478,8 +480,27 @@ class CommandPlugin(ProtocolPlugin):
                             parts.append(z)
             parts[0] = "/cmd"
             commandtext = ""
+            command = str(parts[1])
+            if command not in SPECIAL_CMDS:
+                # See if we can handle it internally
+                try:
+                    func = getattr(self.client, "command%s" % command.title())
+                except AttributeError:
+                    # Can we find it from a plugin?
+                    try:
+                        func = self.client.commands[command.lower()]
+                    except KeyError:
+                        self.client.sendServerMessage("Unknown command '%s'" % command)
+                        return
+                if hasattr(func, "config"):
+                    if func.config["disabled"]:
+                        self.client.sendServerMessage("The command has been disabled by the server owners.")
+                        return
+                    if func.config["disabled_cmdblocks"]:
+                        self.client.sendServerMessage("You cannot use this command in a cmdblock.")
+                        return
             for x in parts:
-                   commandtext = commandtext + " " + str(x)
+                commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
                 var_string = ""
                 var_cmdparts = parts[1:]
@@ -531,8 +552,7 @@ class CommandPlugin(ProtocolPlugin):
             parts[0] = "/gcmd"
             commandtext = ""
             command = str(parts[1])
-            cmdspecials = ["wait", "if", "exit", "getinput", "getnum", "getblock", "getyn", "self"] # not actual commands but can be used in cmdblocks
-            if not command in cmdspecials:
+            if command not in SPECIAL_CMDS:
                 # See if we can handle it internally
                 try:
                     func = getattr(self.client, "command%s" % command.title())
@@ -545,27 +565,22 @@ class CommandPlugin(ProtocolPlugin):
                         return
                 if hasattr(func, "config"):
                     if func.config["disabled"]:
+                        self.client.sendServerMessage("The command has been disabled by the server owners.")
                         return
-                    if self.client.isSpectator() and func.config["rank"]:
+                    if func.config["disabled_cmdblocks"]:
+                        self.client.sendServerMessage("You cannot use this command in a cmdblock.")
                         return
                     if func.config["rank"] == "owner" and not self.client.isOwner():
+                        self.client.sendServerMessage("This command can only be added by an owner.")
                         return
                     if func.config["rank"] == "director" and not self.client.isDirector():
+                        self.client.sendServerMessage("This command can only be added by a director.")
                         return
                     if func.config["rank"] == "admin" and not self.client.isAdmin():
-                        return
-                    if func.config["rank"] == "mod" and not self.client.isMod():
-                        return
-                    if func.config["rank"] == "helper" and not self.client.isHelper():
-                        return
-                    if func.config["rank"] == "worldowner" and not self.client.isWorldOwner():
-                        return
-                    if func.config["rank"] == "op" and not self.client.isOp():
-                        return
-                    if func.config["rank"] == "builder" and not self.client.isBuilder():
+                        self.client.sendServerMessage("This command can only be added by an admin.")
                         return
             for x in parts:
-                   commandtext = commandtext + " " + str(x)
+                commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
                 var_string = ""
                 var_cmdparts = parts[1:]
@@ -616,6 +631,25 @@ class CommandPlugin(ProtocolPlugin):
                             parts.append(z)
             parts[0] = "/scmd"
             commandtext = ""
+            command = str(parts[1])
+            if command not in SPECIAL_CMDS:
+                # See if we can handle it internally
+                try:
+                    func = getattr(self.client, "command%s" % command.title())
+                except AttributeError:
+                    # Can we find it from a plugin?
+                    try:
+                        func = self.client.commands[command.lower()]
+                    except KeyError:
+                        self.client.sendServerMessage("Unknown command '%s'" % command)
+                        return
+                if hasattr(func, "config"):
+                    if func.config["disabled"]:
+                        self.client.sendServerMessage("The command has been disabled by the server owners.")
+                        return
+                    if func.config["disabled_cmdblocks"]:
+                        self.client.sendServerMessage("You cannot use this command in a cmdblock.")
+                        return
             for x in parts:
                    commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
@@ -668,8 +702,7 @@ class CommandPlugin(ProtocolPlugin):
             parts[0] = "/gscmd"
             commandtext = ""
             command = str(parts[1])
-            cmdspecials = ["wait", "if", "exit", "getinput", "getnum", "getblock", "getyn", "self"]  # not actual commands but can be used in cmdblocks
-            if not command in cmdspecials:
+            if command not in SPECIAL_CMDS:
                 # See if we can handle it internally
                 try:
                     func = getattr(self.client, "command%s" % command.title())
@@ -682,24 +715,19 @@ class CommandPlugin(ProtocolPlugin):
                         return
                 if hasattr(func, "config"):
                     if func.config["disabled"]:
+                        self.client.sendServerMessage("The command has been disabled by the server owners.")
                         return
-                    if self.client.isSpectator() and func.config["rank"]:
+                    if func.config["disabled_cmdblocks"]:
+                        self.client.sendServerMessage("You cannot use this command in a cmdblock.")
                         return
                     if func.config["rank"] == "owner" and not self.client.isOwner():
+                        self.client.sendServerMessage("This command can only be added by an owner.")
                         return
                     if func.config["rank"] == "director" and not self.client.isDirector():
+                        self.client.sendServerMessage("This command can only be added by a director.")
                         return
                     if func.config["rank"] == "admin" and not self.client.isAdmin():
-                        return
-                    if func.config["rank"] == "mod" and not self.client.isMod():
-                        return
-                    if func.config["rank"] == "helper" and not self.client.isHelper():
-                        return
-                    if func.config["rank"] == "worldowner" and not self.client.isWorldOwner():
-                        return
-                    if func.config["rank"] == "op" and not self.client.isOp():
-                        return
-                    if func.config["rank"] == "builder" and not self.client.isBuilder():
+                        self.client.sendServerMessage("This command can only be added by an admin.")
                         return
             for x in parts:
                    commandtext = commandtext + " " + str(x)
@@ -1056,6 +1084,9 @@ class CommandPlugin(ProtocolPlugin):
                 if func.config["disabled"]:
                     self.client.sendServerMessage("Command %s has been disabled by the server owners." % command)
                     runcmd = False
+                if func.config["disabled_cmdblocks"]:
+                    self.client.sendServerMessage("This command cannot be used in a command block.")
+                    runcmd = False
             if guest is False:
                 if self.client.isSpectator() and func.config["rank"]:
                     self.client.sendServerMessage("'%s' is not available to spectators." % command)
@@ -1085,13 +1116,8 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("'%s' is a Builder-only command!" % command)
                     runcmd = False
             try:
-                try:
-                    if runcmd:
-                        func(parts, "cmdblock", guest)
-                except UnboundLocalError:
-                    self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                    self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
-                    self.client.logger.error(traceback.format_exc())
+                if runcmd:
+                    func(parts, "cmdblock", guest)
             except Exception as e:
                 self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
                 self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")

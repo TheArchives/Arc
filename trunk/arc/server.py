@@ -969,6 +969,8 @@ class ArcFactory(Factory):
                                         client.sendAction(id, colour, username, text)
                                     elif channel == "server":
                                         client.sendNormalMessage(text)
+                                    elif channel == "irc":
+                                        client.sendNormalMessage("[IRC] %s%s" % (("<%s>" % username) if username != "" else ""), text)
                                     else:
                                         client.sendMessage(id, colour, username, text)
                             # Log them

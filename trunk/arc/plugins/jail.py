@@ -154,7 +154,7 @@ class JailPlugin(ProtocolPlugin):
 
     @config("rank", "mod")
     def commandJail(self, parts, fromloc, overriderank):
-        "/jail user [minutes] - Mod\nPuts a user in jail\nYou can specify a time limit, or leave blank for permajail!"
+        "/jail user [minutes] - Mod\nPuts a user in jail.\nYou can specify a time limit, or leave blank for permajail!"
         if len(parts) == 3:
             if not parts[2].isdigit():
                 self.client.sendServerMessage("You must specify a positive numerical value for minutes!")
@@ -166,6 +166,9 @@ class JailPlugin(ProtocolPlugin):
             time = 0
         else:
             self.client.sendServerMessage("Usage: /jail user [minutes]")
+            return
+        if self.client.factory.isHelper(parts[1]) or parts[1].lower() == self.client.username.lower():
+            self.client.sendServerMessage("You cannot jail yourself or a staff!")
             return
         self.prepJail()
         jail = self.loadJail()

@@ -2,17 +2,24 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
+import random
+
 from twisted.internet import reactor
 
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
-class MinePlugin(ProtocolPlugin):
+UNBREAKABLE = [chr(BLOCK_SOLID), chr(BLOCK_IRON), chr(BLOCK_GOLD), chr(BLOCK_TNT)]
+STRONG = [chr(BLOCK_ROCK), chr(BLOCK_STONE), chr(BLOCK_OBSIDIAN), chr(BLOCK_WATER), chr(BLOCK_STILLWATER), chr(BLOCK_LAVA), chr(BLOCK_STILLLAVA), chr(BLOCK_BRICK), chr(BLOCK_GOLDORE), chr(BLOCK_IRONORE), chr(BLOCK_COAL), chr(BLOCK_SPONGE)]
+
+class ExplosivesPlugin(ProtocolPlugin):
 
     commands = {
         "mine": "commandMine",
         "clearmines": "commandClearMines",
+        "tnt": "commandDynamite",
+        "dynamite": "commandDynamite",
     }
 
     hooks = {
@@ -23,10 +30,15 @@ class MinePlugin(ProtocolPlugin):
 
     def gotClient(self):
         self.build_mines = False
+        self.build_dynamite = False
+        self.explosion_radius = 4
+        self.delay = 2
 
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
+        tobuild = []
+        world = self.client.world
         if fromloc != "user":
-            # People shouldn't be blbing mines
+            # People shouldn't be blbing mines and TNTs
             return
         if self.client.world.has_mine(x, y, z):
             self.client.sendServerMessage("You defused a mine!")
@@ -35,6 +47,42 @@ class MinePlugin(ProtocolPlugin):
             self.build_mines = False
             self.client.world.add_mine(x, y, z)
             self.client.sendServerMessage("Your mine is now active!")
+        # Randomise the variables
+        fanout = random.randint(2, 6)
+        if self.build_dynamite and block == BLOCK_TNT:
+            # Calculate block change radius
+            for i in range(-fanout, fanout+1):
+                for j in range(-fanout, fanout+1):
+                    for k in range(-fanout, fanout+1):
+                        value = (i ** 2 + j ** 2 + k ** 2) ** 0.5 + 0.691
+                        if value < fanout:
+                            try:
+                                if not self.client.AllowedToBuild(x+i, y+j, z+k):
+                                    return
+                                check_offset = world.blockstore.get_offset(x+i, y+j, z+k)
+                                blocktype = world.blockstore.raw_blocks[check_offset]
+                                if blocktype not in UNBREAKABLE + STRONG:
+                                    if not world.has_mine(x+i, y+j, z+k):
+                                        tobuild.append((i, j, k))
+                                if value < fanout - 1:
+                                    if blocktype not in UNBREAKABLE:
+                                        if not world.has_mine(x+i, y+j, z+k):
+                                            tobuild.append((i, j, k))
+                            except AssertionError: # OOB
+                                pass
+            def explode(block, save):
+                # OK, send the build changes
+                for dx, dy, dz in tobuild:
+                    try:
+                        if save: world[mx+dx, my+dy, mz+dz] = chr(block)
+                        self.client.sendBlock(x+dx, y+dy, z+dz, block)
+                        self.client.factory.queue.put((self.client, TASK_BLOCKSET, (x+dx, y+dy, z+dz, block)))
+                    except AssertionError: # OOB
+                        pass
+            # Explode in 2 seconds
+            reactor.callLater(self.delay, explode, BLOCK_STILLLAVA, False)
+            # Explode2 in 3 seconds
+            reactor.callLater(self.delay+1, explode, BLOCK_AIR, True)
 
     def posChanged(self, x, y, z, h, p):
         "Hook trigger for when the user moves"
@@ -91,6 +139,7 @@ class MinePlugin(ProtocolPlugin):
         "Hook to reset mine abilities in new worlds if not op."
         if not self.client.isOp():
             self.build_mines = False
+            self.build_dynamite = False
 
     @config("category", "build")
     @config("rank", "op")
@@ -106,3 +155,15 @@ class MinePlugin(ProtocolPlugin):
         "/clearmines - World Owner\nClears all mines in this world."
         self.client.world.clear_mines()
         self.client.sendServerMessage("All mines in this world have been cleared.")
+
+    @config("category", "build")
+    @config("rank", "op")
+    @on_off_command
+    def commandDynamite(self, onoff, fromloc, overriderank):
+        "/tnt on|off - Op\nAliases: dynamite\nExplodes a radius around the TNT."
+        if onoff == "on":
+            self.build_dynamite = True
+            self.client.sendServerMessage("You have activated TNT; place a TNT block!")
+        else:
+            self.build_dynamite = False
+            self.client.sendServerMessage("You have deactivated TNT.")

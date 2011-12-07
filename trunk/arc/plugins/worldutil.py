@@ -173,6 +173,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "worldowner")
+    @config("disabled_cmdblocks", True)
     def commandDeleteBackup(self, parts, fromloc, overriderank):
         "/deletebackup worldname backupnum/name - World Owner\nDeletes a backup of the world."
         if len(parts) < 3:
@@ -205,6 +206,7 @@ class WorldUtilPlugin(ProtocolPlugin):
     @config("category", "world")
     @config("rank", "admin")
     @on_off_command
+    @config("disabled_cmdblocks", True)
     def commandPhysics(self, onoff, fromloc, overriderank):
         "/physics on|off - Admin\nEnables or disables physics in this world."
         if onoff == "on":
@@ -228,6 +230,7 @@ class WorldUtilPlugin(ProtocolPlugin):
     @config("category", "world")
     @config("rank", "op")
     @on_off_command
+    @config("disabled_cmdblocks", True)
     def commandFwater(self, onoff, fromloc, overriderank):
         "/fwater on|off - Op\nEnables or disables finite water in this world."
         if onoff == "on":
@@ -311,6 +314,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "admin")
+    @config("disabled_cmdblocks", True)
     def commandNew(self, parts, fromloc, overriderank):
         "/new worldname templatename - Admin\nAliases: mapadd\nMakes a new world, and boots it."
         if len(parts) == 1:
@@ -335,6 +339,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandRename(self, parts, fromloc, overriderank):
         "/rename worldname newworldname - Mod\nAliases: maprename\nRenames a SHUT DOWN world."
         if len(parts) < 3:
@@ -505,6 +510,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "admin")
+    @config("disabled_cmdblocks", True)
     def commandCreate(self, parts, fromloc, overriderank):
         "/create worldname width height length - Admin\nCreates a new world with specified dimensions."
         if len(parts) == 1:
@@ -535,6 +541,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "admin")
+    @config("disabled_cmdblocks", True)
     def commandDelete(self, parts, fromloc, overriderank):
         "/delete worldname - Admin\nAliases: mapdelete\nSets the specified world to 'ignored'."
         if len(parts) == 1:
@@ -560,6 +567,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "admin")
+    @config("disabled_cmdblocks", True)
     def commandUnDelete(self, parts, fromloc, overriderank):
         "/undelete worldname - Admin\nRestores a deleted world."
         if len(parts) < 2:
@@ -651,6 +659,7 @@ class WorldUtilPlugin(ProtocolPlugin):
 
     @config("category", "world")
     @config("rank", "mod")
+    @config("disabled_cmdblocks", True)
     def commandCopyWorld(self, parts, fromloc, overriderank):
         "/copyworld worldname newworldname removebackup - Mod\nAliases: cw\nCopies a SHUT DOWN world.\nSpecify True for removebackup to remove all backups in the new world."
         if len(parts) < 3:
