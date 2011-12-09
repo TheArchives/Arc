@@ -267,6 +267,8 @@ class ArcServerProtocol(Protocol):
                         self.factory.logger.info("Kicked '%s'; invalid password (%s, %s)" % (self.username, mppass, correct_pass))
                         self.sendError("Incorrect authentication, please try again.")
                         return
+                value = self.factory.runHook("prePlayerConnect", {"client": self})
+                if not value: return
                 self.factory.logger.info("Connected, as '%s'" % self.username)
                 self.identified = True
                 # Are they banned?
@@ -594,7 +596,7 @@ class ArcServerProtocol(Protocol):
                         self.sendServerMessage("You are silenced and cannot speak.")
                     else:
                         if not override:
-                            self.factory.sendMessageToAll(message, "chat", self, usertitlename)
+                            self.factory.sendMessageToAll(message, "chat", client=self, user=usertitlename)
             else:
                 if type == 2:
                     self.factory.logger.warn("Beta client attempted to connect.")

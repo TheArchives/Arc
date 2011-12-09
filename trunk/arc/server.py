@@ -950,7 +950,7 @@ class ArcFactory(Factory):
                     elif task is TASK_MESSAGE:
                         # More Word Filter
                         id, colour, username, text, channel, theWorld = data
-                        value = self.runHook("onMessage", {"id": id, "colour": colour, "username": username, "text": text, "channel": channel})
+                        value = self.runHook("onMessage", {"id": id, "colour": colour, "username": username, "text": text, "channel": channel, "world": (world if theWorld == None else theWorld)})
                         if value:
                             text = self.messagestrip(text)
                             # Send the message to everybody
@@ -970,7 +970,7 @@ class ArcFactory(Factory):
                                     elif channel == "server":
                                         client.sendNormalMessage(text)
                                     elif channel == "irc":
-                                        client.sendNormalMessage("[IRC] %s%s" % (("<%s>" % username) if username != "" else ""), text)
+                                        client.sendMessage(id, "[IRC] %s" % COLOUR_PURPLE, username, text)
                                     else:
                                         client.sendMessage(id, colour, username, text)
                             # Log them
@@ -978,7 +978,7 @@ class ArcFactory(Factory):
                             if channel == "chat":
                                 self.logger.info("%s&f: %s" % (username, text))
                             elif channel == "irc":
-                                self.logger.irc("%s%s" % (("" if username == "" else ("<"+username+"> ")), text))
+                                self.logger.irc("%s %s" % ((("<%s>" % username) if username != "" else ""), text))
                             elif channel == "staff":
                                 self.logger.info("#%s: %s" % (username, text))
                             elif channel == "action":
@@ -1013,17 +1013,19 @@ class ArcFactory(Factory):
         for world in self.worlds.values():
             world.read_queue()
 
-    def sendMessageToAll(self, message, channel="chat", client=None, user="Server", world=None):
+    def sendMessageToAll(self, message, channel="chat", client=None, id=None, colour=None, user=None, world=None):
         "Quick method for sending message to all clients."
         if client == None:
-            id = 127
-            colour = COLOUR_WHITE
-            username = user
+            uid = id if id != None else 127
+            c = colour if colour != None else COLOUR_WHITE
+            username = user if user != None else "Server"
+            w = world
         else:
-            id = client.id
-            colour = client.userColour()
-            username = (user if user != "Server" else client.username)
-        self.queue.put((client, TASK_MESSAGE, (id, colour, username, message, channel, world)))
+            uid = id if id != None else client.id
+            c = colour if colour != None else client.userColour()
+            username = user if user != None else client.username
+            w = world if world != None else client.username
+        self.queue.put((client, TASK_MESSAGE, (uid, c, username, message, channel, w)))
 
     def newWorld(self, new_name, template="default"):
         "Creates a new world from some template."

@@ -13,7 +13,7 @@ class McBansServerPlugin():
     name = "McBansServerPlugin"
 
     hooks = {
-        "onPlayerConnect": "connected",
+        "prePlayerConnect": "connected",
         "playerQuit": "disconnected",
         "playerBanned": "banned",
         "playerUnbanned": "unbanned",

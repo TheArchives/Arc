@@ -19,8 +19,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
         "cb": "commandCheckBlock",
         "cp": "commandCheckPlayer",
         "rp": "commandRestorePlayer",
-        "undo": "commandUndo",
-        "redo": "commandRedo",
+        "undo": "commandRestorePlayer",
     }
 
     hooks = {
