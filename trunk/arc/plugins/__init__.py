@@ -103,23 +103,24 @@ class ProtocolPlugin(object):
     def gotClient(self):
         pass
 
+
+logger = ColouredLogger(True if "--debug" in sys.argv else False)
+
 def load_plugins(plugins):
     "Given a list of plugin names, imports them so they register."
-    debug = (True if "--debug" in sys.argv else False)
-    logger = ColouredLogger(debug)
     for module_name in plugins:
         try:
             __import__("arc.plugins.%s" % module_name)
-        except ImportError:
-            logger.error(traceback.format_exc())
+        except Exception:
+            global logger
             logger.error("Cannot load plugin %s." % module_name)
+            logger.error(traceback.format_exc())
 
 def unload_plugin(plugin_name):
     "Given a plugin name, unloads its code."
     # Unload all its classes from our lists
-    debug = (True if "--debug" in sys.argv else False)
-    logger = ColouredLogger(debug)
     for plugin in plugins_by_module_name(plugin_name):
+        global logger
         if plugin in protocol_plugins:
             protocol_plugins.remove(plugin)
             logger.debug("Unloaded protocol plugin: %s" % plugin)
@@ -129,23 +130,25 @@ def unload_plugin(plugin_name):
 
 def load_plugin(plugin_name):
     # Reload the module, in case it was imported before
+    global logger
     try:
         reload(__import__("arc.plugins.%s" % plugin_name, {}, {}, ["*"]))
     except ImportError:
-        logger = ColouredLogger()
         logger.warn("No such plugin: %s" % plugin_name)
+    except:
+        logger.error("Error when loading or reloading plugin %s." % plugin_name)
+        logger.error(traceback.format_exc())
 
 def plugins_by_module_name(module_name):
     "Given a module name, returns the plugin classes in it."
-    debug = (True if "--debug" in sys.argv else False)
-    logger = ColouredLogger(debug)
+    global logger
     try:
         module = __import__("arc.plugins.%s" % module_name, {}, {}, ["*"])
     except ImportError:
         logger.warn("Unable to load plugin: %s" % module_name)
-    except Exception as e:
-        logger.warn("Unable to load plugin: %s" % module_name)
-        logger.error("%s" % e)
+    except:
+        logger.error("Error when loading or reloading plugin %s." % module_name)
+        logger.error(traceback.format_exc())
     else:
         for name, val in module.__dict__.items():
             if isinstance(val, type):
