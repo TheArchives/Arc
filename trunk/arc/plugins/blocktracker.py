@@ -170,7 +170,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
             self.num = -1
         else:
             try:
-                self.num = int(parts[2])
+                self.num = int(parts[1])
             except:
                 self.client.sendServerMessage("n must be a number or \"all\"!")
                 return
