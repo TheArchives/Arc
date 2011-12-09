@@ -177,10 +177,12 @@ class BlockTrackerPlugin(ProtocolPlugin):
             if self.num < 0:
                 self.client.sendServerMessage("n must be greater than 0!")
                 return
-        username = self.client.username.lower()
-        if len(parts) == 3 and not self.client.isMod():
-            self.client.sendServerMessage("You cannot undo other's block changes!")
-            return
+        if len(parts) == 3:
+            if not self.client.isMod()
+                self.client.sendServerMessage("You cannot undo other's block changes!")
+                return
+            else:
+                username = parts[2].lower()
         else:
-            username = parts[2].lower()
+            username = self.client.username.lower()
         self.client.world.blocktracker.getplayeredits(username).addCallback(self.sendCallbackRestorePlayer)
