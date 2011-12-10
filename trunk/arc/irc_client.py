@@ -27,7 +27,6 @@ class ChatBot(irc.IRCClient):
         self.ops = []
         self.nickname = self.factory.main_factory.irc_nick
         self.password = self.factory.main_factory.irc_pass
-        self.prefix = "none"
         irc.IRCClient.connectionMade(self)
         self.factory.instance = self
         self.factory, self.controller_factory = self.factory.main_factory, self.factory
@@ -48,7 +47,7 @@ class ChatBot(irc.IRCClient):
     def signedOn(self):
         """Called when bot has succesfully signed on to server."""
         self.logger.info("IRC client connected.")
-        self.msg("NickServ", "IDENTIFY %s" % self.password)
+        self.msg("NickServ", "IDENTIFY %s %s" % (self.nickname, self.password))
         self.msg("ChanServ", "INVITE %s" % self.factory.irc_channel)
         self.join(self.factory.irc_channel)
 
@@ -306,7 +305,7 @@ class ChatBot(irc.IRCClient):
                                 self.factory.sendMessageToAll(out, "world", user=user, world=world)
                             else:
                                 self.msg(self.factory.irc_channel, "07That world does not exist. Try !world message")
-                elif self.prefix == "none":
+                else:
                     allowed = True
                     goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                     for character in msg:
