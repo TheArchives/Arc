@@ -607,6 +607,8 @@ class ArcServerProtocol(Protocol):
 
     def userColour(self):
         if self.factory.colors:
+            if not hasattr(self, "world"):
+                colour = COLOUR_WHITE
             if (self.username.lower() in self.factory.spectators):
                 colour = COLOUR_BLACK
             elif (self.username.lower() in self.factory.owners):

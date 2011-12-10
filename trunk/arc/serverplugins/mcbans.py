@@ -93,7 +93,7 @@ class McBansServerPlugin():
                             self.logger.info("[&1MCBans&f] User %s has a ban for another IP but is on the exclusion list." % client.username)
                 if int(data["playerRep"]) < self.threshold:
                     if client.username not in self.exceptions:
-                        self.logger.info("[%sMCBans%s] Kicking %s because their reputation of %s/10 is below the threshold!" % (client.username, data["playerRep"]))
+                        self.logger.info("[&1MCBans&1] Kicking %s because their reputation of %s/10 is below the threshold!" % (client.username, data["playerRep"]))
                         client.sendError("Your MCBans reputation of %s/10 is too low!" % data["playerRep"])
                     else:
                         self.logger.info("[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (client.username, data["playerRep"]))
