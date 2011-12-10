@@ -61,7 +61,6 @@ class ArcFactory(Factory):
         self.useLowLag = False
         self.hooks = {}
         self.saving = False
-        self.save_count = 1
         self.chatlogs = {}
         for k, v in MSGLOGFORMAT.items():
             self.chatlogs[k] = ChatLogHandler("logs/%s.log" % k, v)
@@ -694,13 +693,6 @@ class ArcFactory(Factory):
             world.save_meta()
             world.flush()
             self.logger.info("World '%s' has been saved." % world_id)
-            if self.save_count == 5:
-                if not self.useLowLag:
-                    for client in list(list(world.clients))[:]:
-                        client.sendServerMessage("[%s] World '%s' has been saved." % (datetime.datetime.utcnow().strftime("%H:%M"), world_id))
-                self.save_count = 1
-            else:
-                self.save_count += 1
             if shutdown: del self.worlds[world_id]
         except Exception as e:
             self.logger.error("Error saving world %s." % world_id)
