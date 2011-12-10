@@ -389,7 +389,7 @@ class ChatBot(irc.IRCClient):
         msg = msg.replace(".!", " !")
         user = user.split('!', 1)[0]
         msg = "".join([char for char in msg if ord(char) < 128 and char != "" or "0"])
-        self.factory.sendMessageToAll(msg, "action", user=user)
+        self.factory.sendMessageToAll("%s* %s %s" % (COLOUR_YELLOW, COLOUR_WHITE+user, msg), "irc", user="")
         self.logger.info("* %s %s" % (user, msg))
         self.factory.chatlog.write("[%s] * %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), user, msg))
         self.factory.chatlog.flush()
