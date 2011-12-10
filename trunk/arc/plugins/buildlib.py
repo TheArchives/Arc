@@ -934,22 +934,22 @@ class BuildLibPlugin(ProtocolPlugin):
     @config("category", "build")
     @config("rank", "builder")
     def commandStairs(self, parts, fromloc, overriderank):
-        "/stairs blockname height [orientation] [x y z x2 y2 z2] - Builder\nBuilds a spiral staircase.\nOrientation: a = anti-clockwise, c = clockwise"
-        if len(parts) < 9 and len(parts) != 3 and len(parts) != 4:
-            self.client.sendServerMessage("Please enter a blocktype height (c (for counter-clockwise)")
+        "/stairs blockname height orientation [x y z x2 y2 z2] - Builder\nBuilds a spiral staircase.\nOrientation: a = anti-clockwise, c = clockwise"
+        if len(parts) < 9 and len(parts) != 4:
+            self.client.sendServerMessage("Please enter a blocktype, height and the orientation")
             self.client.sendServerMessage("(and possibly two coord triples)")
             self.client.sendServerMessage("If the two points are on the 'ground' adjacent to each other, then")
             self.client.sendServerMessage("the second point will spawn the staircase and the first will")
             self.client.sendServerMessage("be used for the initial orientation")
         else:
             # Try getting the counter-clockwise flag
-            if parts[3].lower() == "a":
-                counterflag = 1
-            elif parts[3].lower() == "c":
-                counterflag = -1
-            else:
-                self.client.sendServerMessage("The third entry must be a for anti-clockwise or c for clockwise.")
-                return
+                if parts[3].lower() == "a":
+                    counterflag = 1
+                elif parts[3].lower() == "c":
+                    counterflag = -1
+                else:
+                    self.client.sendServerMessage("The third entry must be a for anti-clockwise or c for clockwise.")
+                    return
             try:
                 height = int(parts[2])
             except ValueError:
