@@ -943,13 +943,13 @@ class BuildLibPlugin(ProtocolPlugin):
             self.client.sendServerMessage("be used for the initial orientation")
         else:
             # Try getting the counter-clockwise flag
-                if parts[3].lower() == "a":
-                    counterflag = 1
-                elif parts[3].lower() == "c":
-                    counterflag = -1
-                else:
-                    self.client.sendServerMessage("The third entry must be a for anti-clockwise or c for clockwise.")
-                    return
+            if parts[3].lower() == "a":
+                counterflag = 1
+            elif parts[3].lower() == "c":
+                counterflag = -1
+            else:
+                self.client.sendServerMessage("The third entry must be a for anti-clockwise or c for clockwise.")
+                return
             try:
                 height = int(parts[2])
             except ValueError:
