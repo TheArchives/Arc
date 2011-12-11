@@ -171,7 +171,7 @@ class ChatBot(irc.IRCClient):
                         else:
                             self.msg(user, "07Sorry, %s is not a command!" % theCommand)
                     else:
-                        self.msg(user, "07%s is not a command!" % theCommand)
+                        self.msg(user, "07%s is not a command!" % command[1].lower())
                 else:
                     self.msg(user,"07You must provide a valid command to use the IRC bot." )
             else:
@@ -179,9 +179,9 @@ class ChatBot(irc.IRCClient):
                     if self.factory.staffchat:
                         self.msg(user, "07You must be an op to use StaffChat.")
                 elif command[1].lower() in self.ocommands:
-                    self.msg(user, "07You must be an op to use %s." %command[1])
+                    self.msg(user, "07You must be an op to use %s." % command[1])
                 else:
-                    self.msg( user, "07%s is not a command!" % command[1] )
+                    self.msg(user, "07%s is not a command!" % command[1])
             if not command[1].startswith("#"):
                 self.logger.info("%s just used: %s" % (user, " ".join(command[1:])))
         except:
