@@ -269,7 +269,7 @@ class ChatBot(irc.IRCClient):
                                     if msg_command[2].lower() not in self.factory.lastseen:
                                         self.msg(self.factory.irc_channel, "07There are no records of %s." % msg_command[2])
                                     else:
-                                        t = time.time() - self.factory.lastseen[msg_command[2]]
+                                        t = time.time() - self.factory.lastseen[msg_command[2].lower()]
                                         days = t // 86400
                                         hours = (t % 86400) // 3600
                                         mins = (t % 3600) // 60
