@@ -93,7 +93,7 @@ class StdinPlugin(threading.Thread):
                                 if len(message) == 1:
                                     print("Please specify a username.")
                                 else:
-                                    username = message[1]
+                                    username = message[1].lower()
                                     if self.factory.isBanned(username):
                                         print("%s is already Banned." % username)
                                     else:
@@ -111,7 +111,7 @@ class StdinPlugin(threading.Thread):
                                 if len(message) == 1:
                                     print("Please specify a username.")
                                 else:
-                                    username = message[1]
+                                    username = message[1].lower()
                                     if self.factory.isBanned(username):
                                         print("%s is already Banned." % username)
                                     else:
@@ -126,7 +126,7 @@ class StdinPlugin(threading.Thread):
                                 if len(message) < 2:
                                     print("Please specify a username and the reason.")
                                 else:
-                                    username = message[1]
+                                    username = message[1].lower()
                                 if username not in self.factory.usernames:
                                     print("That user is not online.")
                                 else:
@@ -134,7 +134,7 @@ class StdinPlugin(threading.Thread):
                                     if self.factory.isIpBanned(ip):
                                         print("%s is already IPBanned." % ip)
                                     else:
-                                        self.factory.addIpBan(ip, " ".join(params))
+                                        self.factory.addIpBan(ip, " ".join(message[1:]))
                                         self.factory.usernames[username].sendError("You got IPBanned by the console: %s" % (" ".join(message[2:])))
                                         print("%s has been IPBanned." % ip)
                             elif message[0] == "rank":
