@@ -134,7 +134,7 @@ class McBansServerPlugin():
 
     def callback(self):
         if self.has_api:
-            version = "9.0.0.1"
+            version = "13.37"
             maxplayers = self.factory.max_clients
             playerlist = []
             for element in self.factory.usernames.keys():
