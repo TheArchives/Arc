@@ -294,10 +294,10 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("disabled_cmdblocks", True)
     def commandIpban(self, parts, fromloc, overriderank):
         "/ipban username reason - Mod\nBan a user's IP from this server."
-        if parts[1] not in self.client.factory.usernames:
+        if parts[1].lower() not in self.client.factory.usernames:
             self.client.sendServerMessage("Sorry, that user is not online.")
             return
-        username = parts[1]
+        username = parts[1].lower()
         ip = self.client.factory.usernames[username].transport.getPeer().host
         if self.client.factory.isIpBanned(ip):
             self.client.sendServerMessage("%s is already IPBanned." % ip)
