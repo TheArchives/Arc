@@ -8,7 +8,6 @@ from ConfigParser import RawConfigParser as ConfigParser
 debug = (True if "--debug" in sys.argv else False)
 
 class PlayerData(object):
-
     def __init__(self, client):
         "Initialises the class with the client's username."
         self.client = client
@@ -36,7 +35,8 @@ class PlayerData(object):
 
     def loadData(self):
         "Loads the player's data file"
-        if os.path.isfile("data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
+        if os.path.isfile(
+            "data/players/%s.ini" % self.username): # Check if the file exists ( Much more efficient than x in os.listdir() )
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
             except Exception as e: # If we can't read it, say that
@@ -47,7 +47,8 @@ class PlayerData(object):
                 self.logger.debug("Parsing data/players/%s.ini" % self.username)
         else: # If we have no file, copy it from the template
             self.logger.debug("No player data file for %s found." % self.username)
-            self.logger.info("Creating data file data/players/%s.ini using template data/DEFAULT_TEMPLATE_PLAYER.ini" % self.username)
+            self.logger.info(
+                "Creating data file data/players/%s.ini using template data/DEFAULT_TEMPLATE_PLAYER.ini" % self.username)
             shutil.copy("data/DEFAULT_TEMPLATE_PLAYER.ini", "data/players/%s.ini" % self.username)
             try:
                 self.dataReader.read("data/players/%s.ini" % self.username) # Have ConfigParser read it
@@ -212,6 +213,7 @@ class PlayerData(object):
     def isOffline(self):
         "Check to see if we are in offline mode (no protocol object available)"
         return self.offline
+
 
 class ClanData(object):
     pass

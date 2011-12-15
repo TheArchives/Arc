@@ -5,21 +5,20 @@
 from arc.constants import *
 
 class McBansServerPlugin():
-
     name = "McBansServerPlugin"
 
     hooks = {
 
     }
-    
+
     commands = {
         "derp": "herp"
     }
 
     def gotServer(self):
         self.logger.debug("Loaded the test command ServerPlugin.")
-        
-    def testCommand(self, data):
-        
 
-serverPlugin = McBansServerPlugin
+    def testCommand(self, data):
+
+
+    serverPlugin = McBansServerPlugin

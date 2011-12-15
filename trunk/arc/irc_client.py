@@ -18,7 +18,7 @@ debug = (True if "--debug" in sys.argv else False)
 
 class ChatBot(irc.IRCClient):
     """An IRC-server chat integration bot."""
-    
+
     ocommands = ["help", "cmdlist", "banreason", "banned", "kick", "ban", "shutdown", "rank", "derank", "spec", "boot"]
     ncommands = ["who", "worlds", "staff", "credits", "help", "rules", "cmdlist", "about", "lastseen", "roll"]
 
@@ -90,7 +90,7 @@ class ChatBot(irc.IRCClient):
                                 self.msg(user, "07Please include a message to send.")
                             else:
                                 text = " ".join(command[1:])[1:]
-                                self.factory.sendMessageToAll(text, "staff", user=(COLOUR_PURPLE+user))
+                                self.factory.sendMessageToAll(text, "staff", user=(COLOUR_PURPLE + user))
                     elif command[1].lower() in self.ocommands and len(command) > 1:
                         theCommand = command[1].lower()
                         if theCommand == ("help"):
@@ -106,41 +106,44 @@ class ChatBot(irc.IRCClient):
                             if len(command) == 3:
                                 username = command[2]
                                 if not self.factory.isBanned(username):
-                                    self.msg(user,"07%s is not Banned." % username)
+                                    self.msg(user, "07%s is not Banned." % username)
                                 else:
-                                    self.msg(user,"07Reason: %s" % self.factory.banReason(username))
+                                    self.msg(user, "07Reason: %s" % self.factory.banReason(username))
                             else:
-                                self.msg(user,"07You must provide a name.")
+                                self.msg(user, "07You must provide a name.")
                         elif theCommand == ("banned"):
-                            self.msg(user,  ", ".join(self.factory.banned))
+                            self.msg(user, ", ".join(self.factory.banned))
                         elif theCommand == ("kick"):
                             theUser = command[2]
                             if user.lower() in self.factory.usernames:
                                 if len(command) > 2:
-                                    self.factory.usernames[theUser.lower()].sendError("You were kicked by %s: %s" % (user, " ".join(command[3:])))
+                                    self.factory.usernames[theUser.lower()].sendError(
+                                        "You were kicked by %s: %s" % (user, " ".join(command[3:])))
                                 else:
                                     self.factory.usernames[theUser.lower()].sendError("You were kicked by %s!" % user)
-                                self.msg(user, "%s has been kicked from the server%s." % (str(command[2], (" for %s" % " ".join(command [3:]) if len(command) > 2 else ""))))
+                                self.msg(user, "%s has been kicked from the server%s." % (
+                                str(command[2], (" for %s" % " ".join(command[3:]) if len(command) > 2 else ""))))
                                 return
                             self.msg(user, "%s is not online." % command[2])
                         elif theCommand == ("ban"):
                             if command > 3:
                                 if self.factory.isBanned(command[2]):
-                                    self.msg(user,"07%s is already Banned." % command[2])
+                                    self.msg(user, "07%s is already Banned." % command[2])
                                 else:
                                     self.factory.addBan(command[2], " ".join(command[3:]))
                                     if command[2] in self.factory.usernames:
                                         self.factory.usernames[command[2]].sendError("You got banned!")
-                                    self.msg(user,"07%s has been Banned for %s." % (command[2]," ".join(command[3:])))
+                                    self.msg(user,
+                                        "07%s has been Banned for %s." % (command[2], " ".join(command[3:])))
                             else:
-                                self.msg(user,"07Please give a username and reason.")
+                                self.msg(user, "07Please give a username and reason.")
                         elif theCommand == ("shutdown"):
                             world = str(command[2]).lower()
                             if world in self.factory.worlds:
                                 self.factory.unloadWorld(world)
-                                self.msg(user, "07World '"+world+"' shutdown.")
+                                self.msg(user, "07World '" + world + "' shutdown.")
                             else:
-                                self.msg(user, "07World '"+world+"' is not loaded.")
+                                self.msg(user, "07World '" + world + "' is not loaded.")
                         elif theCommand == ("rank"):
                             if not len(command) > 2:
                                 self.msg(user, "07You must provide a username.")
@@ -163,7 +166,7 @@ class ChatBot(irc.IRCClient):
                                 self.msg(user, DeSpec(self, command[1], "irc", True, self.factory))
                         elif theCommand == ("boot"):
                             world = str(command[2]).lower()
-                            returned = self.factory.loadWorld("worlds/"+world, world)
+                            returned = self.factory.loadWorld("worlds/" + world, world)
                             if returned == False:
                                 self.msg(user, "07 World %s loading failed." % world)
                             else:
@@ -173,7 +176,7 @@ class ChatBot(irc.IRCClient):
                     else:
                         self.msg(user, "07%s is not a command!" % command[1].lower())
                 else:
-                    self.msg(user,"07You must provide a valid command to use the IRC bot." )
+                    self.msg(user, "07You must provide a valid command to use the IRC bot.")
             else:
                 if command[1].startswith("#"):
                     if self.factory.staffchat:
@@ -198,7 +201,7 @@ class ChatBot(irc.IRCClient):
                     msg_command = msg.split()
                     self.AdminCommand([user] + msg_command)
             elif channel.lower() == self.factory.irc_channel.lower():
-                if msg.lower().lstrip(self.nickname.lower()).startswith("$"+self.nickname.lower()):
+                if msg.lower().lstrip(self.nickname.lower()).startswith("$" + self.nickname.lower()):
                     msg_command = msg.split()
                     msg_command[1] = msg_command[1].lower()
                     if len(msg_command) > 1:
@@ -207,7 +210,7 @@ class ChatBot(irc.IRCClient):
                                 self.msg(self.factory.irc_channel, "07Who's Online?")
                                 none = True
                                 for key in self.factory.worlds:
-                                    users =  ", ".join(str(c.username) for c in self.factory.worlds[key].clients)
+                                    users = ", ".join(str(c.username) for c in self.factory.worlds[key].clients)
                                     if users:
                                         whois = ("07%s: %s" % (key, users))
                                         self.msg(self.factory.irc_channel, whois)
@@ -218,7 +221,7 @@ class ChatBot(irc.IRCClient):
                             elif msg_command[1] == "worlds":
                                 self.msg(self.factory.irc_channel, "07Worlds Booted:")
                                 worlds = ", ".join([id for id, world in self.factory.worlds.items()])
-                                self.msg(self.factory.irc_channel, "07Online Worlds: "+worlds)
+                                self.msg(self.factory.irc_channel, "07Online Worlds: " + worlds)
                             elif msg_command[1] == "staff":
                                 self.msg(self.factory.irc_channel, "07Please see your PM for the Staff List.")
                                 self.msg(user, "The Server Staff")
@@ -230,14 +233,14 @@ class ChatBot(irc.IRCClient):
                                 self.msg(user, "The Credits")
                                 list = Credits()
                                 for each in list:
-                                    self.msg(user,"".join(each))
+                                    self.msg(user, "".join(each))
                             elif msg_command[1] == "help":
                                 self.msg(self.factory.irc_channel, "07Help Center")
-                                self.msg(self.factory.irc_channel, "07Commands: Use '$"+self.nickname+" cmdlist'")
+                                self.msg(self.factory.irc_channel, "07Commands: Use '$" + self.nickname + " cmdlist'")
                                 self.msg(self.factory.irc_channel, "07WorldChat: Use '!world message'")
                                 self.msg(self.factory.irc_channel, "07IRCChat: Use '$message'")
-                                self.msg(self.factory.irc_channel, "07About: Use '$"+self.nickname+" about'")
-                                self.msg(self.factory.irc_channel, "07Credits: Use '$"+self.nickname+" credits'")
+                                self.msg(self.factory.irc_channel, "07About: Use '$" + self.nickname + " about'")
+                                self.msg(self.factory.irc_channel, "07Credits: Use '$" + self.nickname + " credits'")
                             elif msg_command[1] == "rules":
                                 self.msg(self.factory.irc_channel, "07Please see your PM for the Rules.")
                                 self.msg(user, "The Rules")
@@ -251,42 +254,53 @@ class ChatBot(irc.IRCClient):
                                     self.msg(user, line)
                             elif msg_command[1] == "cmdlist":
                                 self.msg(self.factory.irc_channel, "07Command List")
-                                self.msg(self.factory.irc_channel, "07about cmdlist credits help rules staff who worlds")
-                                self.msg(self.factory.irc_channel, "07Use '$"+self.nickname+" command arguments' to do it.")
-                                self.msg(self.factory.irc_channel, "07NOTE: Admin Commands are by PMing "+self.nickname+" - only for ops.")
+                                self.msg(self.factory.irc_channel,
+                                    "07about cmdlist credits help rules staff who worlds")
+                                self.msg(self.factory.irc_channel,
+                                    "07Use '$" + self.nickname + " command arguments' to do it.")
+                                self.msg(self.factory.irc_channel,
+                                    "07NOTE: Admin Commands are by PMing " + self.nickname + " - only for ops.")
                             elif msg_command[1] == "about":
-                                self.msg(self.factory.irc_channel, "07About the Server, powered by The Archives %s | Credits: Use '$%s credits'" % (VERSION, self.nickname))
-                                self.msg(self.factory.irc_channel, "07Name: %s; Owners: %s" % (self.factory.server_name, ", ".join(self.factory.owners)))
+                                self.msg(self.factory.irc_channel,
+                                    "07About the Server, powered by The Archives %s | Credits: Use '$%s credits'" % (
+                                    VERSION, self.nickname))
+                                self.msg(self.factory.irc_channel, "07Name: %s; Owners: %s" % (
+                                self.factory.server_name, ", ".join(self.factory.owners)))
                                 try:
-                                    self.msg(self.factory.irc_channel, "07URL: "+self.factory.heartbeat.url)
+                                    self.msg(self.factory.irc_channel, "07URL: " + self.factory.heartbeat.url)
                                 except:
                                     self.msg(self.factory.irc_channel, "07URL: N/A (minecraft.net is offline)")
-                                self.msg(self.factory.irc_channel, "07Site: "+self.factory.info_url)
+                                self.msg(self.factory.irc_channel, "07Site: " + self.factory.info_url)
                             elif msg_command[1] == "lastseen":
                                 if len(msg_command) < 2:
                                     self.msg(self.factory.irc_channel, "07Please enter a username to look for.")
                                 else:
                                     if msg_command[2].lower() not in self.factory.lastseen:
-                                        self.msg(self.factory.irc_channel, "07There are no records of %s." % msg_command[2])
+                                        self.msg(self.factory.irc_channel,
+                                            "07There are no records of %s." % msg_command[2])
                                     else:
                                         t = time.time() - self.factory.lastseen[msg_command[2].lower()]
                                         days = t // 86400
                                         hours = (t % 86400) // 3600
                                         mins = (t % 3600) // 60
                                         desc = "%id, %ih, %im" % (days, hours, mins)
-                                        self.msg(self.factory.irc_channel, "07%s was last seen %s ago." % (msg_command[2], desc))
+                                        self.msg(self.factory.irc_channel,
+                                            "07%s was last seen %s ago." % (msg_command[2], desc))
                             else:
                                 self.msg(self.factory.irc_channel, "07Sorry, %s is not a command!" % msg_command[1])
                             self.logger.info("%s just used: %s" % (user, " ".join(msg_command[1:])))
                         elif msg_command[1] in self.ocommands and len(msg_command) > 1:
                             if user in self.ops:
-                                self.msg(self.factory.irc_channel, "07Please do not use %s in the channel; use a query instead!" % msg_command[1])
+                                self.msg(self.factory.irc_channel,
+                                    "07Please do not use %s in the channel; use a query instead!" % msg_command[1])
                             else:
-                                self.msg(self.factory.irc_channel, "07You must be an op to use %s." % msg_command[1]) 
+                                self.msg(self.factory.irc_channel, "07You must be an op to use %s." % msg_command[1])
                         else:
-                            self.msg(self.factory.irc_channel,"07You must provide a valid command to use the IRC bot - try the help command.")
+                            self.msg(self.factory.irc_channel,
+                                "07You must provide a valid command to use the IRC bot - try the help command.")
                     else:
-                        self.msg(self.factory.irc_channel,"07You must provide a valid command to use the IRC bot - try the help command.")
+                        self.msg(self.factory.irc_channel,
+                            "07You must provide a valid command to use the IRC bot - try the help command.")
                 elif msg.startswith("$"):
                     self.logger.info("<$%s> %s" % (user, msg))
                 elif msg.startswith("!"):
@@ -296,8 +310,8 @@ class ChatBot(irc.IRCClient):
                         self.msg(self.factory.irc_channel, "07Please include a message to send.")
                     else:
                         try:
-                           world = message[0][1:len(message[0])]
-                           out = "\n ".join(message[1:])
+                            world = message[0][1:len(message[0])]
+                            out = "\n ".join(message[1:])
                         except ValueError:
                             self.msg(self.factory.irc_channel, "07Please include a message to send.")
                         else:
@@ -307,7 +321,10 @@ class ChatBot(irc.IRCClient):
                                 self.msg(self.factory.irc_channel, "07That world does not exist. Try !world message")
                 else:
                     allowed = True
-                    goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
+                    goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q",
+                                 "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6",
+                                 "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{",
+                                 "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                     for character in msg:
                         if not character.lower() in goodchars:
                             msg = msg.replace("&0", "&0")
@@ -371,12 +388,12 @@ class ChatBot(irc.IRCClient):
                     msg = msg.replace("%f", "&f")
                     msg = msg.replace("./", " /")
                     msg = msg.replace(".!", " !")
-                    if msg[len(msg)-2] == "&":
+                    if msg[len(msg) - 2] == "&":
                         self.msg(self.factory.irc_channel, "07You cannot use a color at the end of a message.")
                         return
                     if len(msg) > 51:
                         moddedmsg = msg[:51].replace(" ", "")
-                        if moddedmsg[len(moddedmsg)-2] == "&":
+                        if moddedmsg[len(moddedmsg) - 2] == "&":
                             msg = msg.replace("&", "*")
                     self.factory.sendMessageToAll(msg, "irc", user=user)
         except:
@@ -389,9 +406,10 @@ class ChatBot(irc.IRCClient):
         msg = msg.replace(".!", " !")
         user = user.split('!', 1)[0]
         msg = "".join([char for char in msg if ord(char) < 128 and char != "" or "0"])
-        self.factory.sendMessageToAll("%s* %s %s" % (COLOUR_YELLOW, COLOUR_WHITE+user, msg), "irc", user="")
+        self.factory.sendMessageToAll("%s* %s %s" % (COLOUR_YELLOW, COLOUR_WHITE + user, msg), "irc", user="")
         self.logger.info("* %s %s" % (user, msg))
-        self.factory.chatlog.write("[%s] * %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), user, msg))
+        self.factory.chatlog.write(
+            "[%s] * %s %s\n" % (datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), user, msg))
         self.factory.chatlog.flush()
 
     def sendMessage(self, username, message):
@@ -521,7 +539,8 @@ class ChatBot(irc.IRCClient):
             if len(arguments) < 2:
                 msg = "%s%s was opped on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
-                msg = "%sUsers opped on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
+                msg = "%sUsers opped on %s by %s: %s (%s)" % (
+                COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
             self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if not name in self.ops:
@@ -533,7 +552,8 @@ class ChatBot(irc.IRCClient):
             if len(arguments) < 2:
                 msg = "%s%s was deopped on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
-                msg = "%sUsers deopped on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
+                msg = "%sUsers deopped on %s by %s: %s (%s)" % (
+                COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
             self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if name in self.ops:
@@ -542,7 +562,8 @@ class ChatBot(irc.IRCClient):
             if len(arguments) < 2:
                 msg = "%s%s was voiced on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
-                msg = "%sUsers voiced on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
+                msg = "%sUsers voiced on %s by %s: %s (%s)" % (
+                COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
             self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if not name in self.ops:
@@ -554,7 +575,8 @@ class ChatBot(irc.IRCClient):
             if len(arguments) < 2:
                 msg = "%s%s was devoiced on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
             else:
-                msg = "%sUsers devoiced on %s by %s: %s (%s)" % (COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
+                msg = "%sUsers devoiced on %s by %s: %s (%s)" % (
+                COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
             self.factory.sendMessageToAll(msg, "irc", user="")
             for name in args:
                 if name in self.ops:
@@ -569,7 +591,7 @@ class ChatBot(irc.IRCClient):
             self.factory.sendMessageToAll(msg, "irc", user="")
             msg = "%s(%s)" % (COLOUR_YELLOW, " ".join(args))
             self.factory.sendMessageToAll(msg, "irc", user="")
-    
+
     def irc_QUIT(self, user, params):
         userhost = user
         user = user.split('!')[0]
@@ -579,7 +601,10 @@ class ChatBot(irc.IRCClient):
         msg = "%s%s has quit IRC." % (COLOUR_YELLOW, user)
         self.factory.sendMessageToAll(msg, "irc", user=user)
         allowed = True
-        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
+        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+                     "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@",
+                     "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<",
+                     ",", ">", ".", "?", "/", "\\", "|"]
         for character in msg:
             if not character.lower() in goodchars:
                 msg = msg.replace("&0", "&0")
@@ -643,14 +668,15 @@ class ChatBot(irc.IRCClient):
         msg = msg.replace("%f", "&f")
         msg = msg.replace("./", " /")
         msg = msg.replace(".!", " !")
-        if msg[len(msg)-2] == "&":
+        if msg[len(msg) - 2] == "&":
             return
         if len(msg) > 51:
             moddedmsg = msg[:51].replace(" ", "")
-            if moddedmsg[len(moddedmsg)-2] == "&":
+            if moddedmsg[len(moddedmsg) - 2] == "&":
                 msg = msg.replace("&", "*")
         msg = "%s(%s%s)" % (COLOUR_YELLOW, quitMessage, COLOUR_YELLOW)
         self.factory.sendMessageToAll(msg, "irc", user="")
+
 
 class ChatBotFactory(protocol.ClientFactory):
     # the class of the protocol to build when new connection is made
@@ -661,7 +687,7 @@ class ChatBotFactory(protocol.ClientFactory):
         self.main_factory = main_factory
         self.instance = None
         self.rebootFlag = 1
-    
+
     def quit(self, msg):
         self.rebootFlag = 0
         self.instance.sendLine("QUIT :" + msg)

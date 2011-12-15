@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import sys, threading, time, urllib
+import sys, urllib
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
@@ -46,23 +46,28 @@ class Heartbeat(object):
         try:
             getattr(self.factory, "wom_heartbeat")
         except AttributeError:
-            reactor.callLater(3, self.sendHeartbeat) 
+            reactor.callLater(3, self.sendHeartbeat)
             return
         try:
             getattr(self.factory, "heartbeats")
         except AttributeError:
             if self.factory.hbs != []: # Did we fill in the spoof heartbeat bit?
-                reactor.callLater(3, self.sendHeartbeat) # Server has not finished loading yet - come back in 3 seconds maybe?
+                reactor.callLater(3,
+                    self.sendHeartbeat) # Server has not finished loading yet - come back in 3 seconds maybe?
             return
         try:
             self._sendHeartbeat()
         except ImportError:
-            self.logger.info("WoM heartbeat has SSL enabled, and OpenSSL is not installed on the system. Falling back to minecraft.net heartbeat.")
+            self.logger.info(
+                "WoM heartbeat has SSL enabled, and OpenSSL is not installed on the system. Falling back to minecraft.net heartbeat.")
             self._sendHeartbeat(True)
 
     def _sendHeartbeat(self, overrideurl=False):
-        hburl = "http://direct.worldofminecraft.com/hb.php" if (self.factory.wom_heartbeat and not overrideurl) else "http://www.minecraft.net/heartbeat.jsp"
-        getPage(hburl, method="POST", postdata=self.hbdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30).addCallback(self.heartbeatSentCallback, 0).addErrback(self.heartbeatFailedCallback, 0)
+        hburl = "http://direct.worldofminecraft.com/hb.php" if (
+        self.factory.wom_heartbeat and not overrideurl) else "http://www.minecraft.net/heartbeat.jsp"
+        getPage(hburl, method="POST", postdata=self.hbdata,
+            headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30).addCallback(
+            self.heartbeatSentCallback, 0).addErrback(self.heartbeatFailedCallback, 0)
         for k, v in self.factory.heartbeats.items():
             spoofdata = urllib.urlencode({
                 "port": v[1],
@@ -73,7 +78,9 @@ class Heartbeat(object):
                 "version": 7,
                 "salt": self.factory.salt,
                 })
-            getPage(hburl, method="POST", postdata=spoofdata, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30).addCallback(self.heartbeatSentCallback, k).addErrback(self.heartbeatFailedCallback, k)
+            getPage(hburl, method="POST", postdata=spoofdata,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30).addCallback(
+                self.heartbeatSentCallback, k).addErrback(self.heartbeatFailedCallback, k)
 
     def heartbeatSentCallback(self, result, id):
         if id == 0:
@@ -89,7 +96,8 @@ class Heartbeat(object):
 
     def heartbeatFailedCallback(self, err, id):
         if isinstance(err, TimeoutError):
-            self.logger.error("Heartbeat sending%s timed out." % ("" if id == 0 else " to "+self.factory.heartbeats[id][0]))
+            self.logger.error(
+                "Heartbeat sending%s timed out." % ("" if id == 0 else " to " + self.factory.heartbeats[id][0]))
         elif isinstance(err, twistedError):
             if id == 0:
                 self.logger.error("Heartbeat failed to send. Error:")
@@ -97,5 +105,6 @@ class Heartbeat(object):
                 self.logger.error("Spoof heartbeat for %s could not be sent. Error:" % self.factory.heartbeats[id][0])
             self.logger.error(str(err))
         else:
-            self.logger.error("Unexpected error in heartbeat sending process%s. Error:" % ("" if id == 0 else " to "+self.factory.heartbeats[id][0]))
+            self.logger.error("Unexpected error in heartbeat sending process%s. Error:" % (
+            "" if id == 0 else " to " + self.factory.heartbeats[id][0]))
             self.logger.error(str(err))

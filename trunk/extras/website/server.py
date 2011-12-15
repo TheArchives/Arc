@@ -3,6 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import web
+
 try:
     import simplejson
 except:
@@ -10,11 +11,11 @@ except:
 import socket
 import configuration as config
 
-urls=(
+urls = (
     '/', 'status',
     '/index', 'status',
     '/(.*).css', 'css'
-)
+    )
 render = web.template.render('templates/')
 app = web.application(urls, globals())
 BACKEND_HOST = config.host
@@ -22,20 +23,19 @@ BACKEND_PORT = config.port
 BACKEND_PASSWORD = config.password
 
 class BackendSocket(object):
-    
     def __init__(self, host, port, password):
         self.skt = socket.socket()
         self.skt.connect((host, port))
         self.password = password
-    
+
     def query(self, command, data=None):
         payload = {
             "command": command,
             "password": self.password,
-        }
+            }
         if data:
             payload.update(data)
-        self.skt.send(simplejson.dumps(payload)+"\r\n")
+        self.skt.send(simplejson.dumps(payload) + "\r\n")
         response = self.skt.recv(1024)
         while response and "\n" not in response:
             response += self.skt.recv(1024)
@@ -46,10 +46,10 @@ class BackendSocket(object):
             return simplejson.loads(result)
         else:
             raise IOError
-    
+
     def __del__(self):
         self.skt.close()
-    
+
 
 class status:
     def GET(self):
@@ -72,11 +72,13 @@ class status:
         directors = bs.query("directors")['directors']
         admins = bs.query("Admins")['admins']
         mods = bs.query("Mods")['mods']
-        return render.status(name, motd, public, limit, awaytime, asd, gchat, bufreq, bumax, ircserver, ircchannel, owners, specs, worlds, users, directors, admins, mods)
+        return render.status(name, motd, public, limit, awaytime, asd, gchat, bufreq, bumax, ircserver, ircchannel,
+            owners, specs, worlds, users, directors, admins, mods)
+
 
 class css:
-     def GET(self, css):
-        styling = open(css+".css", 'rb')
+    def GET(self, css):
+        styling = open(css + ".css", 'rb')
         return styling.read()
         styling.close()
 

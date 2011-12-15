@@ -9,7 +9,6 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class BuildUtil(ProtocolPlugin):
-
     commands = {
         "bind": "commandBind",
         "b": "commandBind",
@@ -53,13 +52,13 @@ class BuildUtil(ProtocolPlugin):
         "solid": "commandSolid",
         "adminblock": "commandSolid",
         "bedrock": "commandSolid",
-    }
+        }
 
     hooks = {
         "preblockchange": "preBlockChanged",
         "blockchange": "blockChanged",
         "rankchange": "sendAdminBlockUpdate",
-    }
+        }
 
     def gotClient(self):
         self.block_overrides = {}
@@ -92,7 +91,8 @@ class BuildUtil(ProtocolPlugin):
 
     def sendAdminBlockUpdate(self):
         "Sends a packet that updates the client's admin-building ability"
-        self.client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the server...", self.client.isOp() and 100 or 0)
+        self.client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)),
+            "Reloading the server...", self.client.isOp() and 100 or 0)
 
     @config("category", "build")
     def commandBind(self, parts, fromloc, overriderank):
@@ -136,7 +136,8 @@ class BuildUtil(ProtocolPlugin):
     @config("category", "build")
     def commandAir(self, params, fromloc, overriderank):
         "/air - Guest\nAliases: place, stand\nPuts a block under you for easier building in the air."
-        self.client.sendPacked(TYPE_BLOCKSET, self.client.x>>5, (self.client.y>>5)-3, (self.client.z>>5), BLOCK_WHITE)
+        self.client.sendPacked(TYPE_BLOCKSET, self.client.x >> 5, (self.client.y >> 5) - 3, (self.client.z >> 5),
+            BLOCK_WHITE)
 
     @config("category", "build")
     def commandBuild(self, parts, fromloc, overrriderank):
@@ -202,7 +203,7 @@ class BuildUtil(ProtocolPlugin):
                 except ValueError:
                     self.client.sendServerMessage("All coordinate parameters must be integers.")
                     return
-            # Check whether we have anything saved
+                # Check whether we have anything saved
             try:
                 num_saved = len(self.client.bsaved_blocks)
                 if fromloc == "user":
@@ -210,10 +211,11 @@ class BuildUtil(ProtocolPlugin):
             except AttributeError:
                 self.client.sendServerMessage("Please /copy something first.")
                 return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 for i, j, k, block in self.client.bsaved_blocks:
                     if not self.client.AllowedToBuild(i, j, k) and not overriderank:
@@ -229,8 +231,10 @@ class BuildUtil(ProtocolPlugin):
                         self.client.sendServerMessage("Out of bounds paste error.")
                         return
                     yield
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -241,6 +245,7 @@ class BuildUtil(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your paste just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -280,13 +285,14 @@ class BuildUtil(ProtocolPlugin):
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to copy (Limit is %s)" % limit)
                     return
+
             def doBlocks():
                 self.client.bsaved_blocks = set()
                 world = self.client.world
                 try:
-                    for i in range(x, x2+1):
-                        for j in range(y, y2+1):
-                            for k in range(z, z2+1):
+                    for i in range(x, x2 + 1):
+                        for j in range(y, y2 + 1):
+                            for k in range(z, z2 + 1):
                                 if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
@@ -295,8 +301,10 @@ class BuildUtil(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds copy error.")
                     return
+
             def copyDoneCallback(r):
                 self.client.sendServerMessage("Your copy just completed.")
+
             self.client.sendServerMessage("Copying... This may take a while.")
             threads.deferToThread(doBlocks).addCallback(copyDoneCallback)
 
@@ -433,7 +441,7 @@ class BuildUtil(ProtocolPlugin):
             self.client.sendServerMessage("Angle must be divisible by 90.")
             return
         rotations = angle / 90
-        self.client.sendServerMessage("Rotating %s degrees..." %angle)
+        self.client.sendServerMessage("Rotating %s degrees..." % angle)
         for rotation in range(rotations):
             tempblocks = set()
             ymax = zmax = 0
@@ -500,7 +508,7 @@ class BuildUtil(ProtocolPlugin):
             blockB = self.client.GetBlockValue(parts[2])
             if blockA == None or blockB == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 3:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -529,17 +537,19 @@ class BuildUtil(ProtocolPlugin):
             if limit != -1:
                 # Stop them doing silly things
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
-                    self.client.sendServerMessage("Sorry, that area is too big for you to replace (Limit is %s)" % limit)
+                    self.client.sendServerMessage(
+                        "Sorry, that area is too big for you to replace (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 try:
-                    for i in range(x, x2+1):
-                        for j in range(y, y2+1):
-                            for k in range(z, z2+1):
+                    for i in range(x, x2 + 1):
+                        for j in range(y, y2 + 1):
+                            for k in range(z, z2 + 1):
                                 if not self.client.AllowedToBuild(i, j, k) and overriderank:
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
@@ -553,8 +563,10 @@ class BuildUtil(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds replace error.")
                     return
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -565,6 +577,7 @@ class BuildUtil(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your replace just completed.")
                     pass
+
             do_step()
 
 
@@ -579,7 +592,7 @@ class BuildUtil(ProtocolPlugin):
             blockB = self.client.GetBlockValue(parts[2])
             if blockA == None or blockB == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 3:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -608,17 +621,19 @@ class BuildUtil(ProtocolPlugin):
             if limit != -1:
                 # Stop them doing silly things
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
-                    self.client.sendServerMessage("Sorry, that area is too big for you to replacenot (Limit is %s)" % limit)
+                    self.client.sendServerMessage(
+                        "Sorry, that area is too big for you to replacenot (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 try:
-                    for i in range(x, x2+1):
-                        for j in range(y, y2+1):
-                            for k in range(z, z2+1):
+                    for i in range(x, x2 + 1):
+                        for j in range(y, y2 + 1):
+                            for k in range(z, z2 + 1):
                                 if not self.client.AllowedToBuild(i, j, k) and overriderank:
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
@@ -632,8 +647,10 @@ class BuildUtil(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds replace error.")
                     return
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -644,6 +661,7 @@ class BuildUtil(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your replacenot just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -659,7 +677,7 @@ class BuildUtil(ProtocolPlugin):
             blockC = self.client.GetBlockValue(parts[3])
             if blockA == None or blockB == None or blockC == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 4:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -688,17 +706,19 @@ class BuildUtil(ProtocolPlugin):
             if limit != -1:
                 # Stop them doing silly things
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
-                    self.client.sendServerMessage("Sorry, that area is too big for you to creplace (Limit is %s)" % limit)
+                    self.client.sendServerMessage(
+                        "Sorry, that area is too big for you to creplace (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 try:
-                   for i in range(x, x2+1):
-                       for j in range(y, y2+1):
-                           for k in range(z, z2+1):
+                    for i in range(x, x2 + 1):
+                        for j in range(y, y2 + 1):
+                            for k in range(z, z2 + 1):
                                 blockcheck = world.blockstore.raw_blocks[world.blockstore.get_offset(i, j, k)]
                                 if blockcheck == blockA:
                                     if (i + j + k) % 2 == 0:
@@ -712,8 +732,10 @@ class BuildUtil(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds creplace error.")
                     return
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -724,6 +746,7 @@ class BuildUtil(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your creplace just completed.")
                     pass
+
             do_step()
 
     @config("rank", "builder")
@@ -756,14 +779,16 @@ class BuildUtil(ProtocolPlugin):
             if limit != -1:
                 # Stop them doing silly things
                 if ((radius * 2) ** 3 > limit) or limit == 0:
-                    self.client.sendSplitServerMessage("Sorry, that area is too big for you to replacenear (Limit is %s)" % limit)
+                    self.client.sendSplitServerMessage(
+                        "Sorry, that area is too big for you to replacenear (Limit is %s)" % limit)
                     return
             world = self.client.world
+
             def generate_changes():
                 try:
-                    for i in range(x-radius, x+radius):
-                        for j in range(y-radius, y+radius):
-                            for k in range(z-radius, z+radius):
+                    for i in range(x - radius, x + radius):
+                        for j in range(y - radius, y + radius):
+                            for k in range(z - radius, z + radius):
                                 if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                     return
                                 check_offset = world.blockstore.get_offset(i, j, k)
@@ -777,7 +802,9 @@ class BuildUtil(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendErrorMessage("Out of bounds replacenear error.")
                     return
+
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -788,6 +815,7 @@ class BuildUtil(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your replacenear just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -795,14 +823,16 @@ class BuildUtil(ProtocolPlugin):
     def commandFill(self, parts, fromloc, overriderank):
         "/fill blockname repblock [x y z x2 y2 z2] - Op\nFills the area with the block."
         if len(parts) < 9 and len(parts) != 3:
-            self.client.sendSplitServerMessage("Please enter a type and a type to replace (and possibly two coord triples)")
-            self.client.sendSplitServerMessage("Note that you must place two blocks to use it. The first block sets where to spread from and the second block sets which directions to spread.")
+            self.client.sendSplitServerMessage(
+                "Please enter a type and a type to replace (and possibly two coord triples)")
+            self.client.sendSplitServerMessage(
+                "Note that you must place two blocks to use it. The first block sets where to spread from and the second block sets which directions to spread.")
         else:
             blockA = self.client.GetBlockValue(parts[1])
             blockB = self.client.GetBlockValue(parts[2])
             if blockA == None or blockB == None:
                 return
-            # If they only provided the type argument, use the last block place
+                # If they only provided the type argument, use the last block place
             if len(parts) == 3:
                 try:
                     x, y, z = self.client.last_block_changes[1]
@@ -827,7 +857,7 @@ class BuildUtil(ProtocolPlugin):
                 return
             var_locxchecklist = [(1, 0, 0), (-1, 0, 0)]
             var_locychecklist = [(0, 1, 0), (0, -1, 0)]
-            var_loczchecklist = [(0, 0, 1), (0 ,0, -1)]
+            var_loczchecklist = [(0, 0, 1), (0, 0, -1)]
             var_locchecklist = []
             if x != x2:
                 var_locchecklist = var_locchecklist + var_locxchecklist
@@ -852,12 +882,14 @@ class BuildUtil(ProtocolPlugin):
                 self.client.sendBlock(x, y, z, block)
             except:
                 pass
+
             def generate_changes():
                 var_blockchanges = 0
                 while self.var_blocklist != []:
                     if limit > -1:
                         if var_blockchanges > limit:
-                            self.client.sendServerMessage("You have exceeded the fill limit for your rank. (Limit is %s)" % limit)
+                            self.client.sendServerMessage(
+                                "You have exceeded the fill limit for your rank. (Limit is %s)" % limit)
                             return
                     i, j, k, positionprevious = self.var_blocklist[0]
                     var_blockchanges += 1
@@ -874,13 +906,15 @@ class BuildUtil(ProtocolPlugin):
                                     world[ri, rj, rk] = blockA
                                     self.client.queueTask(TASK_BLOCKSET, (ri, rj, rk, blockA), world=world)
                                     self.client.sendBlock(ri, rj, rk, blockA)
-                                    self.var_blocklist.append((ri, rj, rk,(i,j,k)))
+                                    self.var_blocklist.append((ri, rj, rk, (i, j, k)))
                             except AssertionError:
                                 pass
                             yield
                     del self.var_blocklist[0]
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -891,6 +925,7 @@ class BuildUtil(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your fill just completed.")
                     pass
+
             do_step()
 
     @config("category", "world")
@@ -903,7 +938,7 @@ class BuildUtil(ProtocolPlugin):
         except IndexError:
             self.client.sendServerMessage("You have not clicked two blocks yet.")
             return
-        xRange, yRange, zRange = abs(x - x2) + 1 , abs(y - y2) + 1, abs(z - z2) + 1
+        xRange, yRange, zRange = abs(x - x2) + 1, abs(y - y2) + 1, abs(z - z2) + 1
         self.client.sendServerMessage("X = %d, Y = %d, Z = %d" % (xRange, yRange, zRange))
 
     @config("category", "build")
@@ -914,4 +949,6 @@ class BuildUtil(ProtocolPlugin):
             self.client.sendServerMessage("You are now placing normal rock.")
         else:
             self.client.sendServerMessage("You are now placing admin rock.")
-        self.building_solid = not self.building_solid # Option flip
+        self.building_solid = not self.building_solid
+
+# Option flip

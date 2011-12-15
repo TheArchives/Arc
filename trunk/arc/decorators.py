@@ -10,15 +10,19 @@ from arc.globals import recursive_default
 
 def config(key, value):
     "Decorator that writes to the configuration of the command."
+
     def config_inner(func):
         if getattr(func, "config", None) is None:
             func.config = recursive_default()
         func.config[key] = value
         return func
+
     return config_inner
+
 
 def username_command(func):
     "Decorator for commands that accept a single username parameter, and need a Client"
+
     def inner(self, parts, fromloc, overriderank):
         if len(parts) == 1:
             self.client.sendServerMessage("Please specify a username.")
@@ -41,26 +45,32 @@ def username_command(func):
                         self.client.sendServerMessage("You specificed too many arguments.")
                 else:
                     func(self, self.client.factory.usernames[names[0]], fromloc, overriderank)
+
     inner.__doc__ = func.__doc__
     return inner
+
 
 def only_string_command(string_name):
     def only_inner(func):
         "Decorator for commands that accept a single username/plugin/etc parameter, and don't need it checked"
+
         def inner(self, parts, fromloc, overriderank):
             if len(parts) == 1:
                 self.client.sendServerMessage("Please specify a %s." % string_name)
             else:
                 username = parts[1].lower()
                 func(self, username, fromloc, overriderank)
+
         inner.__doc__ = func.__doc__
         return inner
+
     return only_inner
 
 only_username_command = only_string_command("username")
 
 def username_world_command(func):
     "Decorator for commands that accept a single username parameter and possibly a world name."
+
     def inner(self, parts, fromloc, overriderank):
         if len(parts) == 1:
             self.client.sendServerMessage("Please specify a username.")
@@ -75,11 +85,14 @@ def username_world_command(func):
             else:
                 world = self.client.world
             func(self, username, world, fromloc, overriderank)
+
     inner.__doc__ = func.__doc__
     return inner
 
+
 def on_off_command(func):
     "Decorator for commands that accept a single on/off parameter"
+
     def inner(self, parts, fromloc, overriderank):
         if len(parts) == 1:
             self.client.sendServerMessage("Please specify 'On' or 'Off'.")
@@ -88,5 +101,6 @@ def on_off_command(func):
                 self.client.sendServerMessage("Use 'on' or 'off', not '%s'" % parts[1])
             else:
                 func(self, parts[1].lower(), fromloc, overriderank)
+
     inner.__doc__ = func.__doc__
     return inner

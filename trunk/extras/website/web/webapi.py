@@ -8,25 +8,27 @@ __all__ = [
     "header", "debug",
     "input", "data",
     "setcookie", "cookies",
-    "ctx", 
-    "HTTPError", 
+    "ctx",
+    "HTTPError",
 
     # 200, 201, 202
-    "OK", "Created", "Accepted",    
+    "OK", "Created", "Accepted",
     "ok", "created", "accepted",
-    
+
     # 301, 302, 303, 304, 407
-    "Redirect", "Found", "SeeOther", "NotModified", "TempRedirect", 
+    "Redirect", "Found", "SeeOther", "NotModified", "TempRedirect",
     "redirect", "found", "seeother", "notmodified", "tempredirect",
 
     # 400, 401, 403, 404, 405, 406, 409, 410, 412
-    "BadRequest", "Unauthorized", "Forbidden", "NoMethod", "NotFound", "NotAcceptable", "Conflict", "Gone", "PreconditionFailed",
-    "badrequest", "unauthorized", "forbidden", "nomethod", "notfound", "notacceptable", "conflict", "gone", "preconditionfailed",
+    "BadRequest", "Unauthorized", "Forbidden", "NoMethod", "NotFound", "NotAcceptable", "Conflict", "Gone",
+    "PreconditionFailed",
+    "badrequest", "unauthorized", "forbidden", "nomethod", "notfound", "notacceptable", "conflict", "gone",
+    "preconditionfailed",
 
     # 500
-    "InternalError", 
+    "InternalError",
     "internalerror",
-]
+    ]
 
 import sys, cgi, Cookie, pprint, urlparse, urllib
 from utils import storage, storify, threadeddict, dictadd, intget, utf8
@@ -46,7 +48,8 @@ class HTTPError(Exception):
             header(k, v)
         self.data = data
         Exception.__init__(self, status)
-        
+
+
 def _status_code(status, data=None, classname=None, docstring=None):
     if data is None:
         data = status.split(" ", 1)[1]
@@ -55,7 +58,7 @@ def _status_code(status, data=None, classname=None, docstring=None):
 
     def __init__(self, data=data, headers={}):
         HTTPError.__init__(self, status, headers, data)
-        
+
     # trick to create class dynamically with dynamic docstring.
     return type(classname, (HTTPError, object), {
         '__doc__': docstring,
@@ -68,6 +71,7 @@ accepted = Accepted = _status_code("202 Accepted")
 
 class Redirect(HTTPError):
     """A `301 Moved Permanently` redirect."""
+
     def __init__(self, url, status='301 Moved Permanently', absolute=False):
         """
         Returns a `status` redirect to the new URL. 
@@ -93,6 +97,7 @@ redirect = Redirect
 
 class Found(Redirect):
     """A `302 Found` redirect."""
+
     def __init__(self, url, absolute=False):
         Redirect.__init__(self, url, '302 Found', absolute=absolute)
 
@@ -100,13 +105,15 @@ found = Found
 
 class SeeOther(Redirect):
     """A `303 See Other` redirect."""
+
     def __init__(self, url, absolute=False):
         Redirect.__init__(self, url, '303 See Other', absolute=absolute)
-    
+
 seeother = SeeOther
 
 class NotModified(HTTPError):
     """A `304 Not Modified` status."""
+
     def __init__(self):
         HTTPError.__init__(self, "304 Not Modified")
 
@@ -114,6 +121,7 @@ notmodified = NotModified
 
 class TempRedirect(Redirect):
     """A `307 Temporary Redirect` redirect."""
+
     def __init__(self, url, absolute=False):
         Redirect.__init__(self, url, '307 Temporary Redirect', absolute=absolute)
 
@@ -122,6 +130,7 @@ tempredirect = TempRedirect
 class BadRequest(HTTPError):
     """`400 Bad Request` error."""
     message = "bad request"
+
     def __init__(self):
         status = "400 Bad Request"
         headers = {'Content-Type': 'text/html'}
@@ -132,10 +141,12 @@ badrequest = BadRequest
 class _NotFound(HTTPError):
     """`404 Not Found` error."""
     message = "not found"
+
     def __init__(self, message=None):
         status = '404 Not Found'
         headers = {'Content-Type': 'text/html'}
         HTTPError.__init__(self, status, headers, message or self.message)
+
 
 def NotFound(message=None):
     """Returns HTTPError with '404 Not Found' error from the active application.
@@ -157,11 +168,12 @@ preconditionfailed = PreconditionFailed = _status_code("412 Precondition Failed"
 
 class NoMethod(HTTPError):
     """A `405 Method Not Allowed` error."""
+
     def __init__(self, cls=None):
         status = '405 Method Not Allowed'
         headers = {}
         headers['Content-Type'] = 'text/html'
-        
+
         methods = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE']
         if cls:
             methods = [method for method in methods if hasattr(cls, method)]
@@ -169,12 +181,13 @@ class NoMethod(HTTPError):
         headers['Allow'] = ', '.join(methods)
         data = None
         HTTPError.__init__(self, status, headers, data)
-        
+
 nomethod = NoMethod
 
 class Gone(HTTPError):
     """`410 Gone` error."""
     message = "gone"
+
     def __init__(self):
         status = '410 Gone'
         headers = {'Content-Type': 'text/html'}
@@ -185,11 +198,12 @@ gone = Gone
 class _InternalError(HTTPError):
     """500 Internal Server Error`."""
     message = "internal server error"
-    
+
     def __init__(self, message=None):
         status = '500 Internal Server Error'
         headers = {'Content-Type': 'text/html'}
         HTTPError.__init__(self, status, headers, message or self.message)
+
 
 def InternalError(message=None):
     """Returns HTTPError with '500 internal error' error from the active application.
@@ -214,29 +228,30 @@ def header(hdr, value, unique=False):
     # protection against HTTP response splitting attack
     if '\n' in hdr or '\r' in hdr or '\n' in value or '\r' in value:
         raise ValueError, 'invalid characters in header'
-        
+
     if unique is True:
         for h, v in ctx.headers:
             if h.lower() == hdr.lower(): return
-    
+
     ctx.headers.append((hdr, value))
-    
+
+
 def rawinput(method=None):
     """Returns storage object with GET or POST arguments.
     """
     method = method or "both"
     from cStringIO import StringIO
 
-    def dictify(fs): 
-        # hack to make web.input work with enctype='text/plain.
+    def dictify(fs):
+    # hack to make web.input work with enctype='text/plain.
         if fs.list is None:
-            fs.list = [] 
+            fs.list = []
 
         return dict([(k, fs[k]) for k in fs.keys()])
-    
+
     e = ctx.env.copy()
     a = b = {}
-    
+
     if method.lower() in ['both', 'post', 'put']:
         if e['REQUEST_METHOD'] in ['POST', 'PUT']:
             if e.get('CONTENT_TYPE', '').lower().startswith('multipart/'):
@@ -267,6 +282,7 @@ def rawinput(method=None):
 
     return storage([(k, process_fieldstorage(v)) for k, v in dictadd(b, a).items()])
 
+
 def input(*requireds, **defaults):
     """
     Returns a `storage` object with the GET and POST arguments. 
@@ -280,6 +296,7 @@ def input(*requireds, **defaults):
     except KeyError:
         raise badrequest()
 
+
 def data():
     """Returns the data sent with the request."""
     if 'data' not in ctx:
@@ -287,21 +304,23 @@ def data():
         ctx.data = ctx.env['wsgi.input'].read(cl)
     return ctx.data
 
+
 def setcookie(name, value, expires="", domain=None, secure=False):
     """Sets a cookie."""
-    if expires < 0: 
-        expires = -1000000000 
-    kargs = {'expires': expires, 'path':'/'}
-    if domain: 
+    if expires < 0:
+        expires = -1000000000
+    kargs = {'expires': expires, 'path': '/'}
+    if domain:
         kargs['domain'] = domain
     if secure:
         kargs['secure'] = secure
-    # @@ should we limit cookies to a different path?
+        # @@ should we limit cookies to a different path?
     cookie = Cookie.SimpleCookie()
     cookie[name] = urllib.quote(utf8(value))
-    for key, val in kargs.iteritems(): 
+    for key, val in kargs.iteritems():
         cookie[name][key] = val
     header('Set-Cookie', cookie.items()[0][1].OutputString())
+
 
 def cookies(*requireds, **defaults):
     """
@@ -319,24 +338,27 @@ def cookies(*requireds, **defaults):
         badrequest()
         raise StopIteration
 
+
 def debug(*args):
     """
     Prints a prettyprinted version of `args` to stderr.
     """
-    try: 
+    try:
         out = ctx.environ['wsgi.errors']
-    except: 
+    except:
         out = sys.stderr
     for arg in args:
         print >> out, pprint.pformat(arg)
     return ''
 
+
 def _debugwrite(x):
-    try: 
+    try:
         out = ctx.environ['wsgi.errors']
-    except: 
+    except:
         out = sys.stderr
     out.write(x)
+
 debug.write = _debugwrite
 
 ctx = context = threadeddict()

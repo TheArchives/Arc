@@ -4,13 +4,14 @@ HTTP Utilities
 """
 
 __all__ = [
-  "expires", "lastmodified", 
-  "prefixurl", "modified", 
-  "changequery", "url",
-  "profiler",
-]
+    "expires", "lastmodified",
+    "prefixurl", "modified",
+    "changequery", "url",
+    "profiler",
+    ]
 
-import sys, os, threading, urllib, urlparse
+import    urllib
+
 try: import datetime
 except ImportError: pass
 import net, utils, webapi as web
@@ -21,11 +22,12 @@ def prefixurl(base=''):
     Maybe some other time.
     """
     url = web.ctx.path.lstrip('/')
-    for i in xrange(url.count('/')): 
+    for i in xrange(url.count('/')):
         base += '../'
-    if not base: 
+    if not base:
         base = './'
     return base
+
 
 def expires(delta):
     """
@@ -37,9 +39,11 @@ def expires(delta):
     date_obj = datetime.datetime.utcnow() + delta
     web.header('Expires', net.httpdate(date_obj))
 
+
 def lastmodified(date_obj):
     """Outputs a `Last-Modified` header for `datetime`."""
     web.header('Last-Modified', net.httpdate(date_obj))
+
 
 def modified(date=None, etag=None):
     """
@@ -74,15 +78,16 @@ def modified(date=None, etag=None):
     if date and m:
         # we subtract a second because 
         # HTTP dates don't have sub-second precision
-        if date-datetime.timedelta(seconds=1) <= m:
+        if date - datetime.timedelta(seconds=1) <= m:
             validate = True
-    
+
     if date: lastmodified(date)
     if etag: web.header('ETag', '"' + etag + '"')
     if validate:
         raise web.notmodified()
     else:
         return True
+
 
 def urlencode(query, doseq=0):
     """
@@ -93,14 +98,16 @@ def urlencode(query, doseq=0):
         >>> urlencode({'x': [1, 2]}, doseq=True)
         'x=1&x=2'
     """
+
     def convert(value, doseq=False):
         if doseq and isinstance(value, list):
             return [convert(v) for v in value]
         else:
             return utils.utf8(value)
-        
+
     query = dict([(k, convert(v, doseq)) for k, v in query.items()])
     return urllib.urlencode(query, doseq=doseq)
+
 
 def changequery(query=None, **kw):
     """
@@ -120,6 +127,7 @@ def changequery(query=None, **kw):
         out += '?' + urlencode(query, doseq=True)
     return out
 
+
 def url(path=None, **kw):
     """
     Makes url by concatinating web.ctx.homepath and path and the 
@@ -134,17 +142,21 @@ def url(path=None, **kw):
 
     if kw:
         out += '?' + urlencode(kw)
-    
+
     return out
+
 
 def profiler(app):
     """Outputs basic profiling information at the bottom of each response."""
     from utils import profile
+
     def profile_internal(e, o):
         out, result = profile(app)(e, o)
         return list(out) + ['<pre>' + net.websafe(result) + '</pre>']
+
     return profile_internal
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

@@ -8,13 +8,13 @@ for var_index in range(len(entitylist)):
     ownername = entity[4]
     ownerclient = self.client.username
     if ownername in worldusernamelist:
-        x, y, z = (ownerclient.x >> 5,ownerclient.y >> 5,ownerclient.z >> 5)
+        x, y, z = (ownerclient.x >> 5, ownerclient.y >> 5, ownerclient.z >> 5)
         if identity != "pfield" or "forcefield":
-            rx,ry,rz = var_entity[1]
-            xd = rx-x
-            yd = ry-y
-            zd = rz-z
-            distance = math.sqrt((xd*xd + yd*yd + zd*zd))
+            rx, ry, rz = var_entity[1]
+            xd = rx - x
+            yd = ry - y
+            zd = rz - z
+            distance = math.sqrt((xd * xd + yd * yd + zd * zd))
             if distance <= 3:
                 var_dellist.append(var_index)
                 block = 0

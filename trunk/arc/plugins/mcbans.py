@@ -2,9 +2,6 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import time
-
-from twisted.internet import reactor
 from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
@@ -12,7 +9,6 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class McBansPlugin(ProtocolPlugin):
-
     commands = {
         "mcbans": "commandMCBans"
     }
@@ -42,11 +38,15 @@ class McBansPlugin(ProtocolPlugin):
                             self.client.sendServerMessage("--- MCBans API help ---")
                             self.client.sendSplitServerMessage("MCBans is a global ban system using a http API.")
                             self.client.sendSplitServerMessage("There are three MCBans commands available.")
-                            self.client.sendSplitServerMessage("Admin commands in %sred%s." % (COLOUR_RED, COLOUR_YELLOW))
+                            self.client.sendSplitServerMessage(
+                                "Admin commands in %sred%s." % (COLOUR_RED, COLOUR_YELLOW))
                             self.client.sendServerMessage("* lookup: Looks up a player's info")
-                            self.client.sendServerMessage("* %sban%s: Bans a player on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
-                            self.client.sendServerMessage("* %sunban%s: Reverses a ban on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
-                            self.client.sendServerMessage("* %sreason%s: Set the ban reason for your next ban" % (COLOUR_RED, COLOUR_YELLOW))
+                            self.client.sendServerMessage(
+                                "* %sban%s: Bans a player on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
+                            self.client.sendServerMessage(
+                                "* %sunban%s: Reverses a ban on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
+                            self.client.sendServerMessage(
+                                "* %sreason%s: Set the ban reason for your next ban" % (COLOUR_RED, COLOUR_YELLOW))
                             self.client.sendSplitServerMessage("Do /mcbans help command for more info.")
                         else:
                             command = parts[2].lower()
@@ -59,7 +59,8 @@ class McBansPlugin(ProtocolPlugin):
                                 self.client.sendSplitServerMessage("local: Displays local bans")
                                 self.client.sendSplitServerMessage("minimal: Displays reputation and ban count")
                             elif command == "ban":
-                                self.client.sendSplitServerMessage("USAGE: /mcbans ban [player] [type] (duration) (measure)")
+                                self.client.sendSplitServerMessage(
+                                    "USAGE: /mcbans ban [player] [type] (duration) (measure)")
                                 self.client.sendSplitServerMessage("This command is used to make a ban on MCBans.")
                                 self.client.sendSplitServerMessage("Type may be one of the following..")
                                 self.client.sendSplitServerMessage("global: A global ban.")
@@ -98,13 +99,15 @@ class McBansPlugin(ProtocolPlugin):
                                         if player in self.client.factory.usernames.keys():
                                             client = self.client.factory.usernames[player]
                                             try:
-                                                value = handler.globalBan(player, client.transport.getPeer().host, self.reason, self.client.username)
+                                                value = handler.globalBan(player, client.transport.getPeer().host,
+                                                    self.reason, self.client.username)
                                             except Exception as a:
                                                 self.client.sendServerMessage("Unable to ban %s globally." % player)
                                                 self.client.sendServerMessage("Error: %s" % a)
                                             else:
                                                 if value["result"] == u'y':
-                                                    self.client.sendServerMessage("Player %s has been globally banned." % player)
+                                                    self.client.sendServerMessage(
+                                                        "Player %s has been globally banned." % player)
                                                     self.client.sendServerMessage("Reason: %s" % self.reason)
                                                     client.sendError("[MCBans] Global ban: %s" % self.reason)
                                                     self.reason = ""
@@ -131,28 +134,35 @@ class McBansPlugin(ProtocolPlugin):
                                                     self.client.sendServerMessage("See /mcbans help ban")
                                                 else:
                                                     if player in self.client.factory.clients.keys():
-                                                        ip = self.client.factory.clients[player].transport.getPeer().host
+                                                        ip = self.client.factory.clients[
+                                                             player].transport.getPeer().host
                                                         client = self.client.factory.clients[player]
                                                     else:
                                                         ip = "Offline"
                                                         client = None
                                                     try:
-                                                        value = handler.tempBan(player, ip, self.reason, self.client.username, duration, measure=measure)
+                                                        value = handler.tempBan(player, ip, self.reason,
+                                                            self.client.username, duration, measure=measure)
                                                     except Exception as a:
-                                                        self.client.sendServerMessage("Unable to ban %s temporarily." % player)
+                                                        self.client.sendServerMessage(
+                                                            "Unable to ban %s temporarily." % player)
                                                         self.client.sendServerMessage("Error: %s" % a)
                                                     else:
                                                         if value["result"] == u'y':
-                                                            self.client.sendServerMessage("Player %s has been temporarily banned." % player)
+                                                            self.client.sendServerMessage(
+                                                                "Player %s has been temporarily banned." % player)
                                                             self.client.sendServerMessage("Reason: %s" % self.reason)
                                                             if not client is None:
                                                                 client.sendError("[MCBans] Temporary ban: %s" % reason)
                                                             self.reason = ""
                                                         else:
-                                                            self.client.sendServerMessage("Unable to ban %s temporarily." % player)
-                                                            self.client.sendServerMessage("Please check MCBans for more info.")
+                                                            self.client.sendServerMessage(
+                                                                "Unable to ban %s temporarily." % player)
+                                                            self.client.sendServerMessage(
+                                                                "Please check MCBans for more info.")
                                         else:
-                                            self.client.sendServerMessage("Syntax: /mcbans ban [player] [type] (duration) (measure)")
+                                            self.client.sendServerMessage(
+                                                "Syntax: /mcbans ban [player] [type] (duration) (measure)")
                                     else:
                                         self.client.sendServerMessage("No reason set - try /mcbans help reason")
                                 elif type == "local":
@@ -161,7 +171,8 @@ class McBansPlugin(ProtocolPlugin):
                                     self.client.sendServerMessage("Ban type %s not recognized." % type)
                                     self.client.sendServerMessage("See /mcbans help ban")
                             else:
-                                self.client.sendServerMessage("Syntax: /mcbans ban [player] [type] (duration) (measure)")
+                                self.client.sendServerMessage(
+                                    "Syntax: /mcbans ban [player] [type] (duration) (measure)")
                         else:
                             self.client.sendServerMessage("/mcbans ban is an admin-only command!")
                     elif selection == "unban":

@@ -9,10 +9,9 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class LavaPlugin(ProtocolPlugin):
-
     hooks = {
         "poschange": "posChanged",
-    }
+        }
 
     def gotClient(self):
         self.died = False
@@ -29,7 +28,7 @@ class LavaPlugin(ProtocolPlugin):
                     block = self.client.world.blockstore.raw_blocks[check_offset]
                 except IndexError:
                     return
-                check_offset = self.client.world.blockstore.get_offset(rx, ry-1, rz)
+                check_offset = self.client.world.blockstore.get_offset(rx, ry - 1, rz)
                 blockbelow = self.client.world.blockstore.raw_blocks[check_offset]
             except (KeyError, AssertionError):
                 pass
@@ -38,6 +37,8 @@ class LavaPlugin(ProtocolPlugin):
                     # Ok, so they touched lava. Warp them to the spawn, timer to stop spam.
                     if not self.died:
                         self.died = True
-                        self.client.teleportTo(self.client.world.spawn[0], self.client.world.spawn[1], self.client.world.spawn[2], self.client.world.spawn[3])
-                        self.client.factory.sendMessageToAll("%s%s has died from lava." % (COLOUR_DARKRED, self.client.username), "server", self.client)
+                        self.client.teleportTo(self.client.world.spawn[0], self.client.world.spawn[1],
+                            self.client.world.spawn[2], self.client.world.spawn[3])
+                        self.client.factory.sendMessageToAll(
+                            "%s%s has died from lava." % (COLOUR_DARKRED, self.client.username), "server", self.client)
                         reactor.callLater(1, self.gotClient)

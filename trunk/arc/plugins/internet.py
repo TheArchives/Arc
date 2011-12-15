@@ -26,7 +26,7 @@ class InternetPlugin(ProtocolPlugin):
         "tweet": "commandTweet",
         "rec_url": "commandRec_url",
         "imagedraw": "commandImagedraw",
-    }
+        }
 
     def gotClient(self):
         self.tuser = ""
@@ -48,9 +48,10 @@ class InternetPlugin(ProtocolPlugin):
         else:
             self.tuser = str(parts[1])
             self.tpass = str(parts[2])
-            self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
-            self.client.sendServerMessage("Password: "+COLOUR_RED+self.tpass)
-            self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has logged into twitter.\n")
+            self.client.sendServerMessage("Username: " + COLOUR_RED + self.tuser)
+            self.client.sendServerMessage("Password: " + COLOUR_RED + self.tpass)
+            self.client.factory.twlog.write(
+                self.tuser + "(" + self.client.username + ")" + " has logged into twitter.\n")
             self.client.factory.twlog.flush()
 
     @config("category", "info")
@@ -64,7 +65,8 @@ class InternetPlugin(ProtocolPlugin):
             data = urllib.urlencode({"status": " ".join(parts[1:]) + " #Arc"})
             urllib.urlopen(("http://%s:%s@twitter.com/statuses/update.xml" % (self.tuser, self.tpass)), data)
             self.client.sendServerMessage("You have successfully tweeted.")
-            self.client.factory.twlog.write(self.tuser+"("+self.client.username+")"+" has tweeted: "+msg+"\n")
+            self.client.factory.twlog.write(
+                self.tuser + "(" + self.client.username + ")" + " has tweeted: " + msg + "\n")
             self.client.factory.twlog.flush()
 
     @config("category", "info")
@@ -72,12 +74,12 @@ class InternetPlugin(ProtocolPlugin):
     def commandTDetails(self, parts, fromloc, overriderank):
         "/tdetails - Guest\nGives you your Twitter login details, from /tlog."
         if self.tuser == "":
-            self.client.sendServerMessage("Username: "+COLOUR_RED+"Not entered!")
+            self.client.sendServerMessage("Username: " + COLOUR_RED + "Not entered!")
         else:
-            self.client.sendServerMessage("Username: "+COLOUR_RED+self.tuser)
+            self.client.sendServerMessage("Username: " + COLOUR_RED + self.tuser)
         if self.tpass == "":
-            self.client.sendServerMessage("Password: "+COLOUR_RED+"Not entered!")
-        self.twlog.write(self.tuser+"("+self.client.username+")"+" has checked their Twitter details.\n")
+            self.client.sendServerMessage("Password: " + COLOUR_RED + "Not entered!")
+        self.twlog.write(self.tuser + "(" + self.client.username + ")" + " has checked their Twitter details.\n")
         self.twlog.flush()
 
     @config("category", "build")
@@ -88,7 +90,8 @@ class InternetPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Imagedraw is currently disabled due to server problems.")
         else:
             if len(parts) == 1:
-                self.client.sendSplitServerMessage("Please specify an url (and '//' in the beginning to extend an existing url)")
+                self.client.sendSplitServerMessage(
+                    "Please specify an url (and '//' in the beginning to extend an existing url)")
                 return
             else:
                 if parts[0] == '//rec_url':
@@ -98,8 +101,8 @@ class InternetPlugin(ProtocolPlugin):
             var_divisions64 = int(len(self.client.url) / 64)
             self.client.sendServerMessage("The url has been recorded as:")
             for i in range(var_divisions64):
-                self.client.sendServerMessage(self.client.url[i*64:(i+1)*64])
-            self.client.sendServerMessage(self.client.url[var_divisions64*64:])
+                self.client.sendServerMessage(self.client.url[i * 64:(i + 1) * 64])
+            self.client.sendServerMessage(self.client.url[var_divisions64 * 64:])
 
     @config("category", "build")
     @config("rank", "admin")
@@ -118,19 +121,19 @@ class InternetPlugin(ProtocolPlugin):
                 except ValueError:
                     self.client.sendServerMessage("Rotation must be an integer.")
                     return
-                # Try to get flip
+                    # Try to get flip
                 flip = parts[1].lower()
                 if flip not in ["true", "false"]:
                     self.client.sendServerMessage("Flip must be true or false.")
                     return
-                # Try to get url
+                    # Try to get url
                 if self.url == "":
                     self.client.sendServerMessage("You have not recorded an url yet (use /rec_url).")
                     return
                 if self.url.find('http:') == -1:
                     self.client.sendServerMessage("Only the http protocol is supported.")
                     return
-                # If they only provided the type argument, use the last two block places
+                    # If they only provided the type argument, use the last two block places
                 if len(parts) == 2:
                     try:
                         x, y, z = self.client.last_block_changes[0]
@@ -183,33 +186,35 @@ class InternetPlugin(ProtocolPlugin):
                 if limit != -1:
                     # Stop them doing silly things
                     if (height * width > limit) or limit == 0:
-                        self.client.sendServerMessage("Sorry, that area is too big for you to draw images (limit is %s)" % limit)
+                        self.client.sendServerMessage(
+                            "Sorry, that area is too big for you to draw images (limit is %s)" % limit)
                         return
-                # Draw all the blocks on, I guess
+                    # Draw all the blocks on, I guess
                 # We use a generator so we can slowly release the blocks
                 # We also keep world as a local so they can't change worlds and affect the new one
                 world = self.client.world
+
                 def generate_changes():
                     try:
-                        for i in range(x, x2+1):
-                            for j in range(y, y2+1):
-                                for k in range(z, z2+1):
+                        for i in range(x, x2 + 1):
+                            for j in range(y, y2 + 1):
+                                for k in range(z, z2 + 1):
                                     if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                         return
                                     if flip == "true":
                                         if orientation == 0:
-                                            r, g, b, a = image.getpixel((abs(k - z), abs(i-x)))
+                                            r, g, b, a = image.getpixel((abs(k - z), abs(i - x)))
                                         elif orientation == 1:
-                                            r, g, b, a  = image.getpixel((abs(j - y), abs(i - x)))
+                                            r, g, b, a = image.getpixel((abs(j - y), abs(i - x)))
                                         else:
-                                            r, g, b, a  = image.getpixel((abs(k - z), abs(j - y)))
+                                            r, g, b, a = image.getpixel((abs(k - z), abs(j - y)))
                                     else:
                                         if orientation == 0:
-                                            r, g, b, a  = image.getpixel((width - (abs(k - z) + 1), abs(i - x)))
+                                            r, g, b, a = image.getpixel((width - (abs(k - z) + 1), abs(i - x)))
                                         elif orientation == 1:
-                                            r, g, b, a  = image.getpixel((width - (abs(j - y) + 1), abs(i - x)))
+                                            r, g, b, a = image.getpixel((width - (abs(j - y) + 1), abs(i - x)))
                                         else:
-                                            r, g, b, a  = image.getpixel((width - (abs(k - z) + 1), abs(j - y)))
+                                            r, g, b, a = image.getpixel((width - (abs(k - z) + 1), abs(j - y)))
                                     if a < 25:
                                         block = BLOCK_AIR
                                     else:
@@ -311,17 +316,21 @@ class InternetPlugin(ProtocolPlugin):
                     except AssertionError:
                         self.client.sendServerMessage("Out of bounds imagedraw error.")
                         return
-                # Now, set up a loop delayed by the reactor
+
+                    # Now, set up a loop delayed by the reactor
                 block_iter = iter(generate_changes())
+
                 def do_step():
                     # Do 10 blocks
                     try:
                         for x in range(10): # 10 blocks at a time, 10 blocks per tenths of a second, 100 blocks a second
                             block_iter.next()
-                        reactor.callLater(0.01, do_step)  # This is how long(in seconds) it waits to run another 10 blocks
+                        reactor.callLater(0.01,
+                            do_step)  # This is how long(in seconds) it waits to run another 10 blocks
                     except StopIteration:
                         if fromloc == "user":
                             #self.client.finalizeMassCMD('imagedraw', self.client.total)
                             self.client.sendServerMessage("Your imagedraw just completed.")
                         pass
+
                 do_step()

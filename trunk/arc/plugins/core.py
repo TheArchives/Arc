@@ -9,15 +9,14 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class CorePlugin(ProtocolPlugin):
-    
     commands = {
         "pll": "commandPluginload",
         "plu": "commandPluginunload",
         "plr": "commandPluginreload",
         "pllist": "commandPluginlist",
         "pllistall": "commandPluginlist",
-    }
-    
+        }
+
     @config("rank", "admin")
     @only_string_command("plugin name")
     @config("disabled_cmdblocks", True)
@@ -29,7 +28,7 @@ class CorePlugin(ProtocolPlugin):
             self.client.sendServerMessage("No such plugin '%s'." % plugin_name)
         else:
             self.client.sendServerMessage("Plugin '%s' reloaded." % plugin_name)
-    
+
     @config("rank", "admin")
     @only_string_command("plugin name")
     @config("disabled_cmdblocks", True)
@@ -40,7 +39,7 @@ class CorePlugin(ProtocolPlugin):
             self.client.sendServerMessage("No such plugin '%s'." % plugin_name)
         else:
             self.client.sendServerMessage("Plugin '%s' loaded." % plugin_name)
-    
+
     @config("rank", "admin")
     @only_string_command("plugin name")
     @config("disabled_cmdblocks", True)
@@ -59,6 +58,6 @@ class CorePlugin(ProtocolPlugin):
         newpluginlist = []
         for plugin in pluginlist:
             if not plugin.endswith(".pyc"):
-                plugin = plugin.replace(".py","")
+                plugin = plugin.replace(".py", "")
                 newpluginlist.append(plugin)
         self.client.sendServerList(["Plugins:"] + newpluginlist)

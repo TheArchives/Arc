@@ -8,14 +8,13 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class MoneyPlugin(ProtocolPlugin):
-
     commands = {
         "bank": "commandBalance",
         "balance": "commandBalance",
         "pay": "commandPay",
         "setbank": "commandSetAccount",
         "removebank": "commandRemoveAccount",
-    }
+        }
 
     #System methods, not for commands
     def loadBank(self):
@@ -98,10 +97,16 @@ class MoneyPlugin(ProtocolPlugin):
             bank[user] = bank[user] - amount
             self.dumpBank(bank)
             self.client.sendServerMessage("You sent %d %s." % (amount, self.client.factory.currency))
-            self.client.factory.logger.info("%(user)s sent %(amount)d %(currency)s to %(target)s" % {'user': user, 'amount': amount, 'currency': self.client.factory.currency, 'target': target})
+            self.client.factory.logger.info(
+                "%(user)s sent %(amount)d %(currency)s to %(target)s" % {'user': user, 'amount': amount,
+                                                                         'currency': self.client.factory.currency,
+                                                                         'target': target})
             #factory.usernames uses all lowercased for some reason
             if target in self.client.factory.usernames:
-                self.client.factory.usernames[target].sendServerMessage("You received %(amount)d %(currency)s from %(user)s." % {'amount': amount, 'currency': self.client.factory.currency, 'user': user})
+                self.client.factory.usernames[target].sendServerMessage(
+                    "You received %(amount)d %(currency)s from %(user)s." % {'amount': amount,
+                                                                             'currency': self.client.factory.currency,
+                                                                             'user': user})
 
     @config("rank", "director")
     def commandRemoveAccount(self, parts, fromloc, overriderank):

@@ -11,17 +11,21 @@ from twisted.enterprise import adbapi
 
 class Tracker(Thread):
     """ Provides facilities for block tracking and storage. """
+
     def __init__(self, world, buffersize=500, directory=getcwd()):
         """ Set up database pool, buffers, and other preperations """
         Thread.__init__(self)
         self.deamon = True
-        self.database = adbapi.ConnectionPool('sqlite3', path.join(directory, world+'.db'), check_same_thread=False)
+        self.database = adbapi.ConnectionPool('sqlite3', path.join(directory, world + '.db'), check_same_thread=False)
         self.databuffer = list()
         self.buffersize = buffersize
+
         def c(r):
             if isinstance(r, Exception) or len(r) == 0: # Contradictationay conditions :P
-                self.database.runOperation('CREATE TABLE history (block_offset INTEGER, matbefore INTEGER, matafter INTEGER, name VARCHAR(50), date DATE)')
+                self.database.runOperation(
+                    'CREATE TABLE history (block_offset INTEGER, matbefore INTEGER, matafter INTEGER, name VARCHAR(50), date DATE)')
             self.run = True
+
         self.database.runQuery("SELECT name FROM sqlite_master WHERE name='history'").addBoth(c)
 
     def add(self, data):

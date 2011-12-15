@@ -12,7 +12,6 @@ protocol_plugins = []
 server_plugins = []
 
 class PluginMetaclass(type):
-
     """
     A metaclass which registers any subclasses of Plugin.
     """
@@ -33,6 +32,7 @@ class PluginMetaclass(type):
                 logger.warn("Plugin '%s' is not a server or a protocol plugin." % name)
         return new_cls
 
+
 class ServerPlugin(object):
     """
     Parent object all server plugins inherit from.
@@ -52,11 +52,12 @@ class ServerPlugin(object):
                 except AttributeError:
                     # Nope, can't find the method for that hook. Return error
                     self.logger.error("Cannot find hook code for %s." % fname)
-        # Call clean setup method
+            # Call clean setup method
         self.gotServer()
 
     def gotServer():
         pass
+
 
 class ProtocolPlugin(object):
     """
@@ -78,7 +79,7 @@ class ProtocolPlugin(object):
                 except AttributeError:
                     # Nope, can't find the method for that command. Return error
                     self.logger.error("Cannot find command code for %s (command name is %s)." % (fname, name))
-        # Register our hooks
+            # Register our hooks
         if hasattr(self, "hooks"):
             for name, fname in self.hooks.items():
                 try:
@@ -86,7 +87,7 @@ class ProtocolPlugin(object):
                 except AttributeError:
                     # Nope, can't find the method for that hook. Return error
                     self.logger.error("Cannot find hook code for %s." % fname)
-        # Call clean setup method
+            # Call clean setup method
         self.gotClient()
 
     def unregister(self):
@@ -94,7 +95,7 @@ class ProtocolPlugin(object):
         if hasattr(self, "commands"):
             for name, fname in self.commands.items():
                 self.client.unregisterCommand(name, getattr(self, fname))
-        # Unregister our hooks
+            # Unregister our hooks
         if hasattr(self, "hooks"):
             for name, fname in self.hooks.items():
                 self.client.unregisterHook(name, getattr(self, fname))
@@ -116,6 +117,7 @@ def load_plugins(plugins):
             logger.error("Cannot load plugin %s." % module_name)
             logger.error(traceback.format_exc())
 
+
 def unload_plugin(plugin_name):
     "Given a plugin name, unloads its code."
     # Unload all its classes from our lists
@@ -128,6 +130,7 @@ def unload_plugin(plugin_name):
             server_plugins.remove(plugin)
             logger.debug("Unloaded server plugin: %s" % plugin)
 
+
 def load_plugin(plugin_name):
     # Reload the module, in case it was imported before
     global logger
@@ -138,6 +141,7 @@ def load_plugin(plugin_name):
     except:
         logger.error("Error when loading or reloading plugin %s." % plugin_name)
         logger.error(traceback.format_exc())
+
 
 def plugins_by_module_name(module_name):
     "Given a module name, returns the plugin classes in it."

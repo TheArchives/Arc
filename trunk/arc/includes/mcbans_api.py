@@ -5,6 +5,7 @@
 # The Arc package can be found at http://archivesmc.com
 
 import urllib, urllib2
+
 try:
     import json
 except ImportError:
@@ -34,7 +35,7 @@ class McBans():
         data = {"player": player, "exec": "playerDisconnect"}
         values = self._request(data)
         return values # {'result': 'y'}
-        
+
     def callBack(self, maxPlayers, playerList, version):
         done = ""
         if isinstance(playerList, list):
@@ -64,7 +65,8 @@ class McBans():
 
     def tempBan(self, player, ip, reason, admin, duration, measure):
         if measure == "m" or measure == "h" or measure == "d":
-            data = {"player": player, "ip": ip, "reason": reason, "admin": admin, "duration": duration, "measure": measure, "exec": "tempBan"}
+            data = {"player": player, "ip": ip, "reason": reason, "admin": admin, "duration": duration,
+                    "measure": measure, "exec": "tempBan"}
             values = self._request(data)
         else:
             raise ValueError("'measure' must be m, h or d!")
@@ -114,4 +116,6 @@ class McBans():
     def unblock(self, player, target):
         data = {"player": player, "target": target, "exec": "playerUnBlock"}
         values = self._request(data)
-        return values # {"result": "n"}
+        return values
+
+# {"result": "n"}

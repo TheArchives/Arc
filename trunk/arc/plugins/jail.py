@@ -2,8 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, time
-from twisted.internet import reactor
+import cPickle
 
 from arc.constants import *
 from arc.decorators import *
@@ -15,7 +14,6 @@ J_ZONE = 1
 J_WORLD = 2
 
 class JailPlugin(ProtocolPlugin):
-
     def loadJail(self):
         file = open('config/data/jail.dat', 'r')
         dic = cPickle.load(file)
@@ -32,13 +30,13 @@ class JailPlugin(ProtocolPlugin):
         "free": "commandFree",
         "setjail": "commandSetJail",
         "prisoners": "commandPrisoners",
-    }
+        }
 
     hooks = {
         "poschange": "posChanged",
         "playerjoined": "playerJoined",
         "newworld": "newWorld",
-    }
+        }
 
     def gotClient(self):
         self.jailed = False

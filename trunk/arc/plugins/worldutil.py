@@ -12,7 +12,6 @@ from arc.plugins import ProtocolPlugin
 from arc.world import World
 
 class WorldUtilPlugin(ProtocolPlugin):
-
     commands = {
         "backup": "commandBackup",
         "backups": "commandBackups",
@@ -72,7 +71,7 @@ class WorldUtilPlugin(ProtocolPlugin):
         "ops": "commandOps",
         "writers": "commandBuilders",
         "builders": "commandBuilders",
-    }
+        }
 
     @config("category", "world")
     @config("rank", "op")
@@ -83,13 +82,13 @@ class WorldUtilPlugin(ProtocolPlugin):
         world_id = parts[1]
         world_dir = ("worlds/%s/" % world_id)
         if not os.path.exists(world_dir):
-           self.client.sendServerMessage("World %s does not exist." % (world_id))
+            self.client.sendServerMessage("World %s does not exist." % (world_id))
         else:
-            if not os.path.exists(world_dir+"backup/"):
-                os.mkdir(world_dir+"backup/")
-            folders = os.listdir(world_dir+"backup/")
+            if not os.path.exists(world_dir + "backup/"):
+                os.mkdir(world_dir + "backup/")
+            folders = os.listdir(world_dir + "backup/")
             if len(parts) > 2:
-                path = os.path.join(world_dir+"backup/", parts[2])
+                path = os.path.join(world_dir + "backup/", parts[2])
                 if os.path.exists(path):
                     self.client.sendServerMessage("Backup %s already exists. Pick a different name." % parts[2])
                     return
@@ -99,9 +98,9 @@ class WorldUtilPlugin(ProtocolPlugin):
                     if x.isdigit():
                         backups.append(x)
                 backups.sort(lambda x, y: int(x) - int(y))
-                path = os.path.join(world_dir+"backup/", "0")
+                path = os.path.join(world_dir + "backup/", "0")
                 if backups:
-                    path = os.path.join(world_dir+"backup/", str(int(backups[-1])+1))
+                    path = os.path.join(world_dir + "backup/", str(int(backups[-1]) + 1))
             os.mkdir(path)
             try:
                 shutil.copy(world_dir + "blocks.gz", path)
@@ -112,7 +111,7 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("Backup %s saved." % parts[2])
             else:
                 try:
-                    self.client.sendServerMessage("Backup %s saved." % str(int(backups[-1])+1))
+                    self.client.sendServerMessage("Backup %s saved." % str(int(backups[-1]) + 1))
                 except:
                     self.client.sendServerMessage("Backup 0 saved.")
 
@@ -126,7 +125,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             world_id = parts[1].lower()
             world_dir = ("worlds/%s/" % world_id)
             if len(parts) < 3:
-                backups = os.listdir(world_dir+"backup/")
+                backups = os.listdir(world_dir + "backup/")
                 backups.sort(lambda x, y: int(x) - int(y))
                 backup_number = str(int(backups[-1]))
             else:
@@ -155,7 +154,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             world = self.client.world.id
         if os.path.exists("worlds/%s/" % world):
             world_dir = ("worlds/%s/" % world)
-            folders = os.listdir(world_dir+"backup/")
+            folders = os.listdir(world_dir + "backup/")
             Num_backups = list([])
             Name_backups = list([])
             for x in folders:
@@ -165,7 +164,8 @@ class WorldUtilPlugin(ProtocolPlugin):
                     Name_backups.append(x)
             Num_backups.sort(lambda x, y: int(x) - int(y))
             if Num_backups > 2:
-                self.client.sendServerList(["Backups for %s:" % world] + [Num_backups[0] + "-" + Num_backups[-1]] + Name_backups)
+                self.client.sendServerList(
+                    ["Backups for %s:" % world] + [Num_backups[0] + "-" + Num_backups[-1]] + Name_backups)
             else:
                 self.client.sendServerList(["Backups for %s:" % world] + Num_backups + Name_backups)
         else:
@@ -187,12 +187,13 @@ class WorldUtilPlugin(ProtocolPlugin):
         if os.path.exists("worlds/.trash/%s" % name):
             def doRename():
                 if os.path.exists("worlds/.trash/%s" % (name + extra)):
-                    extra = "_" + str(int(extra[1:])+1)
+                    extra = "_" + str(int(extra[1:]) + 1)
                     reactor.callLater(0.1, doRename)
                 else:
                     name = name + extra
+
             doRename()
-        shutil.copytree("worlds/%s/backup/%s" % (parts[1], parts[2]) , "worlds/.trash/%s/%s" %(name, parts[2]))
+        shutil.copytree("worlds/%s/backup/%s" % (parts[1], parts[2]), "worlds/.trash/%s/%s" % (name, parts[2]))
         shutil.rmtree("worlds/%s/backup/%s" % (parts[1], parts[2]))
         self.client.sendServerMessage("Backup deleted as %s." % name)
 
@@ -214,7 +215,8 @@ class WorldUtilPlugin(ProtocolPlugin):
                 self.client.sendWorldMessage("Physics is already on here.")
             else:
                 if self.client.factory.numberWithPhysics() >= self.client.factory.physics_limit:
-                    self.client.sendWorldMessage("There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
+                    self.client.sendWorldMessage(
+                        "There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
                 else:
                     self.client.world.status["physics"] = True
                     self.client.sendWorldMessage("This world now has physics enabled.")
@@ -247,7 +249,8 @@ class WorldUtilPlugin(ProtocolPlugin):
         "/physflush - Admin\nTells the physics engine to rescan the world."
         if self.client.world.status["physics"]:
             if self.client.factory.numberWithPhysics() >= self.client.factory.physics_limit:
-                self.client.sendServerMessage("There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
+                self.client.sendServerMessage(
+                    "There are already %s worlds with physics on (the max)." % self.client.factory.physics_limit)
             else:
                 self.client.world.status["physics"] = False
                 self.client.world.status["physics"] = True
@@ -285,18 +288,18 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Unlocked %s." % self.client.world.id)
         self.client.world.status["modified"] = True
 
-    #@config("rank", "op")
-    #@on_off_command
-    #def commandPOnly(self, onoff, fromloc, rankoverride):
+        #@config("rank", "op")
+        #@on_off_command
+        #def commandPOnly(self, onoff, fromloc, rankoverride):
         #"/ponly on/off - Makes the world only accessable by portals."
         #if onoff == "on":
-            #self.client.world.portal_only = True
-            #self.client.sendWorldMessage("This world is now portal only.")
-            #self.client.sendServerMessage("%s is now only accessable through portals." % self.client.world.id)
+        #self.client.world.portal_only = True
+        #self.client.sendWorldMessage("This world is now portal only.")
+        #self.client.sendServerMessage("%s is now only accessable through portals." % self.client.world.id)
         #else:
-            #self.client.world.portal_only = False
-            #elf.client.sendWorldMessage("This world is now accesable through commands.")
-            #self.client.sendServerMessage("%s is now accessable through commands." % self.client.world.id)
+        #self.client.world.portal_only = False
+        #elf.client.sendWorldMessage("This world is now accesable through commands.")
+        #self.client.sendServerMessage("%s is now accessable through commands." % self.client.world.id)
         #self.client.world.status["modified"] = True
 
     @config("category", "world")
@@ -408,7 +411,9 @@ class WorldUtilPlugin(ProtocolPlugin):
         "/worlds [search tem|all] [pagenumber] - Guest\nAliases: maps\nLists available worlds - by search term, online, or all."
         if len(parts) < 2:
             self.client.sendNormalMessage("Do /worlds all for all worlds or choose a search term.")
-            self.client.sendServerList(["Online:"] + [id for id, world in self.client.factory.worlds.items() if self.client.canEnter(world)], plain=True)
+            self.client.sendServerList(
+                ["Online:"] + [id for id, world in self.client.factory.worlds.items() if self.client.canEnter(world)],
+                plain=True)
             return
         else:
             worldlist = os.listdir("worlds/")
@@ -432,10 +437,12 @@ class WorldUtilPlugin(ProtocolPlugin):
                         alldone.append(done)
                     pages = len(alldone)
                     if len(parts) < 3:
-                        self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
+                        self.client.sendServerMessage(
+                            "There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
                         self.client.sendServerMessage("Syntax: /worlds all pagenumber")
                         return
-                    self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
+                    self.client.sendServerMessage(
+                        "There are %s pages of worlds (excluding %s hidden worlds)." % (pages, hidden))
                     index = parts[2]
                     try:
                         index = int(index)
@@ -476,11 +483,13 @@ class WorldUtilPlugin(ProtocolPlugin):
                     alldone.append(done)
                 pages = len(alldone)
                 if len(parts) < 3:
-                    self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)" % (pages, hidden))
+                    self.client.sendServerMessage(
+                        "There are %s pages of worlds (excluding %s hidden worlds)" % (pages, hidden))
                     self.client.sendServerMessage("containing %s." % letter)
                     self.client.sendServerMessage("Syntax: /worlds letter pagenumber")
                     return
-                self.client.sendServerMessage("There are %s pages of worlds (excluding %s hidden worlds)" % (pages, hidden))
+                self.client.sendServerMessage(
+                    "There are %s pages of worlds (excluding %s hidden worlds)" % (pages, hidden))
                 self.client.sendServerMessage("containing %s." % letter)
                 index = parts[2]
                 try:
@@ -534,7 +543,7 @@ class WorldUtilPlugin(ProtocolPlugin):
                 sx, sy, sz, # Size
                 sx // 2, grass_to + 2, sz // 2, 0, # Spawn
                 ([BLOCK_DIRT] * (grass_to - 1) + [BLOCK_GRASS] + [BLOCK_AIR] * (sy - grass_to)) # Levels
-                )
+            )
             self.client.factory.loadWorld("worlds/%s" % world_id, world_id)
             self.client.factory.worlds[world_id].status["all_build"] = False
             self.client.sendServerMessage("World '%s' made and booted." % world_id)
@@ -548,22 +557,22 @@ class WorldUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("Please specify a worldname.")
         else:
             if not os.path.exists("worlds/%s" % parts[1]):
-                self.client.sendServerMessage("World %s doesn't exist." %(parts[1]))
+                self.client.sendServerMessage("World %s doesn't exist." % (parts[1]))
                 return
             if parts[1] in self.client.factory.worlds:
                 self.client.factory.unloadWorld(parts[1])
             name = parts[1]
             extra = "_0"
-            if os.path.exists("worlds/.trash/%s" %(name)):
+            if os.path.exists("worlds/.trash/%s" % (name)):
                 while True:
-                    if os.path.exists("worlds/.trash/%s" %(name+extra)):
-                        extra = "_" + str(int(extra[1:])+1)
+                    if os.path.exists("worlds/.trash/%s" % (name + extra)):
+                        extra = "_" + str(int(extra[1:]) + 1)
                     else:
                         name = name + extra
                         break
-            shutil.copytree("worlds/%s" % parts[1], "worlds/.trash/%s" %(name))
+            shutil.copytree("worlds/%s" % parts[1], "worlds/.trash/%s" % (name))
             shutil.rmtree("worlds/%s" % parts[1])
-            self.client.sendServerMessage("World deleted as %s." %(name))
+            self.client.sendServerMessage("World deleted as %s." % (name))
 
     @config("category", "world")
     @config("rank", "admin")
@@ -576,15 +585,15 @@ class WorldUtilPlugin(ProtocolPlugin):
         name = parts[1]
         world_dir = ("worlds/.trash/%s/" % name)
         if not os.path.exists(world_dir):
-           self.client.sendServerMessage("World %s is not in the world trash bin." % name)
-           return
-        extra="_0"
-        if os.path.exists("worlds/%s/" %(name)):
+            self.client.sendServerMessage("World %s is not in the world trash bin." % name)
+            return
+        extra = "_0"
+        if os.path.exists("worlds/%s/" % (name)):
             while True:
-                if os.path.exists("worlds/%s/" %(name+extra)):
-                    extra = "_" + str(int(extra[1:])+1)
+                if os.path.exists("worlds/%s/" % (name + extra)):
+                    extra = "_" + str(int(extra[1:]) + 1)
                 else:
-                    name = name+extra
+                    name = name + extra
                     break
         path = ("worlds/%s/" % name)
         shutil.move(world_dir, path)
@@ -730,14 +739,15 @@ class WorldUtilPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandStatus(self, parts, fromloc, overriderank):
         "/status - Guest\nAliases: mapinfo\nReturns info about the current world."
-        self.client.sendServerMessage("%s (%sx%sx%s)" % (self.client.world.id, self.client.world.x, self.client.world.y, self.client.world.z))
+        self.client.sendServerMessage(
+            "%s (%sx%sx%s)" % (self.client.world.id, self.client.world.x, self.client.world.y, self.client.world.z))
         if not self.client.world.status["owner"].lower() == "n/a":
             self.client.sendServerMessage("Owner: %s" % (self.client.world.status["owner"]))
         self.client.sendNormalMessage(\
-            (self.client.world.status["all_build"] and "&4Unlocked" or "&2Locked")+" "+\
-            (self.client.world.status["zoned"] and "&2Zones" or "&4Zones")+" "+\
-            (self.client.world.status["private"] and "&2Private" or "&4Private")+" "+\
-            (self.client.world.status["physics"] and "&2Physics" or "&4Physics")+" "+\
+            (self.client.world.status["all_build"] and "&4Unlocked" or "&2Locked") + " " +\
+            (self.client.world.status["zoned"] and "&2Zones" or "&4Zones") + " " +\
+            (self.client.world.status["private"] and "&2Private" or "&4Private") + " " +\
+            (self.client.world.status["physics"] and "&2Physics" or "&4Physics") + " " +\
             (self.client.world.status["finite_water"] and "&4FWater" or "&2FWater")
         )
         if self.client.world.ops:
@@ -775,7 +785,7 @@ class WorldUtilPlugin(ProtocolPlugin):
             target_worlds.remove(self.client.world.id)
         except ValueError:
             pass
-        # Anything left?
+            # Anything left?
         if not target_worlds:
             self.client.sendServerMessage("There is only one world, and you're in it.")
         else:

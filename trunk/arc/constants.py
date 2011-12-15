@@ -13,7 +13,7 @@ CFGVERSION = {
     "lastseen.meta": (1, 0, 0),
     "spectators.meta": (1, 0, 0),
     "world.meta": (1, 5, 0),
-}
+    }
 
 CONFIG = [
     # Format:
@@ -28,11 +28,16 @@ CONFIG = [
     ("public", ("main.conf", "main", "public"), None, True, "getboolean", None, True, None),
     ("salt", ("main.conf", "main", "salt"), None, False, "get", "checkSalt", True, None),
     ("use_controller", ("main.conf", "network", "use_controller"), None, False, "getboolean", None, False, False),
-    ("controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None, False, None),
-    ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get", None, False, None),
+    (
+    "controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None
+    , False, None),
+    ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get",
+     None, False, None),
     ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", None, True, None),
     ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None, False, False),
-    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL", False, False),
+    (
+    "wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL", False
+    , False),
     ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None, False, False),
     ("lowlag_players", ("options.conf", "options", "lowlag_players"), None, True, "getint", None, False, 0),
     #("use_irc", ("irc.conf", "irc", "use_irc"), None, False, "getboolean", "initIRC", False, False),
@@ -43,13 +48,19 @@ CONFIG = [
     ("default_backup", ("options.conf", "worlds", "default_backup"), None, True, "get", None, False, "main"),
     ("asd_delay", ("options.conf", "worlds", "asd_delay"), None, True, "getint", "startASDLoop", False, 5),
     ("backup_auto", ("options.conf", "backups", "backup_auto"), None, True, "get", "initBackupLoop", False, True),
-    ("backup_freq", ("options.conf", "backups", "backup_freq"), "self.backup_auto == True", True, "getint", "changeBackupFrequency", False, 10),
-    ("backup_default", ("options.conf", "backups", "backup_default"), "self.backup_auto == True", True, "getboolean", None, False, False),
-    ("backup_max", ("options.conf", "backups", "backup_max"), "self.backup_auto == True", True, "getint", None, False, 50),
-    ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver", False, False),
+    ("backup_freq", ("options.conf", "backups", "backup_freq"), "self.backup_auto == True", True, "getint",
+     "changeBackupFrequency", False, 10),
+    ("backup_default", ("options.conf", "backups", "backup_default"), "self.backup_auto == True", True, "getboolean",
+     None, False, False),
+    ("backup_max", ("options.conf", "backups", "backup_max"), "self.backup_auto == True", True, "getint", None, False,
+     50),
+    ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver",
+     False, False),
     ("currency", ("options.conf", "bank", "currency"), None, True, "get", None, False, "Minecash"),
-    ("useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter", False, False),
-]
+    (
+    "useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter", False, False)
+    ,
+    ]
 
 INFO_VIPLIST = [
     # Mojang staff (current or retired)
@@ -88,7 +99,7 @@ INFO_VIPLIST = [
     "pyropyro",
     "tktech",
     "jte"
-    ]
+]
 
 FORMAT_LENGTHS = {
     "b": 1,
@@ -96,7 +107,7 @@ FORMAT_LENGTHS = {
     "s": 64,
     "h": 2,
     "i": 4,
-}
+    }
 
 TYPE_INITIAL = 0
 TYPE_KEEPALIVE = 1
@@ -268,9 +279,9 @@ BLOCK_WATERVATOR = 9
 BLOCK_LAVA = 10
 BLOCK_MAGMA = 10
 BLOCK_STILL_LAVA = 11
-BLOCK_STILLLAVA= 11
+BLOCK_STILLLAVA = 11
 BLOCK_STILL_MAGMA = 11
-BLOCK_STILLMAGMA= 11
+BLOCK_STILLMAGMA = 11
 BLOCK_LAVAVATOR = 11
 BLOCK_SAND = 12
 BLOCK_GRAVEL = 13
@@ -527,7 +538,7 @@ MSGLOGFORMAT = {
 }
 MSGREPLACE = {
     "escape_commands": {"./": " /", ".!": " !"},
-}
+    }
 MSGREPLACE["game_colour_to_irc"] = {
     COLOUR_BLACK: IRCCOLOUR_BLACK,
     COLOUR_DARKBLUE: IRCCOLOUR_DARKBLUE,
@@ -546,26 +557,27 @@ MSGREPLACE["game_colour_to_irc"] = {
     COLOUR_YELLOW: IRCCOLOUR_YELLOW,
     COLOUR_WHITE: IRCCOLOUR_WHITE
 }
-MSGREPLACE["text_colour_to_game"] = { # % to &
-    "%0": "&0",
-    "%1": "&1",
-    "%2": "&2",
-    "%3": "&3",
-    "%4": "&4",
-    "%5": "&5",
-    "%6": "&6",
-    "%7": "&7",
-    "%8": "&8",
-    "%9": "&9",
-    "%a": "&a",
-    "%b": "&b",
-    "%c": "&c",
-    "%d": "&d",
-    "%e": "&e",
-    "%f": "&f"
+MSGREPLACE["text_colour_to_game"] = {# % to &
+                                     "%0": "&0",
+                                     "%1": "&1",
+                                     "%2": "&2",
+                                     "%3": "&3",
+                                     "%4": "&4",
+                                     "%5": "&5",
+                                     "%6": "&6",
+                                     "%7": "&7",
+                                     "%8": "&8",
+                                     "%9": "&9",
+                                     "%a": "&a",
+                                     "%b": "&b",
+                                     "%c": "&c",
+                                     "%d": "&d",
+                                     "%e": "&e",
+                                     "%f": "&f"
 }
 
 from arc.globals import invertDict
+
 MSGREPLACE["irc_colour_to_game"] = invertDict(MSGREPLACE["game_colour_to_irc"])
 
 class ServerFull(Exception):

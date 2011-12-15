@@ -17,4 +17,4 @@ while chunk:
     chunk = gzf.read(2048)
 gzf.close()
 ngzf.close()
-os.rename(filename+".new", filename)
+os.rename(filename + ".new", filename)

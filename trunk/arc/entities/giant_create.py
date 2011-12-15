@@ -2,5 +2,5 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-entitylist.append(["giant",(x,y,z),4,4])
+entitylist.append(["giant", (x, y, z), 4, 4])
 self.client.sendServerMessage("A giant was created.")

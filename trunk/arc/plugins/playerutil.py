@@ -10,7 +10,6 @@ from arc.globals import *
 from arc.plugins import ProtocolPlugin
 
 class PlayerUtilPlugin(ProtocolPlugin):
-
     commands = {
         "rank": "commandRank",
         "setrank": "commandRank",
@@ -71,7 +70,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "poschange": "posChanged",
         "newworld": "newWorld",
         "recvmessage": "messageReceived",
-    }
+        }
 
     colors = ["&4", "&c", "&e", "&a", "&2", "&3", "&b", "&d", "&5"]
 
@@ -125,7 +124,7 @@ class PlayerUtilPlugin(ProtocolPlugin):
         "Hook trigger for when the user moves"
         # Are we fake-flying them?
         if self.flying:
-            fly_block_loc = ((x>>5), ((y-48)>>5)-1, (z>>5))
+            fly_block_loc = ((x >> 5), ((y - 48) >> 5) - 1, (z >> 5))
             if not self.last_flying_block:
                 # OK, send the first flying blocks
                 self.setCsBlock(fly_block_loc[0], fly_block_loc[1], fly_block_loc[2], BLOCK_GLASS)
@@ -141,16 +140,26 @@ class PlayerUtilPlugin(ProtocolPlugin):
             else:
                 # Have we moved at all?
                 if fly_block_loc != self.last_flying_block:
-                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1] - 1, self.last_flying_block[2], BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2], BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2], BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2], BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] - 1, BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] + 1, BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2] - 1, BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2] + 1, BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2] - 1, BLOCK_AIR)
-                    self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2] + 1, BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1] - 1, self.last_flying_block[2],
+                        BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2],
+                        BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2],
+                        BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2],
+                        BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] - 1,
+                        BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] + 1,
+                        BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1],
+                        self.last_flying_block[2] - 1, BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1],
+                        self.last_flying_block[2] + 1, BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1],
+                        self.last_flying_block[2] - 1, BLOCK_AIR)
+                    self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1],
+                        self.last_flying_block[2] + 1, BLOCK_AIR)
                     self.setCsBlock(fly_block_loc[0], fly_block_loc[1], fly_block_loc[2], BLOCK_GLASS)
                     self.setCsBlock(fly_block_loc[0], fly_block_loc[1] - 1, fly_block_loc[2], BLOCK_GLASS)
                     self.setCsBlock(fly_block_loc[0] - 1, fly_block_loc[1], fly_block_loc[2], BLOCK_GLASS)
@@ -164,16 +173,26 @@ class PlayerUtilPlugin(ProtocolPlugin):
             self.last_flying_block = fly_block_loc
         else:
             if self.last_flying_block:
-                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2], BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1] - 1, self.last_flying_block[2], BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2], BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2], BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] - 1, BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] + 1, BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2] - 1, BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2] + 1, BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2] - 1, BLOCK_AIR)
-                self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2] + 1, BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2],
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1] - 1, self.last_flying_block[2],
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2],
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2],
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] - 1,
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0], self.last_flying_block[1], self.last_flying_block[2] + 1,
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2] - 1,
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0] - 1, self.last_flying_block[1], self.last_flying_block[2] + 1,
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2] - 1,
+                    BLOCK_AIR)
+                self.setCsBlock(self.last_flying_block[0] + 1, self.last_flying_block[1], self.last_flying_block[2] + 1,
+                    BLOCK_AIR)
                 self.last_flying_block = None
 
     def newWorld(self, world):
@@ -192,10 +211,10 @@ class PlayerUtilPlugin(ProtocolPlugin):
         self.num = 0
 
     def sendcount(self, count):
-        if int(self.num)-int(count) == 1:
+        if int(self.num) - int(count) == 1:
             self.client.sendPlainWorldMessage("&7GET READY: &e1")
-        elif not int(self.num)-int(count) == 0:
-            self.client.sendPlainWorldMessage("&7COUNTDOWN: &c%s" %(int(self.num)-int(count)))
+        elif not int(self.num) - int(count) == 0:
+            self.client.sendPlainWorldMessage("&7COUNTDOWN: &c%s" % (int(self.num) - int(count)))
 
     @config("category", "player")
     @config("rank", "mod")
@@ -291,7 +310,8 @@ class PlayerUtilPlugin(ProtocolPlugin):
         ry = self.client.y >> 5
         rz = self.client.z >> 5
         user.var_prefetchdata = (self.client, self.client.world)
-        user.sendServerMessage("%s would like to fetch you%s." % (self.client.username, (("to %s" % self.client.world.id) if self.client.world.id == user.world.id else "")))
+        user.sendServerMessage("%s would like to fetch you%s." % (
+        self.client.username, (("to %s" % self.client.world.id) if self.client.world.id == user.world.id else "")))
         user.sendServerMessage("Do you wish to accept? [y]es [n]o")
         user.var_fetchrequest = True
         user.var_fetchdata = (self.client, self.client.world, rx, ry, rz)
@@ -372,7 +392,8 @@ class PlayerUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("That user seems to have went offline before the teleportation can finish.")
             return
         if (user.settings["tpprotect"] == True) and not self.client.isMod():
-            self.client.sendServerMessage("%s has teleport protection enabled - you cannot teleport to him/her." % user.username)
+            self.client.sendServerMessage(
+                "%s has teleport protection enabled - you cannot teleport to him/her." % user.username)
             return
         if user.world == self.client.world:
             self.client.teleportTo(x, y, z)
@@ -441,11 +462,13 @@ class PlayerUtilPlugin(ProtocolPlugin):
                 bank_dic = cPickle.load(file)
                 file.close()
                 return bank_dic
+
             def loadRank():
                 file = open('config/data/titles.dat', 'r')
                 rank_dic = cPickle.load(file)
                 file.close()
                 return rank_dic
+
             bank = loadBank()
             rank = loadRank()
             user = parts[1].lower()
@@ -457,18 +480,24 @@ class PlayerUtilPlugin(ProtocolPlugin):
                 # Parts is an array, always, so we get the first item.
                 username = self.client.factory.usernames[parts[1].lower()]
                 if self.client.isAdmin() or username.username.lower() == self.client.username.lower():
-                    self.client.sendNormalMessage(self.client.factory.usernames[user].userColour()+("%s" % (title))+parts[1]+COLOUR_YELLOW+" "+username.world.id+" | "+str(username.transport.getPeer().host))
+                    self.client.sendNormalMessage(
+                        self.client.factory.usernames[user].userColour() + ("%s" % (title)) + parts[
+                                                                                              1] + COLOUR_YELLOW + " " + username.world.id + " | " + str(
+                            username.transport.getPeer().host))
                 else:
-                    self.client.sendNormalMessage(self.client.factory.usernames[user].userColour()+("%s" % (title))+parts[1]+COLOUR_YELLOW+" "+username.world.id)
+                    self.client.sendNormalMessage(
+                        self.client.factory.usernames[user].userColour() + ("%s" % (title)) + parts[
+                                                                                              1] + COLOUR_YELLOW + " " + username.world.id)
                 if hasattr(username, "gone"):
                     if username.gone == 1:
-                        self.client.sendNormalMessage(COLOUR_DARKPURPLE+"is currently Away")
+                        self.client.sendNormalMessage(COLOUR_DARKPURPLE + "is currently Away")
                 if user in bank:
                     self.client.sendServerMessage("Balance: M%d" % (bank[user]))
             else:
                 # Parts is an array, always, so we get the first item.
                 username = parts[1].lower()
-                self.client.sendNormalMessage(self.client.userColour()+("%s" % (title))+parts[1]+COLOUR_DARKRED+" Offline")
+                self.client.sendNormalMessage(
+                    self.client.userColour() + ("%s" % (title)) + parts[1] + COLOUR_DARKRED + " Offline")
                 try:
                     t = time.time() - self.client.factory.lastseen[username]
                 except:

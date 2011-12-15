@@ -6,7 +6,7 @@ import gzip, os, sys
 
 if len(sys.argv) == 1:
     print "Please provide a filename."
-filename = sys.argv[1]    
+filename = sys.argv[1]
 print "Fixing %s..." % filename
 gzf = gzip.GzipFile(filename)
 ngzf = gzip.GzipFile(filename + ".new", "wb")
@@ -17,4 +17,4 @@ while chunk:
     chunk = gzf.read(2048)
 gzf.close()
 ngzf.close()
-os.rename(filename+".new", filename)
+os.rename(filename + ".new", filename)

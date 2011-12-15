@@ -9,7 +9,6 @@ from arc.includes.mcbans_api import McBans
 from arc.constants import *
 
 class McBansServerPlugin():
-
     name = "McBansServerPlugin"
 
     hooks = {
@@ -62,41 +61,57 @@ class McBansServerPlugin():
             except:
                 status = data["banStatus"]
                 if status == u'n':
-                    self.logger.info("[&1MCBans&f] User %s has a reputation of %s/10." % (client.username, data["playerRep"]))
-                    client.sendServerMessage("[%sMCBans%s] You have a reputation of %s%s/10." % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, data["playerRep"]))
+                    self.logger.info(
+                        "[&1MCBans&f] User %s has a reputation of %s/10." % (client.username, data["playerRep"]))
+                    client.sendServerMessage("[%sMCBans%s] You have a reputation of %s%s/10." % (
+                    COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, data["playerRep"]))
                 else:
-                    self.logger.warn("[&1MCBans&f] User %s has a reputation of %s/10 with bans on record." % (client.username, data["playerRep"]))
-                    client.sendServerMessage("[%sMCBans%s] Your reputation is %s%s/10%s with recorded bans." % (COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["playerRep"], COLOUR_YELLOW))
+                    self.logger.warn("[&1MCBans&f] User %s has a reputation of %s/10 with bans on record." % (
+                    client.username, data["playerRep"]))
+                    client.sendServerMessage("[%sMCBans%s] Your reputation is %s%s/10%s with recorded bans." % (
+                    COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["playerRep"], COLOUR_YELLOW))
                     if status == u'l':
                         if client.username not in self.exceptions:
-                            self.logger.info("[&1MCBans&f] Kicking user %s as they are locally banned." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] Kicking user %s as they are locally banned." % client.username)
                             client.sendError("[MCBans] You are locally banned.")
                         else:
-                            self.logger.info("[&1MCBans&f] User %s has a local ban but is on the exclusion list." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] User %s has a local ban but is on the exclusion list." % client.username)
                     elif status == u's':
                         if client.username not in self.exceptions:
-                            self.logger.info("[&1MCBans&f] Kicking user %s as they are banned in another server in the group." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] Kicking user %s as they are banned in another server in the group." % client.username)
                             client.sendError("[MCBans] You banned on another server in this group.")
                         else:
-                            self.logger.info("[&1MCBans&f] User %s is banned on another server in the group but is on the exclusion list." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] User %s is banned on another server in the group but is on the exclusion list." % client.username)
                     elif status == u't':
                         if client.username not in self.exceptions:
-                            self.logger.info("[&1MCBans&f] Kicking user %s as they are temporarily banned." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] Kicking user %s as they are temporarily banned." % client.username)
                             client.sendError("[MCBans] You are temporarily banned.")
                         else:
-                            self.logger.info("[&1MCBans&f] User %s has a temporary ban but is on the exclusion list." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] User %s has a temporary ban but is on the exclusion list." % client.username)
                     elif status == u'i':
                         if client.username not in self.exceptions:
-                            self.logger.info("[&1MCBans&f] Kicking user %s as they are banned on another IP." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] Kicking user %s as they are banned on another IP." % client.username)
                             client.sendError("[MCBans] You are IP banned.")
                         else:
-                            self.logger.info("[&1MCBans&f] User %s has a ban for another IP but is on the exclusion list." % client.username)
+                            self.logger.info(
+                                "[&1MCBans&f] User %s has a ban for another IP but is on the exclusion list." % client.username)
                 if int(data["playerRep"]) < self.threshold:
                     if client.username not in self.exceptions:
-                        self.logger.info("[&1MCBans&1] Kicking %s because their reputation of %s/10 is below the threshold!" % (client.username, data["playerRep"]))
+                        self.logger.info(
+                            "[&1MCBans&1] Kicking %s because their reputation of %s/10 is below the threshold!" % (
+                            client.username, data["playerRep"]))
                         client.sendError("Your MCBans reputation of %s/10 is too low!" % data["playerRep"])
                     else:
-                        self.logger.info("[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (client.username, data["playerRep"]))
+                        self.logger.info(
+                            "[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (
+                            client.username, data["playerRep"]))
             else:
                 self.factory.logger.error("MCBans error: %s" % str(error))
 
@@ -112,7 +127,10 @@ class McBansServerPlugin():
 
     def banned(self, data):
         if self.has_api:
-            value = self.handler.localBan(data["username"], self.factory.clients[data["username"]].getPeer().host if data["username"] in self.factory.clients.keys() else "Offline", data["reason"], data["admin"])
+            value = self.handler.localBan(data["username"],
+                self.factory.clients[data["username"]].getPeer().host if data[
+                                                                         "username"] in self.factory.clients.keys() else "Offline"
+                , data["reason"], data["admin"])
             try:
                 error = value["error"]
             except:

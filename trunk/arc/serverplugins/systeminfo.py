@@ -6,7 +6,7 @@ import psutil
 
 class SystemInfoServerPlugin():
     name = "SystemInfoPlugin"
-    
+
     hooks = {
         "heartbeatSent": "onHeartbeat"
     }
@@ -25,7 +25,9 @@ class SystemInfoServerPlugin():
         usageList = self.calculateSystemUsage()
         cpucores = psutil.cpu_percent(interval=0, percpu=True)
         cores = len(psutil.cpu_percent(interval=0, percpu=True))
-        self.logger.info("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
+        self.logger.info(
+            "CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (
+            usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
         if cores == 1:
             self.logger.debug("CPU: %s%% (in one core)" % usageList[0])
         elif cores > 1:
@@ -34,7 +36,7 @@ class SystemInfoServerPlugin():
             for element in cpucores:
                 done = done + ("%s: %s%%, " % (i, element))
                 i = i + 1
-            done = done[0:(len(done)-2)]
+            done = done[0:(len(done) - 2)]
             self.logger.debug("CPU: %s%% (%s)" % (usageList[0], done))
 
 serverPlugin = SystemInfoServerPlugin

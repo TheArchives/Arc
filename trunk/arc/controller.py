@@ -3,6 +3,7 @@
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import sys, traceback
+
 try:
     import simplejson
 except ImportError:
@@ -19,6 +20,7 @@ class ControllerProtocol(LineReceiver):
     """
     Protocol for dealing with controller requests.
     """
+
     def connectionMade(self):
         self.logger = ColouredLogger(debug)
         peer = self.transport.getPeer()
@@ -141,22 +143,22 @@ class ControllerProtocol(LineReceiver):
 
     def commandUserworlds(self, data):
         self.sendJson({"worlds": [
-            (world.id, [client.username for client in world.clients if client.username], {
-                "id": world.id,
-                "ops": list(world.ops),
-                "builders": list(world.builders),
-                "private": world.status["private"],
-                "archive": world.status["is_archive"],
-                "locked": not world.status["all_build"],
-                "physics": world.status["physics"],
-                "zones": world.status["zoned"],
-                "fwater": world.status["finite_water"],
-                "x": world.x,
-                "y": world.y,
-                "z": world.z,
-                "owner": world.status["owner"],
+        (world.id, [client.username for client in world.clients if client.username], {
+            "id": world.id,
+            "ops": list(world.ops),
+            "builders": list(world.builders),
+            "private": world.status["private"],
+            "archive": world.status["is_archive"],
+            "locked": not world.status["all_build"],
+            "physics": world.status["physics"],
+            "zones": world.status["zoned"],
+            "fwater": world.status["finite_water"],
+            "x": world.x,
+            "y": world.y,
+            "z": world.z,
+            "owner": world.status["owner"],
             })
-            for world in self.factory.worlds.values()
+        for world in self.factory.worlds.values()
         ]})
 
     def commandWorldinfo(self, data):
@@ -175,7 +177,8 @@ class ControllerProtocol(LineReceiver):
             "y": world.y,
             "z": world.z,
             "owner": world.status["owner"],
-        })
+            })
+
 
 class ControllerFactory(Factory):
     protocol = ControllerProtocol

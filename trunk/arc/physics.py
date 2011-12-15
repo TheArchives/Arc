@@ -32,8 +32,8 @@ CHR_LAVA_SPOUT = chr(BLOCK_LAVA_SPOUT)
 CHR_SAND_SPOUT = chr(BLOCK_SAND_SPOUT)
 
 # checks are more expensive here then updates (not sure about for the server and client)
-LIMIT_CHECKS = 256*256*256 
-LIMIT_UNFLOOD = 256*256*256
+LIMIT_CHECKS = 256 * 256 * 256
+LIMIT_UNFLOOD = 256 * 256 * 256
 
 class Physics(Thread):
     """
@@ -92,13 +92,15 @@ class Physics(Thread):
                     # if working list is empty then copy changed set to working set
                     # otherwise keep using the working set till empty
                     elif len(self.working) == 0:
-                        self.logger.debug("Performing expand checks for '%s' with %d changes." % (self.blockstore.world_name, len(self.changed)))
+                        self.logger.debug("Performing expand checks for '%s' with %d changes." % (
+                        self.blockstore.world_name, len(self.changed)))
                         changedfixed = self.changed # 'changedfixed' is 'changed' so gets all updates
                         self.changed = set()        # until 'changed' is a new set. This and the above statment are ATOMIC
                         self.working = set()         # changes from a Popxrange to a set
                         while len(changedfixed) > 0:
                             self.expand_checks(changedfixed.pop())
-                    self.logger.debug("Starting physics run for '%s' with %d checks." % (self.blockstore.world_name, len(self.working)))
+                    self.logger.debug("Starting physics run for '%s' with %d checks." % (
+                    self.blockstore.world_name, len(self.working)))
                     updates = 0
                     try:
                         for x in xrange(LIMIT_CHECKS):
@@ -106,10 +108,11 @@ class Physics(Thread):
                             updates += self.handle(offset)
                     except KeyError:
                         pass
-                    #if overflow and (time.time() - self.last_lag > self.LAG_INTERVAL):
+                        #if overflow and (time.time() - self.last_lag > self.LAG_INTERVAL):
                         #self.blockstore.message("Physics is currently lagging in %(id)s.")
                         #self.last_lag = time.time()
-                    self.logger.debug("Ended physics run for '%s' with %d updates and %d checks remaining." % (self.blockstore.world_name, updates, len(self.working)))
+                    self.logger.debug("Ended physics run for '%s' with %d updates and %d checks remaining." % (
+                    self.blockstore.world_name, updates, len(self.working)))
             else:
                 if self.was_physics:
                     self.blockstore.unflooding = False
@@ -133,35 +136,35 @@ class Physics(Thread):
         block = self.blockstore.raw_blocks[offset]
         x, y, z = self.blockstore.get_coords(offset)
         #if block == oldblock:
-            #return
+        #return
         # radius of 2 (because of sponge) should be enough
         for nx, ny, nz, new_offset in self.get_blocks(x, y, z, self.block_radius(2)):
             self.working.add(new_offset)
-        # handle grass and dirt under
-        # if block and oldblock are both either see though or not then ignore
-        #bseethough = (block == CHR_AIR) or (block == CHR_GLASS) or (block == CHR_LEAVES)
-        #oseethough = (oldblock == CHR_AIR) or (oldblock == CHR_GLASS) or (oldblock == CHR_LEAVES)
-        #if bseethough == oseethough:
+            # handle grass and dirt under
+            # if block and oldblock are both either see though or not then ignore
+            #bseethough = (block == CHR_AIR) or (block == CHR_GLASS) or (block == CHR_LEAVES)
+            #oseethough = (oldblock == CHR_AIR) or (oldblock == CHR_GLASS) or (oldblock == CHR_LEAVES)
+            #if bseethough == oseethough:
             #return
         # find first block under that isn't see through
         blocker_offset = offset
         blocker_block = block
-        for ny in xrange(y-1, -1, -1):
+        for ny in xrange(y - 1, -1, -1):
             test_offset = self.blockstore.get_offset(x, ny, z)
             test_block = self.blockstore.raw_blocks[test_offset]
             if not (test_block == CHR_AIR or test_block == CHR_GLASS or test_block == CHR_LEAVES):
                 blocker_offset = test_offset
                 blocker_block = test_block
                 break
-        # if dirt or grass add
+            # if dirt or grass add
         if blocker_offset != offset and (blocker_block == CHR_DIRT or blocker_block == CHR_GRASS):
             self.working.add(blocker_offset)
 
     def block_radius(self, r):
         "Returns blocks within the radius"
-        for x in range(-r, r+1):
-            for y in range(-r, r+1):
-                for z in range(-r, r+1):
+        for x in range(-r, r + 1):
+            for y in range(-r, r + 1):
+                for z in range(-r, r + 1):
                     if x or y or z:
                         yield (x, y, z)
 
@@ -169,15 +172,15 @@ class Physics(Thread):
         "Given a starting point and some deltas, returns all offsets which exist."
         for dx, dy, dz in deltas:
             try:
-                new_offset = self.blockstore.get_offset(x+dx, y+dy, z+dz)
-                yield x+dx, y+dy, z+dz, new_offset
+                new_offset = self.blockstore.get_offset(x + dx, y + dy, z + dz)
+                yield x + dx, y + dy, z + dz, new_offset
             except AssertionError:
                 pass
 
     def is_blocked(self, x, y, z):
         "Given coords, determines if the block can see the sky."
         blocked = False
-        for ny in xrange(y+1, self.blockstore.y):
+        for ny in xrange(y + 1, self.blockstore.y):
             blocker_offset = self.blockstore.get_offset(x, ny, z)
             blocker_block = self.blockstore.raw_blocks[blocker_offset]
             if not ((blocker_block == CHR_AIR) or (blocker_block == CHR_GLASS) or (blocker_block == CHR_LEAVES)):
@@ -220,14 +223,14 @@ class Physics(Thread):
             # If there's a gap below, produce water
             if self.blockstore.finite_water:
                 try:
-                    below = self.blockstore.get_offset(x, y-1, z)
+                    below = self.blockstore.get_offset(x, y - 1, z)
                     if self.blockstore.raw_blocks[below] == CHR_AIR:
                         if block == CHR_SPOUT:
-                            self.set_block((x, y-1, z), BLOCK_WATER)
+                            self.set_block((x, y - 1, z), BLOCK_WATER)
                         elif block == CHR_LAVA_SPOUT:
-                            self.set_block((x, y-1, z), BLOCK_LAVA)
+                            self.set_block((x, y - 1, z), BLOCK_LAVA)
                         else:
-                            self.set_block((x, y-1, z), BLOCK_SAND)
+                            self.set_block((x, y - 1, z), BLOCK_SAND)
                         updates += 1
                 except AssertionError:
                     pass # At bottom of world
@@ -236,18 +239,18 @@ class Physics(Thread):
         elif block == CHR_WATER or block == CHR_STILLWATER or block == CHR_LAVA or block == CHR_SAND:
             # OK, so, can it drop?
             try:
-                below = self.blockstore.get_offset(x, y-1, z)
+                below = self.blockstore.get_offset(x, y - 1, z)
                 if self.blockstore.finite_water:
                     if self.blockstore.raw_blocks[below] == CHR_AIR:
-                        self.set_block((x, y-1, z), ord(block))
+                        self.set_block((x, y - 1, z), ord(block))
                         self.set_block((x, y, z), BLOCK_AIR)
                         return updates + 2
                     elif self.blockstore.raw_blocks[below] == CHR_SPONGE:
                         self.set_block((x, y, z), BLOCK_AIR)
                         return updates + 1
                 else:
-                    if self.blockstore.raw_blocks[below] == CHR_AIR and not self.sponge_within_radius(x, y-1, z, 2):
-                        self.set_block((x, y-1, z), ord(block))
+                    if self.blockstore.raw_blocks[below] == CHR_AIR and not self.sponge_within_radius(x, y - 1, z, 2):
+                        self.set_block((x, y - 1, z), ord(block))
                         self.set_block((x, y, z), BLOCK_AIR)
                         return updates + 2
             except AssertionError:
@@ -256,47 +259,50 @@ class Physics(Thread):
             # Noice. Now, can it spread?
             if self.blockstore.finite_water:
                 # Finite water first tries to move downwards and straight TODO randomise or water will spread in one direction
-                for nx, ny, nz, new_offset in self.get_blocks(x, y, z, [(0, -1, 1), (0, -1, -1), (1, -1, 0), (-1, -1, 0)]):
-                    above_offset = self.blockstore.get_offset(nx, ny+1, nz)
+                for nx, ny, nz, new_offset in self.get_blocks(x, y, z,
+                    [(0, -1, 1), (0, -1, -1), (1, -1, 0), (-1, -1, 0)]):
+                    above_offset = self.blockstore.get_offset(nx, ny + 1, nz)
                     if self.blockstore.raw_blocks[above_offset] == CHR_AIR:
                         # Air? Fall.
                         if self.blockstore.raw_blocks[new_offset] == CHR_AIR:
                             self.set_block((nx, ny, nz), ord(block))
                             self.set_block((x, y, z), BLOCK_AIR)
                             return updates + 2
-                        # Sponge? Absorb.
+                            # Sponge? Absorb.
                         if self.blockstore.raw_blocks[new_offset] == CHR_SPONGE:
                             self.set_block((x, y, z), BLOCK_AIR)
                             return updates + 1
-                # Then it tries a diagonal
-                for nx, ny, nz, new_offset in self.get_blocks(x, y, z, [(1, -1, 1), (1, -1, -1), (-1, -1, 1), (-1, -1, -1)]):
-                    above_offset = self.blockstore.get_offset(nx, ny+1, nz)
-                    left_offset = self.blockstore.get_offset(x, ny+1, nz)
-                    right_offset = self.blockstore.get_offset(nx, ny+1, z)
-                    if self.blockstore.raw_blocks[above_offset] == CHR_AIR and \
-                        (self.blockstore.raw_blocks[left_offset] == CHR_AIR or \
+                    # Then it tries a diagonal
+                for nx, ny, nz, new_offset in self.get_blocks(x, y, z,
+                    [(1, -1, 1), (1, -1, -1), (-1, -1, 1), (-1, -1, -1)]):
+                    above_offset = self.blockstore.get_offset(nx, ny + 1, nz)
+                    left_offset = self.blockstore.get_offset(x, ny + 1, nz)
+                    right_offset = self.blockstore.get_offset(nx, ny + 1, z)
+                    if self.blockstore.raw_blocks[above_offset] == CHR_AIR and\
+                       (self.blockstore.raw_blocks[left_offset] == CHR_AIR or\
                         self.blockstore.raw_blocks[right_offset] == CHR_AIR):
                         # Air? Fall.
                         if self.blockstore.raw_blocks[new_offset] == CHR_AIR:
                             self.set_block((nx, ny, nz), ord(block))
                             self.set_block((x, y, z), BLOCK_AIR)
                             return updates + 2
-                        # Sponge? Absorb.
+                            # Sponge? Absorb.
                         if self.blockstore.raw_blocks[new_offset] == CHR_SPONGE:
                             self.set_block((x, y, z), BLOCK_AIR)
                             return updates + 1
                 if block == CHR_SAND:
                     return updates
-                # TODO got to stop water from stacking, water on water pushes out
+                    # TODO got to stop water from stacking, water on water pushes out
             else:
                 if block == CHR_SAND:
                     return updates
-                # Infinite water spreads in the 4 horiz directions.
+                    # Infinite water spreads in the 4 horiz directions.
                 for nx, ny, nz, new_offset in self.get_blocks(x, y, z, [(0, 0, 1), (0, 0, -1), (1, 0, 0), (-1, 0, 0)]):
-                    if self.blockstore.raw_blocks[new_offset] == CHR_AIR and not self.sponge_within_radius(nx, ny, nz, 2):
+                    if self.blockstore.raw_blocks[new_offset] == CHR_AIR and not self.sponge_within_radius(nx, ny, nz,
+                        2):
                         self.set_block((nx, ny, nz), ord(block))
                         updates += 1
-                # TODO make water levels the same even if tunnel to water is lower then surface
+                        # TODO make water levels the same even if tunnel to water is lower then surface
         elif block == CHR_SPONGE:   # TODO check if sponge adding and (below) removal requires re-animation
             # OK, it's a sponge. Add it to sponge locations.
             self.sponge_locations.add(offset)
@@ -307,11 +313,11 @@ class Physics(Thread):
                     if block == CHR_WATER and block == CHR_LAVA and block == CHR_SAND:
                         self.set_block((nx, ny, nz), BLOCK_AIR)
                         updates += 1
-            # If it's finite water, re-animate anything at the edges.
-            #if self.blockstore.finite_water:
-                #for nx, ny, nz, new_offset in self.get_blocks(x, y, z, self.block_radius(1)):
-                    #block = self.blockstore.raw_blocks[new_offset]
-                    #if block == CHR_WATER or block == CHR_LAVA:
+                        # If it's finite water, re-animate anything at the edges.
+                        #if self.blockstore.finite_water:
+                        #for nx, ny, nz, new_offset in self.get_blocks(x, y, z, self.block_radius(1)):
+                        #block = self.blockstore.raw_blocks[new_offset]
+                        #if block == CHR_WATER or block == CHR_LAVA:
                         #self.current[FLUID].add(new_offset)
 
         elif block == CHR_AIR:
@@ -319,8 +325,8 @@ class Physics(Thread):
                 self.sponge_locations.discard(offset)
                 ## See if there's some water or lava that needs reanimating
                 #for nx, ny, nz, new_offset in self.get_blocks(x, y, z, self.block_radius(3)):
-                    #block = self.blockstore.raw_blocks[new_offset]
-                    #if block == CHR_WATER or block == CHR_LAVA:
-                        #self.current[FLUID].add(new_offset)
+                #block = self.blockstore.raw_blocks[new_offset]
+                #if block == CHR_WATER or block == CHR_LAVA:
+                #self.current[FLUID].add(new_offset)
 
         return updates

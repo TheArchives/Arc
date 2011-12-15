@@ -7,7 +7,6 @@ import struct
 from arc.constants import *
 
 class Format(object):
-
     def __init__(self, format):
         self.format = format
 
@@ -53,4 +52,4 @@ class Format(object):
         return data
 
     def packString(self, string, length=64, packWith=" "):
-        return string + (packWith*(length-len(string)))
+        return string + (packWith * (length - len(string)))

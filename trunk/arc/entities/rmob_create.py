@@ -2,5 +2,5 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-entitylist.append(["mob",(x,y,z),1,1])
+entitylist.append(["mob", (x, y, z), 1, 1])
 self.client.sendServerMessage("A mob was created.")

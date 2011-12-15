@@ -10,10 +10,10 @@ from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
-SPECIAL_CMDS = ["wait", "if", "exit", "getinput", "getnum", "getblock", "getyn", "self"] # not actual commands but can be used in cmdblocks
+SPECIAL_CMDS = ["wait", "if", "exit", "getinput", "getnum", "getblock", "getyn",
+                "self"] # not actual commands but can be used in cmdblocks
 
 class CommandPlugin(ProtocolPlugin):
-
     commands = {
         "cmdhelp": "commandCmdHelp",
         "cmd": "commandCommand",
@@ -28,7 +28,7 @@ class CommandPlugin(ProtocolPlugin):
         "cmddelcmd": "commandDelPreviousCMD",
         "r": "commandLastCommand",
         "lastcmd": "commandLastCommand",
-    }
+        }
 
     hooks = {
         "blockclick": "blockChanged",
@@ -38,7 +38,8 @@ class CommandPlugin(ProtocolPlugin):
     }
 
     def gotClient(self):
-        self.twocoordcommands = list(["blb", "bhb", "bwb", "mountain", "hill", "dune", "pit", "lake", "hole", "copy", "replace", "line"])
+        self.twocoordcommands = list(
+            ["blb", "bhb", "bwb", "mountain", "hill", "dune", "pit", "lake", "hole", "copy", "replace", "line"])
         self.onecoordcommands = list(["sphere", "hsphere", "paste"])
         self.command_remove = False
         self.last_block_position = None
@@ -66,35 +67,39 @@ class CommandPlugin(ProtocolPlugin):
         return bank_dic
 
     def message(self, message):
-        if message.startswith("/") and not (message.split()[0].lower() == "/lastcmd" or message.split()[0].lower() == "/r"):
+        if message.startswith("/") and not (
+        message.split()[0].lower() == "/lastcmd" or message.split()[0].lower() == "/r"):
             self.lastcommand = message
         if self.cmdinfolines is not None:
             if message.lower() == "next":
                 self.infoindex += 10
                 index = int(self.infoindex)
-                cmdlist = self.cmdinfolines[index:index+10]
+                cmdlist = self.cmdinfolines[index:index + 10]
                 if len(cmdlist) < 10:
                     if len(cmdlist) > 0:
-                        self.client.sendServerMessage("Page %s of %s:" % (int((index+11)/10), int((len(self.cmdinfolines)/10)+1)))
+                        self.client.sendServerMessage(
+                            "Page %s of %s:" % (int((index + 11) / 10), int((len(self.cmdinfolines) / 10) + 1)))
                         for x in cmdlist:
                             self.client.sendServerMessage(x)
                     self.client.sendServerMessage("Reached the end.")
                     self.infoindex = None
                     self.cmdinfolines = None
                     return True
-                self.client.sendServerMessage("Page %s of %s:" % (int((index+11)/10), int((len(self.cmdinfolines)/10)+1)))
+                self.client.sendServerMessage(
+                    "Page %s of %s:" % (int((index + 11) / 10), int((len(self.cmdinfolines) / 10) + 1)))
                 for x in cmdlist:
                     self.client.sendServerMessage(x)
                 return True
             elif message.lower() == "back":
                 self.infoindex -= 10
                 try:
-                    cmdlist = self.cmdinfolines[self.infoindex:self.infoindex+10]
+                    cmdlist = self.cmdinfolines[self.infoindex:self.infoindex + 10]
                 except:
                     self.infoindex += 10
                     self.client.sendServerMessage("Reached the beginning.")
                     return
-                self.client.sendServerMessage("Page %s of %s:" % (int((self.infoindex+1)/10), int(len(self.cmdinfolist)/10)))
+                self.client.sendServerMessage(
+                    "Page %s of %s:" % (int((self.infoindex + 1) / 10), int(len(self.cmdinfolist) / 10)))
                 for x in cmdlist:
                     self.client.sendServerMessage(x)
                 return True
@@ -133,8 +138,8 @@ class CommandPlugin(ProtocolPlugin):
                 thiscmd = thiscmd.replace("/gscmd", "")
                 thiscmd = thiscmd.replace("/scmd", "")
                 thiscmd = thiscmd.replace("$name", self.client.username)
-                thiscmd = thiscmd.replace("$date", time.strftime("%m/%d/%Y",time.localtime(time.time())))
-                thiscmd = thiscmd.replace("$time", time.strftime("%H:%M:%S",time.localtime(time.time())))
+                thiscmd = thiscmd.replace("$date", time.strftime("%m/%d/%Y", time.localtime(time.time())))
+                thiscmd = thiscmd.replace("$time", time.strftime("%H:%M:%S", time.localtime(time.time())))
                 parts = thiscmd.split()
                 command = str(parts[0])
                 self.runningcmdlist.remove(x)
@@ -153,8 +158,10 @@ class CommandPlugin(ProtocolPlugin):
                     if runcmd:
                         func(parts, False, guest)
                 except UnboundLocalError:
-                    self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                    self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
+                    self.client.sendSplitServerMessage(
+                        traceback.format_exc().replace("Traceback (most recent call last):", ""))
+                    self.client.sendSplitServerMessage(
+                        "Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                     self.client.logger.error(traceback.format_exc())
             elif message.lower() == "n" or message.lower() == "no":
                 self.listeningforpay = False
@@ -221,7 +228,7 @@ class CommandPlugin(ProtocolPlugin):
                     for x in cmdlist:
                         self.client.sendServerMessage(x)
                 else:
-                    self.client.sendServerMessage("Page 1 of %s:" % int((len(cmdlist)/10)+1))
+                    self.client.sendServerMessage("Page 1 of %s:" % int((len(cmdlist) / 10) + 1))
                     for x in cmdlist[:9]:
                         self.client.sendServerMessage(x)
                     self.infoindex = 0
@@ -283,13 +290,17 @@ class CommandPlugin(ProtocolPlugin):
             if parts[1].lower() == "types":
                 if len(parts) > 2:
                     if parts[2].lower() == "cmd":
-                        self.client.sendSplitServerMessage("cmd - This is the main type of cmdblocks. Activated by clicking the block, these commands will only work if the user can.")
+                        self.client.sendSplitServerMessage(
+                            "cmd - This is the main type of cmdblocks. Activated by clicking the block, these commands will only work if the user can.")
                     elif parts[2].lower() == "gcmd":
-                        self.client.sendSplitServerMessage("gcmd - This is the guest type of cmdblocks. Activated by clicking the block, these commands will work for anyone.")
+                        self.client.sendSplitServerMessage(
+                            "gcmd - This is the guest type of cmdblocks. Activated by clicking the block, these commands will work for anyone.")
                     elif parts[2].lower() == "scmd":
-                        self.client.sendSplitServerMessage("scmd - This is the sensor type of cmdblocks. Activated by passing through, these commands will only work if the user can.")
+                        self.client.sendSplitServerMessage(
+                            "scmd - This is the sensor type of cmdblocks. Activated by passing through, these commands will only work if the user can.")
                     elif parts[2].lower() == "gscmd":
-                        self.client.sendSplitServerMessage("gscmd - This is the guest sensor of cmdblocks. Activated by passing through, these commands will work for anyone.")
+                        self.client.sendSplitServerMessage(
+                            "gscmd - This is the guest sensor of cmdblocks. Activated by passing through, these commands will work for anyone.")
                     else:
                         self.client.sendServerMessage("That subcategory doesn't exist.")
                 else:
@@ -305,25 +316,32 @@ class CommandPlugin(ProtocolPlugin):
                     elif parts[2].lower() == "wait":
                         self.client.sendServerMessage("wait seconds - Pauses the cmdblock for x seconds.")
                     elif parts[2].lower() == "getinput":
-                        self.client.sendSplitServerMessage("getinput varname displaymsg - Pauses the cmdblock waiting for input. The input will be any type of data, stores it for retrieval via $varname")
+                        self.client.sendSplitServerMessage(
+                            "getinput varname displaymsg - Pauses the cmdblock waiting for input. The input will be any type of data, stores it for retrieval via $varname")
                     elif parts[2].lower() == "getnum":
-                        self.client.sendSplitServerMessage("getnum varname displaymsg - Pauses the cmdblock waiting for num input. The input will be any type of number, stores it for retrieval via $varname")
+                        self.client.sendSplitServerMessage(
+                            "getnum varname displaymsg - Pauses the cmdblock waiting for num input. The input will be any type of number, stores it for retrieval via $varname")
                     elif parts[2].lower() == "getblock":
-                        self.client.sendSplitServerMessage("getblock varname displaymsg - Pauses the cmdblock waiting for block input. The input will be any type of block, stores it for retrieval via $varname")
+                        self.client.sendSplitServerMessage(
+                            "getblock varname displaymsg - Pauses the cmdblock waiting for block input. The input will be any type of block, stores it for retrieval via $varname")
                     elif parts[2].lower() == "getyesno":
-                        self.client.sendSplitServerMessage("getyesno varname displaymsg - Pauses the cmdblock waiting for yesno input. The input will be a 'y' or 'n', stores it for retrieval via $varname")
+                        self.client.sendSplitServerMessage(
+                            "getyesno varname displaymsg - Pauses the cmdblock waiting for yesno input. The input will be a 'y' or 'n', stores it for retrieval via $varname")
                     else:
                         self.client.sendServerMessage("That subcategory doesn't exist.")
                 else:
                     self.client.sendServerMessage("cmdblocks Help - Functions")
-                    self.client.sendSplitServerMessage("In cmdblocks there are functions, these are commands that exist only in cmdblocks and can't be done seperate.")
-                    self.client.sendSplitServerMessage("Subcategories: exit getblock getinput getnum getyesno m self wait")
+                    self.client.sendSplitServerMessage(
+                        "In cmdblocks there are functions, these are commands that exist only in cmdblocks and can't be done seperate.")
+                    self.client.sendSplitServerMessage(
+                        "Subcategories: exit getblock getinput getnum getyesno m self wait")
             elif parts[1].lower() == "variables":
                 if len(parts) > 2:
                     if parts[2].lower() == "bank":
                         self.client.sendServerMessage("$bank - Balance of the player.")
                     elif parts[2].lower() == "block":
-                        self.client.sendSplitServerMessage("$block(x, y, z) - Block type, as a integer, for the block at x, y, z in the current world")
+                        self.client.sendSplitServerMessage(
+                            "$block(x, y, z) - Block type, as a integer, for the block at x, y, z in the current world")
                     elif parts[2].lower() == "bname":
                         self.client.sendServerMessage("$bname - Returns the block num as name, can use with $block")
                     elif parts[2].lower() == "cname":
@@ -357,7 +375,8 @@ class CommandPlugin(ProtocolPlugin):
                     elif parts[2].lower() == "ranknum":
                         self.client.sendServerMessage("$ranknum - Rank number of the player.")
                     elif parts[2].lower() == "rnd":
-                        self.client.sendServerMessage("$rnd(min, max) - Returns a random number between the min and max.")
+                        self.client.sendServerMessage(
+                            "$rnd(min, max) - Returns a random number between the min and max.")
                     elif parts[2].lower() == "server":
                         self.client.sendServerMessage("$server - Name of the server.")
                     elif parts[2].lower() == "time":
@@ -366,8 +385,10 @@ class CommandPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("That subcategory doesn't exist.")
                 else:
                     self.client.sendServerMessage("cmdblocks Help - Variables")
-                    self.client.sendSplitServerMessage("In cmdblocks there are variables, these get replaced with the respectful information when the user uses a cmdblock. All Variables start with a $ for use and work in very purposes like display and IFs.")
-                    self.client.sendSplitServerMessage("Subcategories: bank block bname cname date eval first irc ircchan ircnet name owner posa posx posy posz rank ranknum rnd server time")
+                    self.client.sendSplitServerMessage(
+                        "In cmdblocks there are variables, these get replaced with the respectful information when the user uses a cmdblock. All Variables start with a $ for use and work in very purposes like display and IFs.")
+                    self.client.sendSplitServerMessage(
+                        "Subcategories: bank block bname cname date eval first irc ircchan ircnet name owner posa posx posy posz rank ranknum rnd server time")
             else:
                 self.client.sendServerMessage("That category doesn't exist.")
         else:
@@ -435,7 +456,7 @@ class CommandPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.sendServerMessage("'%s' is a Builder-only command!" % command)
                         return
-                # Using custom message?
+                    # Using custom message?
                 if hasattr(func, "config"):
                     if func.config["custom_cmdlog_msg"]:
                         self.client.logger.info("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
@@ -445,7 +466,8 @@ class CommandPlugin(ProtocolPlugin):
             func(parts, "user", False) # fromloc is user, overriderank is false
         except Exception, e:
             self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-            self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
+            self.client.sendSplitServerMessage(
+                "Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
             self.client.logger.error(traceback.format_exc())
 
 
@@ -461,7 +483,7 @@ class CommandPlugin(ProtocolPlugin):
         else:
             if parts[0] != "//cmd":
                 if parts[1] in self.twocoordcommands:
-                    if len(parts) <  8:
+                    if len(parts) < 8:
                         if len(self.client.last_block_changes) > 1:
                             x, y, z = self.client.last_block_changes[0]
                             x2, y2, z2 = self.client.last_block_changes[1]
@@ -515,7 +537,8 @@ class CommandPlugin(ProtocolPlugin):
                 else:
                     self.client.sendServerMessage("You are now creating a command block.")
                     self.client.sendServerMessage("Use /cmd command again to add a command")
-                    self.client.sendSplitServerMessage("Use //cmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendSplitServerMessage(
+                        "Use //cmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
                     self.client.sendServerMessage("Type /cmd with no args to start placing the block.")
                     self.client.sendServerMessage("Command %s added." % var_string)
 
@@ -596,7 +619,8 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("You are now creating a guest command block.")
                     self.client.sendServerMessage("WARNING: Commands on this block can be run by ANYONE")
                     self.client.sendServerMessage("Use /gcmd command again to add a command")
-                    self.client.sendSplitServerMessage("Use //gcmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendSplitServerMessage(
+                        "Use //gcmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
                     self.client.sendServerMessage("Type /gcmd with no args to start placing the block.")
                     self.client.sendServerMessage("Command %s added." % var_string)
 
@@ -612,7 +636,7 @@ class CommandPlugin(ProtocolPlugin):
         else:
             if parts[0] != "//scmd":
                 if parts[1] in self.twocoordcommands:
-                    if len(parts) <  8:
+                    if len(parts) < 8:
                         if len(self.client.last_block_changes) > 1:
                             x, y, z = self.client.last_block_changes[0]
                             x2, y2, z2 = self.client.last_block_changes[1]
@@ -651,7 +675,7 @@ class CommandPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("You cannot use this command in a cmdblock.")
                         return
             for x in parts:
-                   commandtext = commandtext + " " + str(x)
+                commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
                 var_string = ""
                 var_cmdparts = parts[1:]
@@ -666,7 +690,8 @@ class CommandPlugin(ProtocolPlugin):
                 else:
                     self.client.sendServerMessage("You are now creating a sensor command block.")
                     self.client.sendServerMessage("Use /scmd command again to add a command.")
-                    self.client.sendSplitServerMessage("Use //scmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendSplitServerMessage(
+                        "Use //scmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
                     self.client.sendServerMessage("Type /scmd with no args to start placing the block.")
                     self.client.sendServerMessage("Command %s added." % var_string)
 
@@ -682,7 +707,7 @@ class CommandPlugin(ProtocolPlugin):
         else:
             if parts[0] != "//gscmd":
                 if parts[1] in self.twocoordcommands:
-                    if len(parts) <  8:
+                    if len(parts) < 8:
                         if len(self.client.last_block_changes) > 1:
                             x, y, z = self.client.last_block_changes[0]
                             x2, y2, z2 = self.client.last_block_changes[1]
@@ -730,7 +755,7 @@ class CommandPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("This command can only be added by an admin.")
                         return
             for x in parts:
-                   commandtext = commandtext + " " + str(x)
+                commandtext = commandtext + " " + str(x)
             if not self.command_cmd is None:
                 var_string = ""
                 var_cmdparts = parts[1:]
@@ -746,7 +771,8 @@ class CommandPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("You are now creating a guest sensor command block.")
                     self.client.sendServerMessage("WARNING: Commands on this block can be run by ANYONE.")
                     self.client.sendServerMessage("Use /gscmd command again to add a command.")
-                    self.client.sendSplitServerMessage("Use //gscmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
+                    self.client.sendSplitServerMessage(
+                        "Use //gscmd command to add a command without adding any coordinates (for things like blb, sphere, etc.)")
                     self.client.sendServerMessage("Type /gscmd with no args to start placing the block.")
                     self.client.sendServerMessage("Command %s added." % var_string)
 
@@ -763,7 +789,8 @@ class CommandPlugin(ProtocolPlugin):
         self.command_remove = False
         self.placing_cmd = False
         self.client.sendServerMessage("You are no longer placing command blocks.")
-        self.client.sendSplitServerMessage("Note: you can type '/cmdend save' to keep the block you are making and it's commands.")
+        self.client.sendSplitServerMessage(
+            "Note: you can type '/cmdend save' to keep the block you are making and it's commands.")
 
     @config("rank", "builder")
     def commandCommandDel(self, parts, fromloc, overriderank):
@@ -775,7 +802,7 @@ class CommandPlugin(ProtocolPlugin):
     def commandDelPreviousCMD(self, parts, fromloc, overriderank):
         "/cmddelcmd - Builder\nDeletes the previous command for the block."
         if len(self.command_cmd) > 0:
-            del self.command_cmd[len(self.command_cmd)-1]
+            del self.command_cmd[len(self.command_cmd) - 1]
             self.client.sendServerMessage("Previous command for the block deleted.")
         else:
             self.client.sendServerMessage("There is no block command to delete.")
@@ -788,11 +815,11 @@ class CommandPlugin(ProtocolPlugin):
 
     @config("rank", "builder")
     def commandShowCMDBlocks(self, parts, fromloc, overriderank):
-       "/cmdshow - Builder\nShows all command blocks as yellow, only to you."
-       for offset in self.client.world.cmdblocks.keys():
-           x, y, z = self.client.world.get_coords(offset)
-           self.client.sendPacked(TYPE_BLOCKSET, x, y, z, BLOCK_YELLOW)
-       self.client.sendServerMessage("All cmdblocks appearing yellow temporarily.")
+        "/cmdshow - Builder\nShows all command blocks as yellow, only to you."
+        for offset in self.client.world.cmdblocks.keys():
+            x, y, z = self.client.world.get_coords(offset)
+            self.client.sendPacked(TYPE_BLOCKSET, x, y, z, BLOCK_YELLOW)
+        self.client.sendServerMessage("All cmdblocks appearing yellow temporarily.")
 
     @config("rank", "builder")
     @on_off_command
@@ -841,7 +868,8 @@ class CommandPlugin(ProtocolPlugin):
         thiscmd = thiscmd.replace("$first", str(self.client.username in self.client.factory.lastseen))
         thiscmd = thiscmd.replace("$server", self.client.factory.server_name)
         if self.client.factory.irc_relay:
-            thiscmd = thiscmd.replace("$irc", self.client.factory.irc_config.get("irc", "server") + " " + self.client.factory.irc_channel)
+            thiscmd = thiscmd.replace("$irc",
+                self.client.factory.irc_config.get("irc", "server") + " " + self.client.factory.irc_channel)
             thiscmd = thiscmd.replace("$ircchan", self.client.factory.irc_channel)
             thiscmd = thiscmd.replace("$ircnet", self.client.factory.irc_config.get("irc", "server"))
         else:
@@ -897,66 +925,71 @@ class CommandPlugin(ProtocolPlugin):
         thiscmd = thiscmd.replace("$posx", str(rx))
         thiscmd = thiscmd.replace("$posy", str(ry))
         thiscmd = thiscmd.replace("$posz", str(rz))
-        thiscmd = thiscmd.replace("$posa", str(rx)+" "+str(ry)+" "+str(rx))
+        thiscmd = thiscmd.replace("$posa", str(rx) + " " + str(ry) + " " + str(rx))
         thiscmd = thiscmd.replace("$rank", myrank)
         thiscmd = thiscmd.replace("$rnum", str(myranknum))
         for variable in self.customvars.keys():
-            thiscmd = thiscmd.replace("$"+variable, str(self.customvars[variable]))
+            thiscmd = thiscmd.replace("$" + variable, str(self.customvars[variable]))
         for num in range(len(thiscmd)):
-            if thiscmd[num:(num+4)] == "$rnd":
+            if thiscmd[num:(num + 4)] == "$rnd":
                 try:
-                    limits = thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)].split(",")
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], str(random.randint(int(limits[0]), int(limits[1]))))
+                    limits = thiscmd[thiscmd.find("(", num) + 1:thiscmd.find(")", num + 5)].split(",")
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num) + 1],
+                        str(random.randint(int(limits[0]), int(limits[1]))))
                 except:
                     self.client.sendServerMessage("$rnd Syntax Error; Use: $rnd(num1,num2)")
         for num in range(len(thiscmd)):
-            if thiscmd[num:(num+4)] == "$mod":
+            if thiscmd[num:(num + 4)] == "$mod":
                 try:
-                    limits = thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)].split(",")
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], str(int(limits[0])%int(limits[1])))
+                    limits = thiscmd[thiscmd.find("(", num) + 1:thiscmd.find(")", num + 5)].split(",")
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num) + 1],
+                        str(int(limits[0]) % int(limits[1])))
                 except:
                     self.client.sendServerMessage("$mod Syntax Error; Use: $mod(num1,num2)")
         for num in range(len(thiscmd)):
-            if thiscmd[num:(num+6)] == "$block":
+            if thiscmd[num:(num + 6)] == "$block":
                 try:
-                    coords = thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)].split(",")
+                    coords = thiscmd[thiscmd.find("(", num) + 1:thiscmd.find(")", num + 5)].split(",")
                     x = int(coords[0])
                     y = int(coords[1])
                     z = int(coords[2])
                     check_offset = self.client.world.blockstore.get_offset(x, y, z)
                     block = ord(self.client.world.blockstore.raw_blocks[check_offset])
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], str(block))
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num) + 1], str(block))
                 except:
                     self.client.sendServerMessage("$block Syntax Error; Use: $block(x,y,z)")
         for num in range(len(thiscmd)):
-            if thiscmd[num:(num+4)] == "$bin":
+            if thiscmd[num:(num + 4)] == "$bin":
                 try:
-                    HexBin = {"0":"0000", "1":"0001", "2":"0010", "3":"0011", "4":"0100", "5":"0101", "6":"0110", "7":"0111", "8":"1000", "9":"1001", "A":"1010", "B":"1011", "C":"1100", "D":"1101", "E":"1110", "F":"1111"}
-                    coords = thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)] #.split(",")
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], str("".join([HexBin[i] for i in '%X'%coords[0]]).lstrip('0')))
+                    HexBin = {"0": "0000", "1": "0001", "2": "0010", "3": "0011", "4": "0100", "5": "0101", "6": "0110",
+                              "7": "0111", "8": "1000", "9": "1001", "A": "1010", "B": "1011", "C": "1100", "D": "1101",
+                              "E": "1110", "F": "1111"}
+                    coords = thiscmd[thiscmd.find("(", num) + 1:thiscmd.find(")", num + 5)] #.split(",")
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num) + 1],
+                        str("".join([HexBin[i] for i in '%X' % coords[0]]).lstrip('0')))
                 except:
                     self.client.sendServerMessage("$bin Syntax Error; Use: $bin(x)")
         for num in range(len(thiscmd)):
-            if thiscmd[num:(num+5)] == "$eval" or thiscmd[num:(num+4)] == "$int":
+            if thiscmd[num:(num + 5)] == "$eval" or thiscmd[num:(num + 4)] == "$int":
                 try:
                     parentheses = 0
-                    for num2 in range(num+6, len(thiscmd)-1):
+                    for num2 in range(num + 6, len(thiscmd) - 1):
                         if thiscmd[num2] == "(":
-                            parentheses = parentheses+1
+                            parentheses = parentheses + 1
                         elif thiscmd[num2] == ")":
-                            parentheses = parentheses-1
+                            parentheses = parentheses - 1
                         if parentheses == 0:
                             # We've reached the end of the expression
                             lastindex = num2
-                    expression = str(eval(thiscmd[thiscmd.find("(", num)+1:lastindex+1]))
-                    thiscmd = thiscmd.replace(thiscmd[num:lastindex+2], expression)
+                    expression = str(eval(thiscmd[thiscmd.find("(", num) + 1:lastindex + 1]))
+                    thiscmd = thiscmd.replace(thiscmd[num:lastindex + 2], expression)
                 except:
                     self.client.sendServerMessage("$eval Syntax Error; Use: $eval(expression)")
         for num in range(len(thiscmd)):
-            if thiscmd[num:(num+6)] == "$bname":
+            if thiscmd[num:(num + 6)] == "$bname":
                 try:
-                    blocknum = int(thiscmd[thiscmd.find("(", num)+1:thiscmd.find(")", num+5)])
-                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num)+1], BlockList[blocknum])
+                    blocknum = int(thiscmd[thiscmd.find("(", num) + 1:thiscmd.find(")", num + 5)])
+                    thiscmd = thiscmd.replace(thiscmd[num:thiscmd.find(")", num) + 1], BlockList[blocknum])
                 except:
                     self.client.sendServerMessage("$bname Syntax Error; Use: $bname(blockint)")
         if thiscmd.startswith(" if"):
@@ -964,7 +997,7 @@ class CommandPlugin(ProtocolPlugin):
                 condition = thiscmd[4:thiscmd.find(":")]
                 if (bool(eval(condition, {}, {}))) == False:
                     runcmd = False
-                thiscmd = thiscmd.replace(thiscmd[:thiscmd.find(":")+1], "")
+                thiscmd = thiscmd.replace(thiscmd[:thiscmd.find(":") + 1], "")
             except:
                 self.client.sendServerMessage("IF Syntax Error; Use: if \"a\"==\"b\": command")
         parts = thiscmd.split()
@@ -983,7 +1016,7 @@ class CommandPlugin(ProtocolPlugin):
             if user in bank:
                 if bank[user] > amount:
                     self.listeningforpay = True
-                    self.client.sendServerMessage("%s is requesting payment of C%s. Pay? [Y/N]" %(target, amount))
+                    self.client.sendServerMessage("%s is requesting payment of C%s. Pay? [Y/N]" % (target, amount))
                     return
                 else:
                     self.client.sendServerMessage("You don't have enough money to pay!")
@@ -995,7 +1028,7 @@ class CommandPlugin(ProtocolPlugin):
                 self.runningcmdlist = list({})
                 self.runningsensor = False
                 return
-        # Comments
+            # Comments
         if command == "#" and runcmd:
             runcmd = False
         if (command == "self" or command == "m") and runcmd:
@@ -1025,7 +1058,7 @@ class CommandPlugin(ProtocolPlugin):
                 runcmd = False
             if runcmd:
                 if len(parts) > 2:
-                    self.client.sendServerMessage("[INPUT] "+" ".join(parts[2:]))
+                    self.client.sendServerMessage("[INPUT] " + " ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting input.")
                 self.runningcmdlist.remove(self.runningcmdlist[0])
@@ -1038,7 +1071,7 @@ class CommandPlugin(ProtocolPlugin):
                 runcmd = False
             if runcmd:
                 if len(parts) > 2:
-                    self.client.sendServerMessage("[INPUT] "+" ".join(parts[2:]))
+                    self.client.sendServerMessage("[INPUT] " + " ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting input.")
                 self.runningcmdlist.remove(self.runningcmdlist[0])
@@ -1051,7 +1084,7 @@ class CommandPlugin(ProtocolPlugin):
                 runcmd = False
             if runcmd:
                 if len(parts) > 2:
-                    self.client.sendServerMessage("[BLOCK INPUT] "+" ".join(parts[2:]))
+                    self.client.sendServerMessage("[BLOCK INPUT] " + " ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting block input.")
                 self.runningcmdlist.remove(self.runningcmdlist[0])
@@ -1064,7 +1097,7 @@ class CommandPlugin(ProtocolPlugin):
                 runcmd = False
             if runcmd:
                 if len(parts) > 2:
-                    self.client.sendServerMessage("[Y/N] "+" ".join(parts[2:]))
+                    self.client.sendServerMessage("[Y/N] " + " ".join(parts[2:]))
                 else:
                     self.client.sendServerMessage("This command block is requesting yes/no input.")
                 self.runningcmdlist.remove(self.runningcmdlist[0])
@@ -1119,8 +1152,10 @@ class CommandPlugin(ProtocolPlugin):
                 if runcmd:
                     func(parts, "cmdblock", guest)
             except Exception as e:
-                self.client.sendSplitServerMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                self.client.sendSplitServerMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
+                self.client.sendSplitServerMessage(
+                    traceback.format_exc().replace("Traceback (most recent call last):", ""))
+                self.client.sendSplitServerMessage(
+                    "Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                 self.client.logger.error(traceback.format_exc())
         self.runningcmdlist.remove(self.runningcmdlist[0])
         reactor.callLater(0.1, self.runcommands)

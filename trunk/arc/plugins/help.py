@@ -10,7 +10,6 @@ from arc.globals import *
 from arc.plugins import ProtocolPlugin
 
 class helpPlugin(ProtocolPlugin):
-
     commands = {
         "help": "commandHelp",
         "?": "commandHelp",
@@ -31,7 +30,7 @@ class helpPlugin(ProtocolPlugin):
 
         "dcurl": "commandDCURL",
         "womurl": "commandDCURL",
-    }
+        }
 
     @config("category", "info")
     def commandHelp(self, parts, fromloc, overriderank):
@@ -48,17 +47,18 @@ class helpPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("StaffChat: #message")
                 elif parts[1].lower() == "physic":
                     self.client.sendServerMessage("Help; Physics Engine")
-                    self.client.sendServerMessage("Turn physics on to use Physics (max of %s worlds)" % self.client.factory.physics_limit)
+                    self.client.sendServerMessage(
+                        "Turn physics on to use Physics (max of %s worlds)" % self.client.factory.physics_limit)
                     self.client.sendServerMessage("If fwater is on then your water won't move.")
                     self.client.sendServerMessage("Orange blocks make Lavafalls, darkblue blocks make Waterfalls.")
                     self.client.sendServerMessage("Spouts need fwater to be on in order to work.")
                     self.client.sendServerMessage("Sand will fall, grass will grow, sponges will absorb.")
                     self.client.sendServerMessage("Use unflood to move all water, lava, and spouts from the world.")
                 elif parts[1].lower() == "ranks":
-                    self.client.sendNormalMessage(COLOUR_YELLOW+"Help: Server Ranks - "+COLOUR_GREEN+
-                                                 "Owner/Console [9] "+COLOUR_DARKRED+"Director [8] "+COLOUR_RED+"Admin [7] "+COLOUR_DARKBLUE+"Mod [6] "
-                                                 +COLOUR_DARKGREY+"Helper [5] "+COLOUR_DARKYELLOW+"World Owner [4] "+COLOUR_DARKCYAN+"Op [3] "+COLOUR_CYAN+"Builder [2] "
-                                                 +COLOUR_WHITE+"Guest [1] "+COLOUR_YELLOW+"VIP (Guest) "+COLOUR_BLACK+"Spec/Banned [0]")
+                    self.client.sendNormalMessage(COLOUR_YELLOW + "Help: Server Ranks - " + COLOUR_GREEN +
+                                                  "Owner/Console [9] " + COLOUR_DARKRED + "Director [8] " + COLOUR_RED + "Admin [7] " + COLOUR_DARKBLUE + "Mod [6] "
+                                                  + COLOUR_DARKGREY + "Helper [5] " + COLOUR_DARKYELLOW + "World Owner [4] " + COLOUR_DARKCYAN + "Op [3] " + COLOUR_CYAN + "Builder [2] "
+                                                  + COLOUR_WHITE + "Guest [1] " + COLOUR_YELLOW + "VIP (Guest) " + COLOUR_BLACK + "Spec/Banned [0]")
                 elif parts[1].lower() == "cc":
                     self.client.sendServerMessage("Help; Color Codes")
                     self.client.sendNormalMessage("&a%a &b%b &c%c &d%d &e%e &f%f")
@@ -98,7 +98,7 @@ class helpPlugin(ProtocolPlugin):
                 self.ListCommands(parts[1].lower())
         else:
             self.client.sendServerMessage("Command List - Use: /cmdlist category")
-            self.client.sendServerMessage("Categories: %s"  % " ".join(categories))
+            self.client.sendServerMessage("Categories: %s" % " ".join(categories))
 
     def ListCommands(self, list):
         self.client.sendServerMessage("%s Commands:" % list.title())
@@ -159,11 +159,13 @@ class helpPlugin(ProtocolPlugin):
     def commandAbout(self, parts, fromloc, overriderank):
         "/about - Guest\nAliases: info\nAbout the server and software."
         self.client.sendSplitServerMessage("About The Server, powered by Arc %s | Credits: /credits" % VERSION)
-        self.client.sendSplitServerMessage("Name: %s; Owners: %s" % (self.client.factory.server_name, ", ".join(self.client.factory.owners)))
+        self.client.sendSplitServerMessage(
+            "Name: %s; Owners: %s" % (self.client.factory.server_name, ", ".join(self.client.factory.owners)))
         self.client.sendSplitServerMessage(self.client.factory.server_message)
         self.client.sendServerMessage("URL: %s" % self.client.factory.info_url)
         if self.client.factory.use_irc:
-            self.client.sendServerMessage("IRC: %s %s" % (self.client.factory.irc_config.get("irc", "server"), self.client.factory.irc_channel))
+            self.client.sendServerMessage(
+                "IRC: %s %s" % (self.client.factory.irc_config.get("irc", "server"), self.client.factory.irc_channel))
 
     @config("category", "info")
     def commandCredits(self, parts, fromloc, overriderank):
@@ -187,7 +189,7 @@ class helpPlugin(ProtocolPlugin):
     @config("category", "info")
     def commandRules(self, parts, fromloc, overriderank):
         "/rules - Guest\nShows the server rules."
-        self.client.sendServerMessage("Rules for "+self.client.factory.server_name+":")
+        self.client.sendServerMessage("Rules for " + self.client.factory.server_name + ":")
         try:
             r = open('config/rules.txt', 'r')
         except:
@@ -277,5 +279,6 @@ class helpPlugin(ProtocolPlugin):
             ip = parseaddress(output)
         mppass = hashlib.md5(self.client.factory.salt + self.client.username).hexdigest()[-32:].strip("0")
         self.client.sendServerMessage("Direct Connect URL:")
-        self.client.sendServerMessage("mc://%s:%s/%s/" % (ip, self.client.factory.config.getint("network", "port"), self.client.username))
+        self.client.sendServerMessage(
+            "mc://%s:%s/%s/" % (ip, self.client.factory.config.getint("network", "port"), self.client.username))
         self.client.sendServerMessage("%s" % (mppass))

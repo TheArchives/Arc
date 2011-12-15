@@ -2,31 +2,32 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-x,y,z = var_position
+x, y, z = var_position
 userpositionlist = []
 for user in clients:
-    userpositionlist.append((user.x >> 5,user.y >> 5,user.z >> 5))
-closestposition = (0,0)
+    userpositionlist.append((user.x >> 5, user.y >> 5, user.z >> 5))
+closestposition = (0, 0)
 closestclient = None
 closestdistance = None
 for var_pos in userpositionlist:
-    i,j,k = var_pos
-    distance = ((i-x)**2+(j-y)**2+(k-z)**2)**0.5
+    i, j, k = var_pos
+    distance = ((i - x) ** 2 + (j - y) ** 2 + (k - z) ** 2) ** 0.5
     if closestdistance == None:
         closestdistance = distance
-        closestposition = (var_pos[0],var_pos[2])
+        closestposition = (var_pos[0], var_pos[2])
     else:
         if distance < closestdistance:
             closestdistance = distance
-            closestposition = (var_pos[0],var_pos[2])
-i,k = closestposition
-distance = ((i-x)**2+(k-z)**2)**0.5
+            closestposition = (var_pos[0], var_pos[2])
+i, k = closestposition
+distance = ((i - x) ** 2 + (k - z) ** 2) ** 0.5
 if distance != 0 and distance > 2:
-    target = [int((i-x)/(distance/1.75)) + x,int((j-y)/(distance/1.75)) + y,int((k-z)/(distance/1.75)) + z]
-    i,j,k = target
+    target = [int((i - x) / (distance / 1.75)) + x, int((j - y) / (distance / 1.75)) + y,
+              int((k - z) / (distance / 1.75)) + z]
+    i, j, k = target
     var_cango = True
     try:
-        blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(i,j,k)])
+        blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(i, j, k)])
         if blocktocheck != 0:
             var_cango = False
     except:
@@ -40,7 +41,7 @@ if distance != 0 and distance > 2:
         self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
         self.client.sendBlock(x, y, z, block)
         var_position = target
-        x,y,z = var_position
+        x, y, z = var_position
         block = chr(35)
         try:
             world[x, y, z] = block
@@ -53,7 +54,7 @@ if distance != 0 and distance > 2:
         target[1] = target[1] + 1
         j = target[1]
         try:
-            blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(i,j,k)])
+            blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(i, j, k)])
             if blocktocheck != 0:
                 var_cango = False
         except:
@@ -67,7 +68,7 @@ if distance != 0 and distance > 2:
             self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
             self.client.sendBlock(x, y, z, block)
             var_position = target
-            x,y,z = var_position
+            x, y, z = var_position
             block = chr(35)
             try:
                 world[x, y, z] = block

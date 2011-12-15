@@ -17,6 +17,7 @@ from utils import sendmail, safestr
 import webapi as web
 
 import os, os.path
+
 whereami = os.path.join(os.getcwd(), __file__)
 whereami = os.path.sep.join(whereami.split(os.path.sep)[:-1])
 djangoerror_t = """\
@@ -238,16 +239,16 @@ def djangoerror():
             lower_bound = max(0, lineno - context_lines)
             upper_bound = lineno + context_lines
 
-            pre_context = \
-                [line.strip('\n') for line in source[lower_bound:lineno]]
+            pre_context =\
+            [line.strip('\n') for line in source[lower_bound:lineno]]
             context_line = source[lineno].strip('\n')
-            post_context = \
-                [line.strip('\n') for line in source[lineno + 1:upper_bound]]
+            post_context =\
+            [line.strip('\n') for line in source[lineno + 1:upper_bound]]
 
             return lower_bound, pre_context, context_line, post_context
         except (OSError, IOError, IndexError):
-            return None, [], None, []    
-    
+            return None, [], None, []
+
     exception_type, exception_value, tback = sys.exc_info()
     frames = []
     while tback is not None:
@@ -257,9 +258,9 @@ def djangoerror():
 
         # hack to get correct line number for templates
         lineno += tback.tb_frame.f_locals.get("__lineoffset__", 0)
-        
-        pre_context_lineno, pre_context, context_line, post_context = \
-            _get_lines_from_file(filename, lineno, 7)
+
+        pre_context_lineno, pre_context, context_line, post_context =\
+        _get_lines_from_file(filename, lineno, 7)
 
         if '__hidetraceback__' not in tback.tb_frame.f_locals:
             frames.append(web.storage({
@@ -273,26 +274,28 @@ def djangoerror():
                 'context_line': context_line,
                 'post_context': post_context,
                 'pre_context_lineno': pre_context_lineno,
-            }))
+                }))
         tback = tback.tb_next
     frames.reverse()
     urljoin = urlparse.urljoin
+
     def prettify(x):
-        try: 
+        try:
             out = pprint.pformat(x)
-        except Exception, e: 
-            out = '[could not display: <' + e.__class__.__name__ + \
-                  ': '+str(e)+'>]'
+        except Exception, e:
+            out = '[could not display: <' + e.__class__.__name__ +\
+                  ': ' + str(e) + '>]'
         return out
-        
+
     global djangoerror_r
     if djangoerror_r is None:
         djangoerror_r = Template(djangoerror_t, filename=__file__, filter=websafe)
-        
+
     t = djangoerror_r
-    globals = {'ctx': web.ctx, 'web':web, 'dict':dict, 'str':str, 'prettify': prettify}
+    globals = {'ctx': web.ctx, 'web': web, 'dict': dict, 'str': str, 'prettify': prettify}
     t.t.func_globals.update(globals)
     return t(exception_type, exception_value, frames)
+
 
 def debugerror():
     """
@@ -303,6 +306,7 @@ def debugerror():
     designed by [Wilson Miner](http://wilsonminer.com/).)
     """
     return web._InternalError(djangoerror())
+
 
 def emailerrors(to_address, olderror, from_address=None):
     """
@@ -323,9 +327,9 @@ def emailerrors(to_address, olderror, from_address=None):
         tb_txt = ''.join(traceback.format_exception(*tb))
         path = web.ctx.path
         request = web.ctx.method + ' ' + web.ctx.home + web.ctx.fullpath
-        
+
         message = "\n%s\n\n%s\n\n" % (request, tb_txt)
-        
+
         sendmail(
             "your buggy site <%s>" % from_address,
             "the bugfixer <%s>" % to_address,
@@ -336,17 +340,18 @@ def emailerrors(to_address, olderror, from_address=None):
             ],
         )
         return error
-    
+
     return emailerrors_internal
 
 if __name__ == "__main__":
     urls = (
         '/', 'index'
-    )
+        )
     from application import application
+
     app = application(urls, globals())
     app.internalerror = debugerror
-    
+
     class index:
         def GET(self):
             thisdoesnotexist

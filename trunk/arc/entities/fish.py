@@ -12,7 +12,7 @@ if entity[5] >= 3:
 entity[5] = randint(1, 5)
 l, m, n = entity[4]
 try:
-    blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(x+l,y+m,z+n)])
+    blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(x + l, y + m, z + n)])
     if blocktocheck != 8:
         var_cango = False
 except:
@@ -25,7 +25,7 @@ if var_cango:
         block = randint(22, 36)
     else:
         block = 22
-    self.client.queueTask(TASK_BLOCKSET, (x+l, y+m, z+n, block), world=world)
-    self.client.sendBlock(x+l, y+m, z+n, block)
-    var_position = (x+l, y+m, z+n)
-    x,y,z = var_position
+    self.client.queueTask(TASK_BLOCKSET, (x + l, y + m, z + n, block), world=world)
+    self.client.sendBlock(x + l, y + m, z + n, block)
+    var_position = (x + l, y + m, z + n)
+    x, y, z = var_position

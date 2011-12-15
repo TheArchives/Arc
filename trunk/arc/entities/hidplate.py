@@ -18,19 +18,19 @@ if entity[5] == True:
 for entry in userpositionlist:
     client = entry[0]
     var_pos = entry[1]
-    i,j,k = var_pos
-    xd = i-x
-    yd = j-y
-    zd = k-z
-    distance = math.sqrt((xd*xd + yd*yd + zd*zd))
+    i, j, k = var_pos
+    xd = i - x
+    yd = j - y
+    zd = k - z
+    distance = math.sqrt((xd * xd + yd * yd + zd * zd))
     if distance < 4:
         var_open = True
 if var_open:
     block = entity[4]
     self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
-    self.client.sendBlock(x, y, z, block) 
+    self.client.sendBlock(x, y, z, block)
 else:
-    blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(x,y,z)])
+    blocktocheck = ord(world.blockstore.raw_blocks[world.blockstore.get_offset(x, y, z)])
     if blocktocheck == entity[4] or chr(0):
         var_cango = True
 if var_cango == True:

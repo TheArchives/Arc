@@ -2,14 +2,11 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import inspect
-
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class PortalPlugin(ProtocolPlugin):
-    
     commands = {
         "p": "commandPortal",
         "phere": "commandPortalhere",
@@ -22,20 +19,20 @@ class PortalPlugin(ProtocolPlugin):
         "pdelend": "commandPortaldelend",
         "puse": "commandUseportals",
         "useportals": "commandUseportals",
-    }
-    
+        }
+
     hooks = {
         "blockchange": "blockChanged",
         "poschange": "posChanged",
         "newworld": "newWorld",
-    }
-    
+        }
+
     def gotClient(self):
         self.portal_dest = None
         self.portal_remove = False
         self.portals_on = True
         self.last_block_position = None
-    
+
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
         if self.client.world.has_portal(x, y, z):
@@ -48,7 +45,7 @@ class PortalPlugin(ProtocolPlugin):
         if self.portal_dest:
             self.client.sendServerMessage("You placed a Portal block.")
             self.client.world.add_portal(x, y, z, self.portal_dest)
-    
+
     def posChanged(self, x, y, z, h, p):
         "Hook trigger for when the user moves"
         rx = x >> 5
@@ -77,21 +74,22 @@ class PortalPlugin(ProtocolPlugin):
                             self.client.sendServerMessage("'%s' is private; you're not allowed in." % world_id)
                     else:
                         if (rx, ry, rz) != self.last_block_position:
-                            self.client.sendServerMessage("You're WorldBanned from '%s'; you're not allowed in." % world_id)
+                            self.client.sendServerMessage(
+                                "You're WorldBanned from '%s'; you're not allowed in." % world_id)
                 else:
                     if world == self.client.world:
                         self.client.teleportTo(tx, ty, tz, th)
                     else:
                         self.client.changeToWorld(world.id, position=(tx, ty, tz, th))
         self.last_block_position = (rx, ry, rz)
-    
+
     def newWorld(self, world):
         "Hook to reset Portal abilities in new worlds if not op."
         if not self.client.isOp():
             self.portal_dest = None
             self.portal_remove = False
             self.portals_on = True
-    
+
     @config("rank", "op")
     def commandPortal(self, parts, fromloc, overriderank):
         "/p worldname x y z [r] - Op\nMakes the next block you place a Portal."
@@ -117,20 +115,20 @@ class PortalPlugin(ProtocolPlugin):
                     return
                 self.portal_dest = parts[1], x, y, z, h
                 self.client.sendServerMessage("You are now placing portal blocks. /pend to stop")
-    
+
     @config("rank", "op")
     def commandPortalhere(self, parts, fromloc, overriderank):
         "/phere - Op\nEnables Portal creation mode, to here."
-        self.portal_dest = self.client.world.id, self.client.x>>5, self.client.y>>5, self.client.z>>5, self.client.h
+        self.portal_dest = self.client.world.id, self.client.x >> 5, self.client.y >> 5, self.client.z >> 5, self.client.h
         self.client.sendServerMessage("You are now placing portal blocks to here. /pend to stop")
-    
+
     @config("rank", "op")
     def commandPortalend(self, parts, fromloc, overriderank):
         "/pend - Op\nDisables portal creation mode."
         self.portal_dest = None
         self.portal_remove = False
         self.client.sendServerMessage("You are no longer placing Portal blocks.")
-    
+
     @config("rank", "op")
     def commandShowportals(self, parts, fromloc, overriderank):
         "/pshow - Op\nAliases: tpshow\nShows all Portal blocks as blue, only to you."

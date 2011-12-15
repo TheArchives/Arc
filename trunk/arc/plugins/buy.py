@@ -10,11 +10,10 @@ from arc.globals import *
 from arc.plugins import ProtocolPlugin
 
 class BuyPlugin(ProtocolPlugin):
-    
     commands = {
         "buy": "commandBuy",
-    }
-    
+        }
+
     def commandBuy(self, parts, fromloc, overriderank):
         "/buy worldname size - Guest\nsmall - 64x64x64, 2000 Minecash.\nnormal - 128x128x128, 4000 Minecash.\nMakes a new world, and boots it, if the user has enough money."
         if len(parts) == 1:
@@ -60,4 +59,5 @@ class BuyPlugin(ProtocolPlugin):
             if len(parts) < 4:
                 self.client.sendServerMessage("World '%s' made and booted." % world_id)
                 self.client.changeToWorld(world_id)
-                self.client.sendServerMessage(Rank(self, ["/rank", "worldowner", self.client.username, world_id], fromloc, True))
+                self.client.sendServerMessage(
+                    Rank(self, ["/rank", "worldowner", self.client.username, world_id], fromloc, True))

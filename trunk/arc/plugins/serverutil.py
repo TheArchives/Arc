@@ -46,14 +46,15 @@ class ServerUtilPlugin(ProtocolPlugin):
             loopsToReschedule.append("saveworlds")
         elif action == "shutdownall":
             loopsToReschedule.append("backup")
-        # Firstly, stop the loops.
+            # Firstly, stop the loops.
         for loop in loopsToReschedule:
             if self.client.factory.loops[loop].running:
                 self.client.factory.loops[loop].stop()
-        # Okay, let's continue with the main job.
+            # Okay, let's continue with the main job.
         if action == "shutdownall":
             self.client.sendServerMessage("Shutting down all empty worlds...")
             self.value = 0
+
             def doShutdown():
                 for world in self.client.factory.worlds.values():
                     if world.id == self.client.factory.default_name:
@@ -62,7 +63,9 @@ class ServerUtilPlugin(ProtocolPlugin):
                         self.client.factory.unloadWorld(world.id)
                         self.value += 1
                         yield
+
             shutdownIter = iter(doShutdown())
+
             def doStep():
                 try:
                     shutdownIter.next()
@@ -72,23 +75,28 @@ class ServerUtilPlugin(ProtocolPlugin):
                         self.client.sendServerMessage("%s empty world(s) have been shut down." % self.value)
                     del self.value
                     pass
+
             doStep()
         elif action == "saveall":
             self.client.sendServerMessage("Saving all worlds...")
             self.client.factory.saveWorlds()
             self.client.sendServerMessage("All online worlds saved.")
-        # Restart the loops
+            # Restart the loops
         for loop in loopsToReschedule:
-            self.client.factory.loops[loop].start(self.client.factory.loops[loop].interval, self.client.factory.loops[loop]._runAtStart)
+            self.client.factory.loops[loop].start(self.client.factory.loops[loop].interval,
+                self.client.factory.loops[loop]._runAtStart)
 
     def commandServerInfo(self, parts, fromloc, overriderank):
         "/sinfo - Guest\nDisplay server information."
         if self.client.factory.serverPluginExists("SystemInfoPlugin"):
             usageList = self.client.factory.serverPlugins["SystemInfoPlugin"].calculateSystemUsage()
             if usageList == False:
-                self.client.sendServerMessage("System information plugin disabled, unable to display system information.")
+                self.client.sendServerMessage(
+                    "System information plugin disabled, unable to display system information.")
             else:
-                self.client.sendSplitServerMessage("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
+                self.client.sendSplitServerMessage(
+                    "CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (
+                    usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
         else:
             self.client.sendServerMessage("System information plugin disabled, unable to display system information.")
 

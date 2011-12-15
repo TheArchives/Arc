@@ -2,81 +2,81 @@ $def with (name, motd, public, limit, awaytime, asd, gchat, bufreq, bumax, ircse
 <title>Server Status</title>
 
 <h3>Who's online?</h3>
-There are $len(users) users online in $len(worlds) worlds.<br />
+There are $len(users) users online in $len(worlds) worlds.<br/>
 <ul>
-$for usrs in users:
+    $for usrs in users:
     <li>
-    $if usrs in directors:
+        $if usrs in directors:
         <span style="color:green">$usrs</span>
-    $elif usrs in admins:
+        $elif usrs in admins:
         <span style="color:red">$usrs</span>
-    $elif usrs in mods:
+        $elif usrs in mods:
         <span style="color:blue">$usrs</span>
-    $elif usrs in members:
+        $elif usrs in members:
         <span style="color:grey">$usrs</span>
-    $else:
+        $else:
         <span style="color:black">$usrs</span>
     </li>
 </ul>
 
-<hr /><h3>Worlds</h3>
+<hr/><h3>Worlds</h3>
 $for world, wusrs, info in worlds
-    <p>
-    $world - $info['x']x$info['y']x$info['z']; $info['owner']<br />  
+<p>
+    $world - $info['x']x$info['y']x$info['z']; $info['owner']<br/>
     $if info['locked']:
-        <span style="color:green">Locked</span>
+    <span style="color:green">Locked</span>
     $else:
-        <span style="color:red">Locked</span>
+    <span style="color:red">Locked</span>
     $if info['private']:
-        <span style="color:green">Private</span>
+    <span style="color:green">Private</span>
     $else:
-        <span style="color:red">Private</span>
+    <span style="color:red">Private</span>
     $if info['physics']:
-        <span style="color:green">Physics</span>
+    <span style="color:green">Physics</span>
     $else:
-        <span style="color:red">Physics</span>
+    <span style="color:red">Physics</span>
     $if info['colors']:
-        <span style="color:green">Colors</span>
+    <span style="color:green">Colors</span>
     $else:
-        <span style="color:red">Colors</span>
+    <span style="color:red">Colors</span>
     $if info['fwater']:
-        <span style="color:green">FWater</span>
+    <span style="color:green">FWater</span>
     $else:
-        <span style="color:red">FWater</span>
+    <span style="color:red">FWater</span>
     $if info['solids']:
-        <span style="color:green">Solids</span>
+    <span style="color:green">Solids</span>
     $else:
-        <span style="color:red">Solids</span>
-    <ul>
+    <span style="color:red">Solids</span>
+<ul>
     $for usr in wusrs:
-        <li>
+    <li>
         $if usr.lower() == info['owner'].lower():
-            <span style="color:gold">$usr</span>
+        <span style="color:gold">$usr</span>
         $elif usr.lower() in info['ops']:
-            <span style="color:darkcyan">$usr</span>
+        <span style="color:darkcyan">$usr</span>
         $elif usr.lower() in info['builders']:
             <span style="color:cyan">$usr</span.
-        $else:
+                $else:
             $usr
-        </li>
-    </ul>
+    </li>
+</ul>
 
-<hr /><h3>Staff</h3>
+<hr/><h3>Staff</h3>
 <p>Directors ($len(directors))</p>
 <ul>
-$for director in directors:
+    $for director in directors:
     <li>$director</li>
 </ul>
 <p>Admins ($len(admins))</p>
 <ul>
-$for admin in admins:
+    $for admin in admins:
     <li>$admin</li>
 </ul>
 <p>Mods ($len(mods))</p>
 <ul>
-$for mod in mods:
-    <li>$mod</li>        
+    $for mod in mods:
+    <li>$mod</li>
 </ul>
 
-<hr /><h3>Players</h3>
+<hr/><h3>Players</h3>
 <p>Members ($len(members))</p>

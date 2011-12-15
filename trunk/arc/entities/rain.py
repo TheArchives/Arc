@@ -20,10 +20,10 @@ try:
         var_cango = False
 except:
     var_cango = False
-if var_cango and randint(0,45) != 45:
-    var_position = (i,j,k)
-    x,y,z = var_position
-    block = chr(9) 
+if var_cango and randint(0, 45) != 45:
+    var_position = (i, j, k)
+    x, y, z = var_position
+    block = chr(9)
     try:
         world[x, y, z] = block
     except:

@@ -9,7 +9,6 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class BlbPlugin(ProtocolPlugin):
-
     commands = {
         "blb": "commandBlb",
         "draw": "commandBlb",
@@ -25,7 +24,7 @@ class BlbPlugin(ProtocolPlugin):
         "newblb": "commandNBlb",
         "oblb": "commandOneBlb",
         "bob": "commandOneBlb",
-    }
+        }
 
     @config("category", "build")
     @config("rank", "builder")
@@ -37,7 +36,7 @@ class BlbPlugin(ProtocolPlugin):
             block = self.client.GetBlockValue(parts[1])
             if block == None:
                 return
-            # If they only provided the type argument, use the last block place
+                # If they only provided the type argument, use the last block place
             if len(parts) == 2:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -75,7 +74,7 @@ class BlbPlugin(ProtocolPlugin):
             block = self.client.GetBlockValue(parts[1])
             if block == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 2:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -110,6 +109,7 @@ class BlbPlugin(ProtocolPlugin):
             world = self.client.world
             if realLimit >= 45565: # To test it out first, will try a bigger one later - tyteen
                 self.client.sendServerMessage("BLB has been started.")
+
                 def doBlocks():
                     # This implements 2 new things: Respawn method and try-the-whole-loop.
                     # Since the loop stops when an AssertionErrors pops up, so we just
@@ -123,9 +123,9 @@ class BlbPlugin(ProtocolPlugin):
                     # All clients will get respawned too.
                     # Credits to UberFoX for this idea. Thanks Stacy!
                     try:
-                        for i in range(x, x2+1):
-                            for j in range(y, y2+1):
-                                for k in range(z, z2+1):
+                        for i in range(x, x2 + 1):
+                            for j in range(y, y2 + 1):
+                                for k in range(z, z2 + 1):
                                     if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                         return
                                     world[i, j, k] = block
@@ -133,20 +133,24 @@ class BlbPlugin(ProtocolPlugin):
                     except AssertionError:
                         self.client.sendServerMessage("Out of bounds blb error.")
                         return
+
                 d = threads.deferToThread(doBlocks)
                 # Now the fun part. Respawn them all!
                 def blbCallback():
                     for client in world.clients.values():
-                        client.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.client.factory.server_name, self.client.world.id)), "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
+                        client.sendPacked(TYPE_INITIAL, 6,
+                            ("%s: %s" % (self.client.factory.server_name, self.client.world.id)),
+                            "Reloading the world...", self.client.canBreakAdminBlocks() and 100 or 0)
                     if fromloc == "user":
                         self.client.sendServerMessage("Your blb just completed.")
+
                 d.addCallback(blbCallback)
             else:
                 def generate_changes():
                     try:
-                        for i in range(x, x2+1):
-                            for j in range(y, y2+1):
-                                for k in range(z, z2+1):
+                        for i in range(x, x2 + 1):
+                            for j in range(y, y2 + 1):
+                                for k in range(z, z2 + 1):
                                     if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                         return
                                     world[i, j, k] = block
@@ -156,7 +160,9 @@ class BlbPlugin(ProtocolPlugin):
                     except AssertionError:
                         self.client.sendServerMessage("Out of bounds blb error.")
                         return
+
                 block_iter = iter(generate_changes())
+
                 def do_step():
                     try:
                         for x in range(10):
@@ -166,8 +172,9 @@ class BlbPlugin(ProtocolPlugin):
                         if fromloc == "user":
                             self.client.sendServerMessage("Your blb just completed.")
                         pass
+
                 do_step()
-            
+
     @config("category", "build")
     @config("rank", "builder")
     def commandBlb(self, parts, fromloc, overriderank):
@@ -178,7 +185,7 @@ class BlbPlugin(ProtocolPlugin):
             block = self.client.GetBlockValue(parts[1])
             if block == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 2:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -209,15 +216,16 @@ class BlbPlugin(ProtocolPlugin):
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to blb (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 try:
-                    for i in range(x, x2+1):
-                        for j in range(y, y2+1):
-                            for k in range(z, z2+1):
+                    for i in range(x, x2 + 1):
+                        for j in range(y, y2 + 1):
+                            for k in range(z, z2 + 1):
                                 if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                     return
                                 world[i, j, k] = block
@@ -227,8 +235,10 @@ class BlbPlugin(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds blb error.")
                     return
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -239,6 +249,7 @@ class BlbPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your blb just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -251,7 +262,7 @@ class BlbPlugin(ProtocolPlugin):
             block = self.client.GetBlockValue(parts[1])
             if block == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 2:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -282,15 +293,16 @@ class BlbPlugin(ProtocolPlugin):
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to bhb (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 try:
-                    for i in range(x, x2+1):
-                        for j in range(y, y2+1):
-                            for k in range(z, z2+1):
+                    for i in range(x, x2 + 1):
+                        for j in range(y, y2 + 1):
+                            for k in range(z, z2 + 1):
                                 if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                     return
                                 if i == x or i == x2 or j == y or j == y2 or k == z or k == z2:
@@ -301,8 +313,10 @@ class BlbPlugin(ProtocolPlugin):
                 except AssertionError:
                     self.client.sendServerMessage("Out of bounds bhb error.")
                     return
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -313,6 +327,7 @@ class BlbPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your bhb just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -325,7 +340,7 @@ class BlbPlugin(ProtocolPlugin):
             block = self.client.GetBlockValue(parts[1])
             if block == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 2:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -350,35 +365,38 @@ class BlbPlugin(ProtocolPlugin):
                 y, y2 = y2, y
             if z > z2:
                 z, z2 = z2, z
-            # TODO: Fix the formula
+                # TODO: Fix the formula
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to bwb (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
-                for i in range(x, x2+1):
-                    for j in range(y, y2+1):
-                        for k in range(z, z2+1):
+                for i in range(x, x2 + 1):
+                    for j in range(y, y2 + 1):
+                        for k in range(z, z2 + 1):
                             if not self.client.AllowedToBuild(i, j, k) and not overriderank:
                                 return
-                            if i==x or i==x2 or k==z or k==z2:
+                            if i == x or i == x2 or k == z or k == z2:
                                 try:
-                                   world[i, j, k] = block
-                                   self.client.runHook("blockchange", x, y, z, ord(block), ord(block), fromloc)
+                                    world[i, j, k] = block
+                                    self.client.runHook("blockchange", x, y, z, ord(block), ord(block), fromloc)
                                 except AssertionError:
                                     self.client.sendServerMessage("Out of bounds bwb error.")
                                     return
                                 self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
                                 self.client.sendBlock(i, j, k, block)
                                 yield
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -389,6 +407,7 @@ class BlbPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your bwb just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -402,7 +421,7 @@ class BlbPlugin(ProtocolPlugin):
             block2 = self.client.GetBlockValue(parts[2])
             if block == None or block2 == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 3:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -433,19 +452,20 @@ class BlbPlugin(ProtocolPlugin):
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to bcb (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 ticker = 0
-                for i in range(x, x2+1):
-                    for j in range(y, y2+1):
-                        for k in range(z, z2+1):
+                for i in range(x, x2 + 1):
+                    for j in range(y, y2 + 1):
+                        for k in range(z, z2 + 1):
                             if not self.client.AllowedToBuild(i, j, k):
                                 return
                             try:
-                                if (i+j+k)%2 == 0:
+                                if (i + j + k) % 2 == 0:
                                     ticker = 1
                                 else:
                                     ticker = 0
@@ -463,8 +483,10 @@ class BlbPlugin(ProtocolPlugin):
                                 self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
                                 self.client.sendBlock(i, j, k, block)
                             yield
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -475,6 +497,7 @@ class BlbPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your bcb just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -488,7 +511,7 @@ class BlbPlugin(ProtocolPlugin):
             block2 = self.client.GetBlockValue(parts[2])
             if block == None or block2 == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 3:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -513,27 +536,28 @@ class BlbPlugin(ProtocolPlugin):
                 y, y2 = y2, y
             if z > z2:
                 z, z2 = z2, z
-            # TODO: Fix the formula
+                # TODO: Fix the formula
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to blb (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
                 ticker = 0
-                for i in range(x, x2+1):
-                    for j in range(y, y2+1):
-                        for k in range(z, z2+1):
+                for i in range(x, x2 + 1):
+                    for j in range(y, y2 + 1):
+                        for k in range(z, z2 + 1):
                             if not self.client.AllowedToBuild(i, j, k):
                                 return
-                            if i==x or i==x2 or j==y or j==y2 or k==z or k==z2:
+                            if i == x or i == x2 or j == y or j == y2 or k == z or k == z2:
                                 try:
-                                    if (i+j+k)%2 == 0:
+                                    if (i + j + k) % 2 == 0:
                                         ticker = 1
                                     else:
                                         ticker = 0
@@ -551,8 +575,10 @@ class BlbPlugin(ProtocolPlugin):
                                     self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
                                     self.client.sendBlock(i, j, k, block)
                                 yield
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -563,6 +589,7 @@ class BlbPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your bhcb just completed.")
                     pass
+
             do_step()
 
     @config("category", "build")
@@ -575,7 +602,7 @@ class BlbPlugin(ProtocolPlugin):
             block = self.client.GetBlockValue(parts[1])
             if block == None:
                 return
-            # If they only provided the type argument, use the last two block places
+                # If they only provided the type argument, use the last two block places
             if len(parts) == 2:
                 try:
                     x, y, z = self.client.last_block_changes[0]
@@ -600,34 +627,40 @@ class BlbPlugin(ProtocolPlugin):
                 y, y2 = y2, y
             if z > z2:
                 z, z2 = z2, z
-            # TODO: Fix the formula
+                # TODO: Fix the formula
             limit = self.client.getBlbLimit()
             if limit != -1:
                 # Stop them doing silly things
                 if ((x2 - x) * (y2 - y) * (z2 - z) > limit) or limit == 0:
                     self.client.sendServerMessage("Sorry, that area is too big for you to bfb (Limit is %s)" % limit)
                     return
-            # Draw all the blocks on, I guess
+                # Draw all the blocks on, I guess
             # We use a generator so we can slowly release the blocks
             # We also keep world as a local so they can't change worlds and affect the new one
             world = self.client.world
+
             def generate_changes():
-                for i in range(x, x2+1):
-                    for j in range(y, y2+1):
-                        for k in range(z, z2+1):
+                for i in range(x, x2 + 1):
+                    for j in range(y, y2 + 1):
+                        for k in range(z, z2 + 1):
                             if not self.client.AllowedToBuild(i, j, k):
                                 return
-                            if (i==x and j==y) or (i==x2 and j==y2) or (j==y2 and k==z2) or (i==x2 and k==z2) or (j==y and k==z) or (i==x and k==z) or (i==x and k==z2) or (j==y and k==z2) or (i==x2 and k==z) or (j==y2 and k==z) or (i==x and j==y2) or (i==x2 and j==y):
+                            if (i == x and j == y) or (i == x2 and j == y2) or (j == y2 and k == z2) or (
+                            i == x2 and k == z2) or (j == y and k == z) or (i == x and k == z) or (
+                            i == x and k == z2) or (j == y and k == z2) or (i == x2 and k == z) or (
+                            j == y2 and k == z) or (i == x and j == y2) or (i == x2 and j == y):
                                 try:
-                                   world[i, j, k] = block
+                                    world[i, j, k] = block
                                 except AssertionError:
                                     self.client.sendServerMessage("Out of bounds bfb error.")
                                     return
                                 self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
                                 self.client.sendBlock(i, j, k, block)
                                 yield
-            # Now, set up a loop delayed by the reactor
+
+                # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
+
             def do_step():
                 # Do 10 blocks
                 try:
@@ -638,4 +671,5 @@ class BlbPlugin(ProtocolPlugin):
                     if fromloc == "user":
                         self.client.sendServerMessage("Your bfb just completed.")
                     pass
+
             do_step()

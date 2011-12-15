@@ -4,7 +4,7 @@
 
 #!/usr/bin/python
 
-import datetime, sys, time, traceback, os
+import  sys, time, traceback, os
 from ConfigParser import RawConfigParser as ConfigParser
 
 from twisted.internet import reactor
@@ -35,6 +35,7 @@ makedatfile("config/data/titles.dat")
 
 try:
     from colorama import init
+
     init()
     logger.stdout("&f")
     logger.debug("&fIf you see this, debug mode is &eon&f!")
@@ -50,6 +51,7 @@ def doExit():
         raw_input("\nYou may now close the server console window.")
     else:
         raw_input("\nPlease press enter to exit.")
+
 
 def main():
     global logger

@@ -52,13 +52,13 @@ def loadentities():
         possibeCreateFile = entry + "_create.py"
         if possibeCreateFile in datafilelist:
             entitycreatedict[entry] = open("arc/entities/%s" % possibeCreateFile)
+
 loadentities()
 for validentity in validentities:
     if validentity not in entityblocklist:
-        entityblocklist[validentity] = [(0,0,0)]
+        entityblocklist[validentity] = [(0, 0, 0)]
 
 class EntityPlugin(ProtocolPlugin):
-
     commands = {
         "entity": "commandEntity",
         "entityclear": "commandEntityclear",
@@ -72,13 +72,13 @@ class EntityPlugin(ProtocolPlugin):
         "itemclear": "commandEntityclear",
         "numitems": "commandNumentities",
         "items": "commandEntities",
-    }
+        }
 
     hooks = {
         "blockchange": "blockChanged",
         "poschange": "posChanged",
         "newworld": "newWorld",
-    }
+        }
 
     def gotClient(self):
         self.var_entityselected = "None"
@@ -95,17 +95,18 @@ class EntityPlugin(ProtocolPlugin):
             return
         world = self.client.world
         try:
-            px, py, pz, ph, pp = self.client.x>>5, self.client.y>>5, self.client.z>>5, self.client.h, self.client.p
+            px, py, pz, ph, pp = self.client.x >> 5, self.client.y >> 5, self.client.z >> 5, self.client.h, self.client.p
         except:
             pass
-        world.entities_worldblockchangesdict[self.client] = ((x, y, z, time(), selected_block, block), (px, py, pz, ph, pp))
+        world.entities_worldblockchangesdict[self.client] = (
+        (x, y, z, time(), selected_block, block), (px, py, pz, ph, pp))
         entitylist = world.entitylist
         dellist = []
         for index in range(len(entitylist)):
             entity = entitylist[index]
             identity = entity[0]
             i, j, k = entity[1]
-            if (i, j, k) == (x, y, z) or (identity in twoblockhighentities and (i, j+1 ,k) == (x, y, z)):
+            if (i, j, k) == (x, y, z) or (identity in twoblockhighentities and (i, j + 1, k) == (x, y, z)):
                 dellist.append(index)
         dellist.reverse()
         for index in dellist:
@@ -147,7 +148,7 @@ class EntityPlugin(ProtocolPlugin):
             var_abstime = time()
             userpositionlist = []
             for user in clients:
-                userpositionlist.append((user,(self.client.x >> 5,self.client.y >> 5,self.client.z >> 5)))
+                userpositionlist.append((user, (self.client.x >> 5, self.client.y >> 5, self.client.z >> 5)))
             var_num = len(entitylist)
             if var_num > maxentitiystepsatonetime:
                 var_num = maxentitiystepsatonetime
@@ -159,35 +160,37 @@ class EntityPlugin(ProtocolPlugin):
                 if entity[2] < 0:
                     try:
                         entity[2] = entity[3]
-                        x,y,z = var_position
+                        x, y, z = var_position
                         if not (0 <= x < world.x and 0 <= y < world.y and 0 <= z < world.z):
                             var_dellist.append(index)
                             if var_type in var_childrenentities:
                                 del entities_childerenlist[entities_childerenlist.index(entity[5])]
-                        elif (var_type in twoblockhighentities or var_type == "spawner" or var_type in twoblockhighshootingentities) and not (0 <= x < world.x and 0 <= y+1 < world.y and 0 <= z < world.z):
+                        elif (
+                             var_type in twoblockhighentities or var_type == "spawner" or var_type in twoblockhighshootingentities) and not (
+                        0 <= x < world.x and 0 <= y + 1 < world.y and 0 <= z < world.z):
                             var_dellist.append(index)
                         elif var_type == "cannon":
                             # these variables also used later
                             var_orientation = entity[5]
-                            x,y,z = var_position
+                            x, y, z = var_position
                             if var_orientation == 0:
-                                var_sensorblocksoffsets = ((0,1,-2),(0,2,-2))
-                                var_loadblockoffset = (0,0,-1)
+                                var_sensorblocksoffsets = ((0, 1, -2), (0, 2, -2))
+                                var_loadblockoffset = (0, 0, -1)
                             elif var_orientation == 1:
-                                var_sensorblocksoffsets = ((2,1,0),(2,2,0))
-                                var_loadblockoffset = (1,0,0)
+                                var_sensorblocksoffsets = ((2, 1, 0), (2, 2, 0))
+                                var_loadblockoffset = (1, 0, 0)
                             elif var_orientation == 2:
-                                var_sensorblocksoffsets = ((0,1,2),(0,2,2))
-                                var_loadblockoffset = (0,0,1)
+                                var_sensorblocksoffsets = ((0, 1, 2), (0, 2, 2))
+                                var_loadblockoffset = (0, 0, 1)
                             elif var_orientation == 3:
-                                var_sensorblocksoffsets = ((-2,1,0),(-2,2,0))
-                                var_loadblockoffset = (-1,0,0)
-                            n,m,o = var_loadblockoffset
-                            if not (0 <= x+n < world.x and 0 <= y+m < world.y and 0 <= z+o < world.z):
+                                var_sensorblocksoffsets = ((-2, 1, 0), (-2, 2, 0))
+                                var_loadblockoffset = (-1, 0, 0)
+                            n, m, o = var_loadblockoffset
+                            if not (0 <= x + n < world.x and 0 <= y + m < world.y and 0 <= z + o < world.z):
                                 var_dellist.append(index)
                             else:
-                                for q,r,s in var_sensorblocksoffsets:
-                                    if not (0 <= x+q < world.x and 0 <= y+r < world.y and 0 <= z+s < world.z):
+                                for q, r, s in var_sensorblocksoffsets:
+                                    if not (0 <= x + q < world.x and 0 <= y + r < world.y and 0 <= z + s < world.z):
                                         var_dellist.append(index)
                         if index not in var_dellist:
                             if var_type in entitycodedict:
@@ -196,8 +199,10 @@ class EntityPlugin(ProtocolPlugin):
                             else:
                                 self.client.sendWorldMessage("UNKOWN ENTITY IN WORLD - FIX THIS!")
                     except:
-                        self.client.sendPlainWorldMessage(traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                        self.client.sendPlainWorldMessage("Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
+                        self.client.sendPlainWorldMessage(
+                            traceback.format_exc().replace("Traceback (most recent call last):", ""))
+                        self.client.sendPlainWorldMessage(
+                            "Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
                         self.client.logger.error(traceback.format_exc())
                         world.entitylist = []
                         return
@@ -205,7 +210,7 @@ class EntityPlugin(ProtocolPlugin):
             var_dellist2 = []
             for index in var_dellist:
                 if index not in var_dellist2:
-                        var_dellist2.append(index)
+                    var_dellist2.append(index)
             var_dellist2.sort()
             var_dellist2.reverse()
             for index in var_dellist2:
@@ -213,7 +218,7 @@ class EntityPlugin(ProtocolPlugin):
             worldblockchangedellist2 = []
             for index in worldblockchangedellist:
                 if index not in worldblockchangedellist2:
-                        worldblockchangedellist2.append(index)
+                    worldblockchangedellist2.append(index)
             for index in worldblockchangedellist2:
                 del worldblockchangesdict[index]
             if len(entitylist) > maxentitiystepsatonetime:
@@ -259,11 +264,11 @@ class EntityPlugin(ProtocolPlugin):
         world = self.client.world
         for entity in self.client.world.entitylist:
             var_id = entity[0]
-            x,y,z = entity[1]
+            x, y, z = entity[1]
             if var_id in entityblocklist:
                 for offset in entityblocklist[var_id]:
-                    ox,oy,oz = offset
-                    rx,ry,rz = x+ox,y+oy,z+oz
+                    ox, oy, oz = offset
+                    rx, ry, rz = x + ox, y + oy, z + oz
                     block = '\x00'
                     world[rx, ry, rz] = block
                     self.client.queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
@@ -271,28 +276,28 @@ class EntityPlugin(ProtocolPlugin):
             elif var_id == "cannon":
                 var_orientation = entity[5]
                 if var_orientation == 0:
-                    var_sensorblocksoffsets = ((0,1,-2),(0,2,-2))
-                    var_loadblockoffset = (0,0,-1)
+                    var_sensorblocksoffsets = ((0, 1, -2), (0, 2, -2))
+                    var_loadblockoffset = (0, 0, -1)
                 elif var_orientation == 1:
-                    var_sensorblocksoffsets = ((2,1,0),(2,2,0))
-                    var_loadblockoffset = (1,0,0)
+                    var_sensorblocksoffsets = ((2, 1, 0), (2, 2, 0))
+                    var_loadblockoffset = (1, 0, 0)
                 elif var_orientation == 2:
-                    var_sensorblocksoffsets = ((0,1,2),(0,2,2))
-                    var_loadblockoffset = (0,0,1)
+                    var_sensorblocksoffsets = ((0, 1, 2), (0, 2, 2))
+                    var_loadblockoffset = (0, 0, 1)
                 elif var_orientation == 3:
-                    var_sensorblocksoffsets = ((-2,1,0),(-2,2,0))
-                    var_loadblockoffset = (-1,0,0)
+                    var_sensorblocksoffsets = ((-2, 1, 0), (-2, 2, 0))
+                    var_loadblockoffset = (-1, 0, 0)
                 block = '\x00'
                 world[x, y, z] = block
                 self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
                 self.client.sendBlock(x, y, z, block)
-                i,j,k = var_loadblockoffset
-                rx,ry,rz = x+i,y+j,z+k
+                i, j, k = var_loadblockoffset
+                rx, ry, rz = x + i, y + j, z + k
                 world[rx, ry, rz] = block
                 self.client.queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
                 self.client.sendBlock(rx, ry, rz, block)
-                for i,j,k in var_sensorblocksoffsets:
-                    rx,ry,rz = x+i,y+j,z+k
+                for i, j, k in var_sensorblocksoffsets:
+                    rx, ry, rz = x + i, y + j, z + k
                     world[rx, ry, rz] = block
                     self.client.queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
                     self.client.sendBlock(rx, ry, rz, block)

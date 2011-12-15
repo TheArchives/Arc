@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import datetime, sys, threading, time, traceback
+import sys, threading, time, traceback
 
 from twisted.internet.task import LoopingCall
 from arc.constants import *
@@ -10,7 +10,6 @@ from arc.globals import *
 from arc.logger import ColouredLogger
 
 class StdinPlugin(threading.Thread):
-
     def __init__(self, factory):
         threading.Thread.__init__(self)
         self.factory = factory
@@ -27,7 +26,10 @@ class StdinPlugin(threading.Thread):
                         return
                     message = line
                     if len(line) > 1:
-                        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
+                        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q"
+                            , "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8",
+                                     "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}"
+                            , "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                         for character in message:
                             if not character.lower() in goodchars:
                                 message = message.replace("&0", "&0")
@@ -67,13 +69,13 @@ class StdinPlugin(threading.Thread):
                         message = message.replace(".!", " !")
                         message = message.replace(".@", " @")
                         message = message.replace(".#", " #")
-                        if message[len(message)-3] == "&":
+                        if message[len(message) - 3] == "&":
                             print("You cannot use a color at the end of a message.")
                             return
                         if message.startswith("/"):
                             message = message.split(" ")
                             message[0] = message[0][1:]
-                            message[len(message)-1] = message[len(message)-1][:len(message[len(message)-1])-1]
+                            message[len(message) - 1] = message[len(message) - 1][:len(message[len(message) - 1]) - 1]
                             # It's a command
                             if message[0] == "kick":
                                 if len(message) == 1:
@@ -81,9 +83,11 @@ class StdinPlugin(threading.Thread):
                                 else:
                                     if message[1].lower() in self.factory.usernames:
                                         if message[2:]:
-                                            self.factory.usernames[message[1].lower()].sendError("You were kicked by the console: %s" % " ".join(message[2:]))
+                                            self.factory.usernames[message[1].lower()].sendError(
+                                                "You were kicked by the console: %s" % " ".join(message[2:]))
                                         else:
-                                            self.factory.usernames[message[1].lower()].sendError("You were kicked by the console!")
+                                            self.factory.usernames[message[1].lower()].sendError(
+                                                "You were kicked by the console!")
                                         print("%s has been kicked from the server." % message[1])
                                         continue
                                     else:
@@ -104,7 +108,8 @@ class StdinPlugin(threading.Thread):
                                             if username in self.factory.usernames:
                                                 ip = self.factory.usernames[username].transport.getPeer().host
                                                 self.factory.addIpBan(ip, " ".join(message[2:]))
-                                                self.factory.usernames[username].sendError("You got banned by the console: %s" % (" ".join(message[2:])))
+                                                self.factory.usernames[username].sendError(
+                                                    "You got banned by the console: %s" % (" ".join(message[2:])))
                                                 print("%s has been IPBanned." % ip)
                                             print("%s has been banned." % username)
                             elif message[0] == "ban":
@@ -120,7 +125,8 @@ class StdinPlugin(threading.Thread):
                                         else:
                                             self.factory.addBan(username, " ".join(message[2:]))
                                             if username in self.factory.usernames:
-                                                self.factory.usernames[username].sendError("You got banned by the console: %s" % (" ".join(message[2:])))
+                                                self.factory.usernames[username].sendError(
+                                                    "You got banned by the console: %s" % (" ".join(message[2:])))
                                             print("%s has been banned." % username)
                             elif message[0] == "ipban":
                                 if len(message) < 2:
@@ -135,7 +141,8 @@ class StdinPlugin(threading.Thread):
                                         print("%s is already IPBanned." % ip)
                                     else:
                                         self.factory.addIpBan(ip, " ".join(message[1:]))
-                                        self.factory.usernames[username].sendError("You got IPBanned by the console: %s" % (" ".join(message[2:])))
+                                        self.factory.usernames[username].sendError(
+                                            "You got IPBanned by the console: %s" % (" ".join(message[2:])))
                                         print("%s has been IPBanned." % ip)
                             elif message[0] == "rank":
                                 if len(message) == 1:
@@ -176,12 +183,12 @@ class StdinPlugin(threading.Thread):
                                     print("Please specify a worldname.")
                                     continue
                                 try:
-                                    self.factory.loadWorld("worlds/"+world, world)
+                                    self.factory.loadWorld("worlds/" + world, world)
                                 except AssertionError:
                                     print("Either world %s doesn't exist, or is broken." % world)
                                     continue
                                 else:
-                                    print("World '"+world+"' booted.")
+                                    print("World '" + world + "' booted.")
                             elif message[0] == ("shutdown"):
                                 try:
                                     world = str(message[1]).lower()
@@ -189,7 +196,7 @@ class StdinPlugin(threading.Thread):
                                     print("Please specify a worldname.")
                                     continue
                                 self.factory.unloadWorld(world)
-                                print("World '"+world+"' shutdown.")
+                                print("World '" + world + "' shutdown.")
                             elif message[0] == ("new"):
                                 if len(message) == 1:
                                     print("Please specify a new worldname.")
@@ -214,9 +221,13 @@ class StdinPlugin(threading.Thread):
                                 else:
                                     self.factory.sendMessageToAll(" ".join(message[1:]), "action")
                             elif message[0] == ("srb"):
-                                self.factory.sendMessageToAll("%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "Be back soon.")), "server", user="")
+                                self.factory.sendMessageToAll("%s[Server Reboot] %s" % (
+                                COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "Be back soon.")),
+                                    "server", user="")
                             elif message[0] == ("srs"):
-                                self.factory.sendMessageToAll("%s[Server Shutdown] %s" % (COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "See you later.")), "server", user="")
+                                self.factory.sendMessageToAll("%s[Server Shutdown] %s" % (
+                                COLOUR_DARKRED, (" ".join(message[1:]) if len(message) > 1 else "See you later.")),
+                                    "server", user="")
                             elif message[0] == ("ircrehash"):
                                 print("Rehashing the IRC Bot..")
                                 self.factory.reloadIrcBot()
@@ -229,7 +240,8 @@ class StdinPlugin(threading.Thread):
                                 print("StaffChat: #message")
                                 print("Commands: /cmdlist")
                             elif message[0] == ("cmdlist"):
-                                print("about boot ban banb cmdlist cpr derank despec gc help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
+                                print(
+                                "about boot ban banb cmdlist cpr derank despec gc help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
                             elif message[0] == ("about"):
                                 print("About The Server")
                                 print("Powered by Arc %s" % (INFO_VERSION))
@@ -303,8 +315,11 @@ class StdinPlugin(threading.Thread):
                                 if username in self.factory.usernames:
                                     self.factory.usernames[username].sendWhisper(self.username, text)
                                     self.factory.logger.info("Console to %s: %s" % (username, text))
-                                    self.factory.chatlogs["whisper"].write({"self": "Console", "other": username, "text": text})
-                                    self.factory.chatlogs["main"].write({"self": "Console", "other": username, "text": text}, formatter=MSGLOGFORMAT["whisper"])
+                                    self.factory.chatlogs["whisper"].write(
+                                            {"self": "Console", "other": username, "text": text})
+                                    self.factory.chatlogs["main"].write(
+                                            {"self": "Console", "other": username, "text": text},
+                                        formatter=MSGLOGFORMAT["whisper"])
                                 else:
                                     print("%s is currently offline." % username)
                         elif message.startswith("!"):
@@ -312,7 +327,7 @@ class StdinPlugin(threading.Thread):
                             if len(message) < 2:
                                 self.sendServerMessage("Please include a message and a world to send to.")
                             else:
-                                world, out = message[1:len(message)-1].split(" ")
+                                world, out = message[1:len(message) - 1].split(" ")
                                 if world not in self.factory.worlds.keys():
                                     print("World %s is not booted." % world)
                                 else:
@@ -323,10 +338,10 @@ class StdinPlugin(threading.Thread):
                                 print("Please include a message to send.")
                             else:
                                 text = message[1:]
-                                text = text[:len(text)-1]
+                                text = text[:len(text) - 1]
                                 self.factory.sendMessageToAll(text, "staff", user="Console")
                         else:
-                            self.factory.sendMessageToAll(message[0:len(message)-1], "chat", user="Console")
+                            self.factory.sendMessageToAll(message[0:len(message) - 1], "chat", user="Console")
             except:
                 print traceback.format_exc()
                 self.logger.error(traceback.format_exc())

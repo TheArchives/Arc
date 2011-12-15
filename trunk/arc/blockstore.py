@@ -119,7 +119,7 @@ class BlockStore(Thread):
         assert 0 <= x < self.x
         assert 0 <= y < self.y
         assert 0 <= z < self.z
-        return y*(self.x*self.z) + z*(self.x) + x
+        return y * (self.x * self.z) + z * (self.x) + x
 
     def get_coords(self, offset):
         "Turns a data offset into coordinates"
@@ -141,7 +141,7 @@ class BlockStore(Thread):
         # And directly to raw blocks, if we must
         if self.raw_blocks:
             self.raw_blocks[offset] = block
-        # Ask the physics engine if they'd like a look at that
+            # Ask the physics engine if they'd like a look at that
         self.physics_engine.handle_change(offset, block)
 
     def __getitem__(self, (x, y, z)):   # TODO ditch this because can read raw_blocks
@@ -194,7 +194,7 @@ class BlockStore(Thread):
                 pos += len(chunk)
                 chunk = list(gz.read(chunk_size))
                 chunk_end = pos + len(chunk)
-            # Safety first. If this isn't true, there's a bug.
+                # Safety first. If this isn't true, there's a bug.
             assert blocks_pos == len(ordered_blocks)
             new_gz.flush()
             os.fsync(new_gz.fileno())
@@ -208,8 +208,8 @@ class BlockStore(Thread):
             os.rename(self.blocks_path, self.blocks_path + ".old")
             os.rename(self.blocks_path + ".new", self.blocks_path)
 
-            self.logger.info("World '%s' has been saved with %d changes." % 
-                    (self.world_name, len(self.queued_blocks)))
+            self.logger.info("World '%s' has been saved with %d changes." %
+                             (self.world_name, len(self.queued_blocks)))
             self.queued_blocks = {}
         except Exception as a:
             self.logger.error("Problem saving world %s" % self.world_name)
@@ -225,8 +225,8 @@ class BlockStore(Thread):
         # Open the gzip
         fh = gzip.GzipFile(blocks_path, mode="wb")
         # Write a size header
-        fh.write(struct.pack("!i", sx*sy*sz))
+        fh.write(struct.pack("!i", sx * sy * sz))
         # Write each level
         for level in levels:
-            fh.write(chr(level)*(sx*sz))
+            fh.write(chr(level) * (sx * sz))
         fh.close()

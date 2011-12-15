@@ -24,7 +24,7 @@ def Rank(self, parts, fromloc, overriderank, server=None):
                     world = self.client.world
                 else:
                     return "You must provide a world."
-        # Do the ranks
+            # Do the ranks
         if rank == "builder":
             if not server:
                 if not overriderank:
@@ -89,17 +89,21 @@ def Rank(self, parts, fromloc, overriderank, server=None):
                     if not factory.isOwner(parts[-1]):
                         return ("You are not high enough rank!")
             factory.directors.add(username)
-        # Final cleanup
+            # Final cleanup
         if username in factory.usernames:
             if rank in ["builder", "op", "worldowner"]:
                 if factory.usernames[username].world == world:
                     factory.usernames[username].sendRankUpdate()
             else:
                 factory.usernames[username].sendRankUpdate()
-            factory.usernames[username].sendServerMessage("You are now %s %s%s." % (("an" if (rank.startswith(tuple("aeiou"))) else "a", rank, (" here" if rank in ["builder", "op", "worldowner"] else ""))))
-        return ("%s is now %s %s%s." % (username, ("an" if (rank.startswith(tuple("aeiou"))) else "a"), rank, " here" if rank in ["builder", "op", "worldowner"] else ""))
+            factory.usernames[username].sendServerMessage("You are now %s %s%s." % ((
+            "an" if (rank.startswith(tuple("aeiou"))) else "a", rank,
+            (" here" if rank in ["builder", "op", "worldowner"] else ""))))
+        return ("%s is now %s %s%s." % (username, ("an" if (rank.startswith(tuple("aeiou"))) else "a"), rank,
+                                        " here" if rank in ["builder", "op", "worldowner"] else ""))
     else:
         return ("Unknown rank \"%s\"" % rank)
+
 
 def DeRank(self, parts, fromloc, overriderank, server=None):
     username = parts[1].lower()
@@ -189,7 +193,7 @@ def DeRank(self, parts, fromloc, overriderank, server=None):
             if username in factory.admins:
                 factory.admins.remove(username)
             else:
-                return ("No such admin \"%s\""% username.lower())
+                return ("No such admin \"%s\"" % username.lower())
         elif rank == "director":
             if not server:
                 if not self.client.isOwner():
@@ -202,17 +206,21 @@ def DeRank(self, parts, fromloc, overriderank, server=None):
                 factory.directors.remove(username)
             else:
                 return ("No such director \"%s\"" % username.lower())
-        # Final cleanup
+            # Final cleanup
         if username in factory.usernames:
             if rank in ["builder", "op", "worldowner"]:
                 if factory.usernames[username].world == world:
                     factory.usernames[username].sendRankUpdate()
             else:
                 factory.usernames[username].sendRankUpdate()
-            factory.usernames[username].sendServerMessage("You are no longer %s %s%s." % (("an" if (rank.startswith(tuple("aeiou"))) else "a"), rank, " here" if rank in ["builder", "op", "worldowner"] else ""))
-        return ("%s is no longer %s %s%s." % (username, ("an" if (rank.startswith(tuple("aeiou"))) else "a"), rank, " here" if rank in ["builder", "op", "worldowner"] else ""))
+            factory.usernames[username].sendServerMessage("You are no longer %s %s%s." % (
+            ("an" if (rank.startswith(tuple("aeiou"))) else "a"), rank, " here" if rank in ["builder", "op",
+                                                                                            "worldowner"] else ""))
+        return ("%s is no longer %s %s%s." % (username, ("an" if (rank.startswith(tuple("aeiou"))) else "a"), rank,
+                                              " here" if rank in ["builder", "op", "worldowner"] else ""))
     else:
-        return ("Unknown rank \"%s\""%rank)
+        return ("Unknown rank \"%s\"" % rank)
+
 
 def Spec(self, username, fromloc, overriderank, server=None):
     if server:
@@ -226,6 +234,7 @@ def Spec(self, username, fromloc, overriderank, server=None):
         factory.usernames[username].sendRankUpdate()
     return ("%s is now a spec." % username)
 
+
 def DeSpec(self, username, fromloc, overriderank, server=None):
     if server:
         factory = server
@@ -237,7 +246,8 @@ def DeSpec(self, username, fromloc, overriderank, server=None):
     if username in factory.usernames:
         factory.usernames[username].sendRankUpdate()
     return ("%s is no longer a spec." % username)
-    
+
+
 def Staff(self, server=None):
     Temp = []
     if server:
@@ -256,18 +266,24 @@ def Staff(self, server=None):
         Temp.append(["Helpers:"] + list(factory.helpers))
     return Temp
 
+
 def Credits():
     Temp = []
     Temp.append("Thanks to the following people for making Arc possible...")
     Temp.append("Mojang Specifications (Minecraft): Notch, c418, ez, jeb, kappe, mollstam...")
-    Temp.append("Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
-    Temp.append("Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
+    Temp.append(
+        "Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
+    Temp.append(
+        "Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
     Temp.append("Devs (blockBox): fizyplankton, tyteen4a03, UberFoX")
-    Temp.append("Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius, blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
+    Temp.append(
+        "Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius, blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
     return Temp
+
 
 def makefile(filename):
     import os
+
     dir = os.path.dirname(filename)
     try:
         os.stat(dir)
@@ -281,8 +297,10 @@ def makefile(filename):
             f.write("")
     del os
 
+
 def makedatfile(filename):
     import os
+
     dir = os.path.dirname(filename)
     try:
         os.stat(dir)
@@ -294,13 +312,16 @@ def makedatfile(filename):
     if not os.path.exists(filename):
         with open(filename, "w") as f:
             import cPickle
+
             cPickle.dump("", f)
             del cPickle
     del os
 
+
 def makefiles(l):
     for f in l:
         makefile(f)
+
 
 def invertDict(OldDict):
     NewDict = dict()
@@ -309,15 +330,18 @@ def invertDict(OldDict):
             NewDict[OldDict[key]] = key
     return NewDict
 
+
 def appendToKeys(theDict, phrase):
     finalDict = dict()
     for key in theDict.keys():
         for value in theDict.values():
-            finalDict[phrase+key] = value
+            finalDict[phrase + key] = value
     return finalDict
+
 
 def recursive_default():
     return defaultdict(recursive_default)
+
 
 def checkConfigVersion(version, current):
     theVersion = tuple()
@@ -327,16 +351,19 @@ def checkConfigVersion(version, current):
         return False
     else:
         # Check version
-        if (int(theVersion[0]) < current[0]) or ((int(theVersion[1]) + 2) < current[1]) or ((int(theVersion[2]) + 5) < current[2]):
+        if (int(theVersion[0]) < current[0]) or ((int(theVersion[1]) + 2) < current[1]) or (
+        (int(theVersion[2]) + 5) < current[2]):
             return False
         else:
             return True
 
+
 def sanitizeMessage(message, replaceSets):
-    def _messageReplace(message, dict): 
+    def _messageReplace(message, dict):
         for key, value in dict:
             message = message.replace(key, value)
         return message
+
     if isinstance(replacesets, list):
         for replaceset in replacesets:
             if isinstance(replaceset, dict):
@@ -349,9 +376,11 @@ def sanitizeMessage(message, replaceSets):
         raise ValueError("Replace set not a dict or a list of dicts")
     return message
 
+
 def find(f, seq):
     for it in (item for item in seq if f(item)):
         return it
+
 
 class Popxrange(): # There is probably a way to do this without this class but where?
     def __init__(self, start, end):
@@ -365,6 +394,7 @@ class Popxrange(): # There is probably a way to do this without this class but w
 
     def __len__(self):
         return self._i.__length_hint__()
+
 
 class Deferred(object):
     """
@@ -394,7 +424,7 @@ class Deferred(object):
     def merge_call(self, func, args1, args2, kwargs1, kwargs2):
         "Merge two function call definitions together sensibly, and run them."
         kwargs1.update(kwargs2)
-        func(*(args1+args2), **kwargs1)
+        func(*(args1 + args2), **kwargs1)
 
     def callback(self, *args, **kwargs):
         "Send a successful-callback signal."

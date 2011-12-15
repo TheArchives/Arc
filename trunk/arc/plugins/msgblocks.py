@@ -7,7 +7,6 @@ from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class MsgblockPlugin(ProtocolPlugin):
-
     commands = {
         "mb": "commandMsgblock",
         "mbend": "commandMsgblockend",
@@ -15,13 +14,13 @@ class MsgblockPlugin(ProtocolPlugin):
         "mbdel": "commandMsgblockdel",
         "mdel": "commandMsgblockdel",
         "mbdelend": "commandMsgblockdelend",
-    }
+        }
 
     hooks = {
         "blockchange": "blockChanged",
         "poschange": "posChanged",
         "newworld": "newWorld",
-    }
+        }
 
     def gotClient(self):
         self.msgblock_message = None

@@ -4,14 +4,11 @@
 
 import time
 
-from twisted.internet import reactor
-
 from arc.constants import *
 from arc.decorators import *
 from arc.plugins import ProtocolPlugin
 
 class BlockTrackerPlugin(ProtocolPlugin):
-
     commands = {
         "checkblock": "commandCheckBlock",
         "checkplayer": "commandCheckPlayer",
@@ -20,7 +17,7 @@ class BlockTrackerPlugin(ProtocolPlugin):
         "cp": "commandCheckPlayer",
         "rp": "commandRestorePlayer",
         "undo": "commandRestorePlayer",
-    }
+        }
 
     hooks = {
         "blockdetect": "blockDetected",
@@ -80,7 +77,8 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 offset, before, after, player, date = element
                 date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
                 coords = self.client.world.get_coords(offset)
-                self.client.sendServerMessage("[%s] (%s, %s, %s) %s -> %s" % (date, coords[0], coords[1], coords[2], before, after))
+                self.client.sendServerMessage(
+                    "[%s] (%s, %s, %s) %s -> %s" % (date, coords[0], coords[1], coords[2], before, after))
 
     def sendCallbackBlock(self, data):
         if len(data) > 10:
@@ -100,7 +98,8 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 offset, before, after, player, date = element
                 date = time.strftime("%d/%m %H:%M:%S", time.gmtime(date))
                 coords = self.client.world.get_coords(offset)
-                self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))
+                self.client.sendServerMessage("[%s] (%s, %s, %s) %s: %s -> %s" % (
+                date, coords[0], coords[1], coords[2], player.encode("ascii", "ignore"), before, after))
 
     def blockDetected(self, x, y, z, block, selected_block, fromloc):
         "Hook trigger for block changes."
@@ -110,7 +109,9 @@ class BlockTrackerPlugin(ProtocolPlugin):
                 before_block = 0
             else:
                 before_block = ord(before_block)
-            self.client.world.blocktracker.add((self.client.world.get_offset(x, y, z), before_block, block, self.client.username.lower(), time.mktime(time.localtime())))
+            self.client.world.blocktracker.add((
+            self.client.world.get_offset(x, y, z), before_block, block, self.client.username.lower(),
+            time.mktime(time.localtime())))
 
     def blockChanged(self, x, y, z, block, selected_block, fromloc):
         if self.isChecking:
@@ -137,21 +138,21 @@ class BlockTrackerPlugin(ProtocolPlugin):
     def commandCheckPlayer(self, parts, fromloc, overriderank):
         "/checkplayer playername - Guest\nChecks a player's edits on this world."
         if len(parts) > 1:
-            # if len(parts) == 2:
-                # self.client.sendServerMessage("You need to specify the block type to view, or specify 'all'.")
-                # return
-            # if len(parts) == 3:
-                # if parts[2].lower() not in ["all", "before", "after"]:
-                    # self.client.sendServerMessage("Please specify 'before', 'after' or 'all'.")
-                    # return
-                # else:
-                    # filter = parts[2].lower()
-                # block = self.client.GetBlockValue(parts[3])
-                # if block == None:
-                    # return
-            # else:
-                # filter = "all"
-                # block = "all"
+        # if len(parts) == 2:
+        # self.client.sendServerMessage("You need to specify the block type to view, or specify 'all'.")
+        # return
+        # if len(parts) == 3:
+        # if parts[2].lower() not in ["all", "before", "after"]:
+        # self.client.sendServerMessage("Please specify 'before', 'after' or 'all'.")
+        # return
+        # else:
+        # filter = parts[2].lower()
+        # block = self.client.GetBlockValue(parts[3])
+        # if block == None:
+        # return
+        # else:
+        # filter = "all"
+        # block = "all"
             # edits = self.client.world.blocktracker.getplayeredits(parts[1], filter, block)
             # edits.addCallback(self.sendCallbackPlayer)
             edits = self.client.world.blocktracker.getplayeredits(parts[1])

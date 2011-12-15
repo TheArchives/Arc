@@ -4,7 +4,6 @@
 
 import cPickle
 
-from twisted.internet import reactor
 from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
@@ -12,7 +11,6 @@ from arc.decorators import *
 from arc.plugins import *
 
 class ModUtilPlugin(ProtocolPlugin):
-
     commands = {
         "srb": "commandSRB",
         "srs": "commandSRS",
@@ -54,12 +52,12 @@ class ModUtilPlugin(ProtocolPlugin):
         "desilence": "commandDesilence",
         "unsilence": "commandDesilence",
         "silenced": "commandSilenced",
-    }
+        }
 
     hooks = {
         "playerpos": "playerMoved",
         "poschange": "posChanged",
-    }
+        }
 
     def gotClient(self):
         self.hidden = False
@@ -95,12 +93,16 @@ class ModUtilPlugin(ProtocolPlugin):
     @config("rank", "director")
     def commandSRB(self, parts, fromloc, overriderank):
         "/srb [reason] - Director\nPrints out a reboot message."
-        self.client.factory.sendMessageToAll("%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(parts[1:]) if len(parts) > 1 else "Be back soon.")), "server", self.client)
+        self.client.factory.sendMessageToAll(
+            "%s[Server Reboot] %s" % (COLOUR_DARKRED, (" ".join(parts[1:]) if len(parts) > 1 else "Be back soon.")),
+            "server", self.client)
 
     @config("rank", "director")
     def commandSRS(self, parts, fromloc, overriderank):
         "/srs [reason] - Director\nPrints out a shutdown message."
-        self.client.factory.sendMessageToAll("%s[Server Shutdown] %s" % (COLOUR_DARKRED, (" ".join(parts[1:]) if len(parts) > 1 else "See you later.")), "server", self.client)
+        self.client.factory.sendMessageToAll(
+            "%s[Server Shutdown] %s" % (COLOUR_DARKRED, (" ".join(parts[1:]) if len(parts) > 1 else "See you later.")),
+            "server", self.client)
 
     @config("rank", "admin")
     def commandUrgent(self, parts, fromloc, overriderank):
@@ -108,7 +110,8 @@ class ModUtilPlugin(ProtocolPlugin):
         if len(parts) == 1:
             self.client.sendServerMessage("Please type a message.")
         else:
-            self.client.factory.sendMessageToAll("%s[URGENT] %s" % (COLOUR_DARKRED, " ".join(parts[1:])), "server", self.client)
+            self.client.factory.sendMessageToAll("%s[URGENT] %s" % (COLOUR_DARKRED, " ".join(parts[1:])), "server",
+                self.client)
 
     @config("category", "player")
     @config("rank", "op")
@@ -183,7 +186,9 @@ class ModUtilPlugin(ProtocolPlugin):
             self.client.sendServerMessage("That was Magic!")
             self.hidden = False
             # Imagine that! They've mysteriously appeared.
-            self.client.queueTask(TASK_NEWPLAYER, [self.client.id, self.client.username, self.client.x, self.client.y, self.client.z, self.client.h, self.client.p])
+            self.client.queueTask(TASK_NEWPLAYER,
+                [self.client.id, self.client.username, self.client.x, self.client.y, self.client.z, self.client.h,
+                 self.client.p])
 
     @config("category", "player")
     @config("rank", "mod")
@@ -214,7 +219,7 @@ class ModUtilPlugin(ProtocolPlugin):
         "/kick username [reason] - Helper\nKicks the user off the server."
         username = user.username
         if params:
-            user.sendError("Kicked by %s: %s" % (self.client.username , " ".join(params)))
+            user.sendError("Kicked by %s: %s" % (self.client.username, " ".join(params)))
         else:
             user.sendError("You got kicked by %s." % self.client.username)
         self.client.sendServerMessage("User %s kicked." % username)
@@ -227,18 +232,19 @@ class ModUtilPlugin(ProtocolPlugin):
         if len(parts) <= 2:
             self.client.sendServerMessage("Please specify a username and a reason.")
             return
-        # Grab statistics
+            # Grab statistics
         username = parts[1].lower()
         if username not in self.client.factory.usernames:
             noIP = True
         else:
             noIP = False
             ip = self.client.factory.usernames[username].transport.getPeer().host
-        # Region MCBans
+            # Region MCBans
         if self.client.factory.serverPluginExists("McBansServerPlugin"):
             if not noIP:
                 try:
-                    value = self.client.factory.serverPlugins["McBansServerPlugin"].handler.globalBan(username, ip, " ".join(parts[2:]), self.client.username)
+                    value = self.client.factory.serverPlugins["McBansServerPlugin"].handler.globalBan(username, ip,
+                        " ".join(parts[2:]), self.client.username)
                 except Exception as e:
                     self.client.sendServerMessage("Error when banning user globally on MCBans.")
                     self.client.sendServerMessage(str(e))
@@ -252,13 +258,13 @@ class ModUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("User %s is not online, unable to submit to MCBans." % username)
         else:
             self.client.sendServerMessage("MCBans server plugin not loaded, skipping this part.")
-        # Region ban
+            # Region ban
         if self.client.factory.isBanned(username):
             self.client.sendServerMessage("%s is already banned." % username)
         else:
             self.client.factory.addBan(username, " ".join(parts[2:]), self.client.username)
             self.client.sendServerMessage("Player %s banned. Continuing to IPBan..." % username)
-        # Region IPBan
+            # Region IPBan
         if not noIP:
             if self.client.factory.isIpBanned(ip):
                 self.client.sendServerMessage("%s is already IPBanned." % ip)
@@ -268,9 +274,10 @@ class ModUtilPlugin(ProtocolPlugin):
                 self.client.factory.addIpBan(ip, " ".join(parts[2:]))
         else:
             self.client.sendServerMessage("User %s is not online, unable to IPBan." % username)
-        # Follow-up action
+            # Follow-up action
         if username in self.client.factory.usernames:
-            self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
+            self.client.factory.usernames[username].sendError(
+                "You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
 
     @config("category", "player")
     @config("rank", "mod")
@@ -286,7 +293,8 @@ class ModUtilPlugin(ProtocolPlugin):
         else:
             self.client.factory.addBan(username, " ".join(parts[2:]), self.client.username)
             if username in self.client.factory.usernames:
-                self.client.factory.usernames[username].sendError("You got banned by %s: %s" % (self.client.username, " ".join(parts[2:])))
+                self.client.factory.usernames[username].sendError(
+                    "You got banned by %s: %s" % (self.client.username, " ".join(parts[2:])))
             self.client.sendServerMessage("%s has been banned for %s." % (username, " ".join(parts[2:])))
 
     @config("category", "player")
@@ -309,7 +317,8 @@ class ModUtilPlugin(ProtocolPlugin):
                 self.client.sendServerMessage("%s has been IPBanned." % ip)
                 self.client.factory.addIpBan(ip, " ".join(parts[2:]))
                 if username in self.client.factory.usernames:
-                    self.client.factory.usernames[username].sendError("You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
+                    self.client.factory.usernames[username].sendError(
+                        "You got IPbanned by %s: %s" % (self.client.username, " ".join(parts[2:])))
 
     @config("category", "player")
     @config("rank", "mod")
@@ -418,7 +427,8 @@ class ModUtilPlugin(ProtocolPlugin):
             return
         else:
             self.client.factory.usernames[username].changeToWorld(world_id)
-            self.client.factory.usernames[username].sendServerMessage("You were sent to %s by %s." % (world_id, self.client.username))
+            self.client.factory.usernames[username].sendServerMessage(
+                "You were sent to %s by %s." % (world_id, self.client.username))
             self.client.sendServerMessage("User %s was sent to world %s." % (username, world_id))
 
     @config("category", "player")

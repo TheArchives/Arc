@@ -57,18 +57,17 @@ BLOCK_COLOURS = {
     BLOCK_BOOKCASE: (35, 92, 72),
     BLOCK_MOSSY_STONE: (121, 20, 50),
     BLOCK_OBSIDIAN: (0, 0, 0),
-}
+    }
 
 CHR_AIR = chr(BLOCK_AIR)
 CHR_GLASS = chr(BLOCK_GLASS)
 
 
 class Imager(object):
-    
     """
     Takes a level file, and turns it into a nice topographic map.
     """
-    
+
     def __init__(self, level):
         self.level = level
         self.blocks_path = os.path.join(level, "blocks.gz")
@@ -76,7 +75,7 @@ class Imager(object):
         assert os.path.exists(self.blocks_path)
         assert os.path.exists(self.meta_path)
         self.load()
-    
+
     def load(self):
         "Load the world file into memory."
         config = ConfigParser()
@@ -92,13 +91,13 @@ class Imager(object):
             self.blocks.extend(chunk)
             chunk = gzf.read(2048)
         gzf.close()
-    
+
     def get_offset(self, x, y, z):
         "Turns block coordinates into a data offset"
         assert 0 <= x < self.x
         assert 0 <= y < self.y
         assert 0 <= z < self.z
-        return y*(self.x*self.z) + z*(self.x) + x
+        return y * (self.x * self.z) + z * (self.x) + x
 
     def get_coords(self, offset):
         "Turns a data offset into coordinates"
@@ -109,7 +108,7 @@ class Imager(object):
 
     def top_block(self, x, z):
         "Returns the top block in an x,z column that isn't air."
-        cur_offset = self.get_offset(x, self.y-1, z)
+        cur_offset = self.get_offset(x, self.y - 1, z)
         offset_jump = self.x * self.z
         for y in reversed(range(self.y)):
             block = self.blocks[cur_offset]
@@ -117,7 +116,7 @@ class Imager(object):
             if block is not CHR_AIR and block is not CHR_GLASS:
                 return ord(block), y
         return BLOCK_GROUND_ROCK, 0
-    
+
     def draw_map(self, filename):
         img = Image.new("RGBA", (self.x, self.z))
         px = img.load()
@@ -128,8 +127,8 @@ class Imager(object):
                 if not (h or s or v):
                     print block
                 v = (y / float(self.y)) * 50 + v * 0.5
-                r, g, b = colorsys.hsv_to_rgb(h/360.0, s/100.0, v/100.0)
-                px[x, z] = (int(r*255), int(g*255), int(b*255), 255)
+                r, g, b = colorsys.hsv_to_rgb(h / 360.0, s / 100.0, v / 100.0)
+                px[x, z] = (int(r * 255), int(g * 255), int(b * 255), 255)
         img.save(filename)
 
 

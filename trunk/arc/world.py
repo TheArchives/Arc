@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import gzip, os, shutil, sys, traceback
+import  os, shutil, sys, traceback
 from ConfigParser import RawConfigParser as ConfigParser
 from Queue import Empty
 
@@ -136,6 +136,7 @@ class World(object):
                 self.blockstore.in_queue.put([TASK_PHYSICSON])
             else:
                 self.blockstore.in_queue.put([TASK_PHYSICSOFF])
+
     physics = property(get_physics, set_physics)
 
     def get_finite_water(self):
@@ -148,6 +149,7 @@ class World(object):
                 self.blockstore.in_queue.put([TASK_FWATERON])
             else:
                 self.blockstore.in_queue.put([TASK_FWATEROFF])
+
     finite_water = property(get_finite_water, set_finite_water)
 
     def start_unflooding(self):
@@ -172,7 +174,7 @@ class World(object):
             config.getint("spawn", "y"),
             config.getint("spawn", "z"),
             config.getint("spawn", "h"),
-        )
+            )
         if config.has_section("options"):
             if config.has_option("options", "autoshutdown"):
                 self.status["autoshutdown"] = config.getboolean("options", "autoshutdown")
@@ -276,7 +278,7 @@ class World(object):
                                 entry[i] = False
                             elif entry[i] == "True":
                                 entry[i] = True
-                    self.entitylist.append([entry[0],(entry[1],entry[2],entry[3])] + entry[4:])
+                    self.entitylist.append([entry[0], (entry[1], entry[2], entry[3])] + entry[4:])
 
     @property
     def store_raw_blocks(self):
@@ -327,34 +329,34 @@ class World(object):
         # Store ops
         for op in self.ops:
             config.set("ops", op, "true")
-        # Store builders
+            # Store builders
         for builder in self.builders:
             config.set("builders", builder, "true")
-        # Store portals
+            # Store portals
         for offset, dest in self.portals.items():
             config.set("portals", str(offset), ", ".join(map(str, dest)))
-        # Store msgblocks
+            # Store msgblocks
         for offset, msg in self.msgblocks.items():
             config.set("msgblocks", str(offset), msg)
-        # Store worldbans
+            # Store worldbans
         for name in self.worldbans:
             config.set("worldbans", str(name), "True")
-        # Store cmdblocks
+            # Store cmdblocks
         for offset, cmd in self.cmdblocks.items():
             cmdstr = ""
             for x in cmd:
                 cmdstr = cmdstr + x + "&n"
             config.set("cmdblocks", str(offset), cmdstr)
-        # Store mines
+            # Store mines
         for offset in self.mines:
             config.set("mines", str(offset), "True")
-        # Store user zones
+            # Store user zones
         for name, zone in self.userzones.items():
             config.set("userzones", str(name), ", ".join(map(str, zone)))
-        # Store rank zones
+            # Store rank zones
         for name, zone in self.rankzones.items():
             config.set("rankzones", str(name), ", ".join(map(str, zone)))
-        # Store entitylist
+            # Store entitylist
         for i in range(len(self.entitylist)):
             entry = self.entitylist[i]
             config.set("entitylist", str(i), str(entry))
@@ -475,7 +477,8 @@ class World(object):
 
     def clear_mines(self):
         self.mines = []
-    # The above methods needs to be simplified into 1 method
+
+        # The above methods needs to be simplified into 1 method
 
     def isWorldBanned(self, name):
         return name.lower() in self.worldbans
@@ -499,7 +502,7 @@ class World(object):
         assert 0 <= x < self.x
         assert 0 <= y < self.y
         assert 0 <= z < self.z
-        return y*(self.x*self.z) + z*(self.x) + x
+        return y * (self.x * self.z) + z * (self.x) + x
 
     def get_coords(self, offset):
         "Turns a data offset into coordinates"
@@ -514,17 +517,18 @@ class World(object):
         gzip blocks file (gzipped, not the contents).
         """
         # First, queue it
-        self.blockstore.in_queue.put([TASK_FLUSH,self.saved])
+        self.blockstore.in_queue.put([TASK_FLUSH, self.saved])
         # Now, make the flush deferred if we haven't.
         if not self.flush_deferred:
             self.flush_deferred = Deferred()
-        # Next, make a deferred for us to return
+            # Next, make a deferred for us to return
         handle_deferred = Deferred()
         # Now, make a function that will call that on the first one
         def on_flush(result):
             handle_deferred.callback((
                 open(self.blocks_path, "rb"),
                 os.stat(self.blocks_path).st_size,
-            ))
+                ))
+
         self.flush_deferred.addCallback(on_flush)
         return handle_deferred

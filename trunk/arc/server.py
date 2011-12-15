@@ -64,7 +64,7 @@ class ArcFactory(Factory):
         self.chatlogs = {}
         for k, v in MSGLOGFORMAT.items():
             self.chatlogs[k] = ChatLogHandler("logs/%s.log" % k, v)
-        # Load the config
+            # Load the config
         self.loadConfig()
         # Read in the greeting
         try:
@@ -101,17 +101,19 @@ class ArcFactory(Factory):
                 self.staffchat = self.irc_config.getboolean("irc", "staffchat")
                 self.irc_relay = ChatBotFactory(self)
                 if self.ircbot and not self.irc_channel == "#channel" and not self.irc_nick == "botname":
-                    reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
+                    reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"),
+                        self.irc_relay)
                 else:
                     self.logger.error("IRC Bot failed to connect, you could modify, rename or remove irc.conf")
-                    self.logger.error("You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
+                    self.logger.error(
+                        "You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
             except Exception as e:
                 self.logger.warn("Error parsing irc.conf (%s)" % e)
                 self.logger.warn("IRC bot will not be started.")
                 self.irc_relay = None
         else:
             self.irc_relay = None
-        # Word Filter
+            # Word Filter
         # Note: worldfilter.conf has no cfgversion at the moment, because we might rewrite this bit - g will know more
         wordfilter = ConfigParser.RawConfigParser()
         try:
@@ -130,8 +132,9 @@ class ArcFactory(Factory):
                 self.logger.error("Error parsing wordfilter.conf (%s)" % e)
                 sys.exit(1)
             for x in range(number):
-                self.filter = self.filter + [[wordfilter.get("filter", "s"+str(x)), wordfilter.get("filter", "r"+str(x))]]
-        # Load up the plugins specified
+                self.filter = self.filter + [
+                    [wordfilter.get("filter", "s" + str(x)), wordfilter.get("filter", "r" + str(x))]]
+            # Load up the plugins specified
         self.plugins_config = ConfigParser.RawConfigParser()
         try:
             self.plugins_config.read("config/plugins.conf")
@@ -158,11 +161,11 @@ class ArcFactory(Factory):
             world = World.create(
                 "worlds/%s" % self.default_name,
                 sx, sy, sz, # Size
-                sx//2,grass_to+2, sz//2, 0, # Spawn
-                ([BLOCK_DIRT] * (grass_to-1) + [BLOCK_GRASS] + [BLOCK_AIR] * (sy-grass_to)) # Levels
+                sx // 2, grass_to + 2, sz // 2, 0, # Spawn
+                ([BLOCK_DIRT] * (grass_to - 1) + [BLOCK_GRASS] + [BLOCK_AIR] * (sy - grass_to)) # Levels
             )
             self.logger.info("Generated.")
-        # Load up the contents of data.
+            # Load up the contents of data.
         self.loadMeta()
         # Set up a few more things.
         self.queue = Queue()
@@ -184,7 +187,7 @@ class ArcFactory(Factory):
                 except Exception as e:
                     self.logger.error("Unable to read %s (%s)" % (config[1][0], e))
                     sys.exit(1)
-                # Check Config version
+                    # Check Config version
                 if config[1][0] in CFGVERSION:
                     if configParsers[config[1][0]].has_section("cfginfo"):
                         self.cfginfo["version"][config[1][0]] = configParsers[config[1][0]].get("cfginfo", "version")
@@ -195,13 +198,15 @@ class ArcFactory(Factory):
                 if not checkConfigVersion(self.cfginfo["version"][config[1][0]], CFGVERSION[config[1][0]]):
                     if config[1][0] in CFGVERSION:
                         # Inside official dist
-                        self.logger.error("You have an outdated %s, please redownload the Arc package and fill in the configuration again." % config[1][0])
+                        self.logger.error(
+                            "You have an outdated %s, please redownload the Arc package and fill in the configuration again." %
+                            config[1][0])
                         sys.exit(1)
                     else:
                         # Plugin
                         self.logger.error("You have an outdated %s, please contact the plugin author." % config[1][0])
                         sys.exit(1)
-            # Any prerequistics?
+                # Any prerequistics?
             if config[2] != None:
                 evaluate = eval(config[2], {"self": self})
                 self.logger.debug("Criteria result: %s" % str(evaluate))
@@ -209,7 +214,7 @@ class ArcFactory(Factory):
                     self.logger.debug("Criteria not met. Skipping.")
                     self.logger.debug("Criteria: %s" % config[2])
                     continue
-            # Get the correct ConfigParser method
+                # Get the correct ConfigParser method
             valueFunc = getattr(configParsers[config[1][0]], config[4])
             theError = 0
             if config[4] == "options":
@@ -326,7 +331,7 @@ class ArcFactory(Factory):
                 continue
             elif ext == "py": # Check if it ends in .py
                 files.append(file)
-        self.logger.debug("Possible server plugins (%s): %s" % (len(files) ,".py, ".join(files)+".py"))
+        self.logger.debug("Possible server plugins (%s): %s" % (len(files), ".py, ".join(files) + ".py"))
         self.logger.info("Loading server plugins..")
         i = 0
         while i < len(files):
@@ -342,14 +347,15 @@ class ArcFactory(Factory):
                     continue
                 else:
                     try:
-                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin() # Grab the actual plugin class
+                        mod = sys.modules[
+                              "arc.serverplugins.%s" % element].serverPlugin() # Grab the actual plugin class
                         name = mod.name # What's the name?
                         mod.factory = self
                         mod.logger = self.logger
                         if hasattr(mod, "gotServer"):
                             mod.gotServer()
                     except Exception as a:
-                        self.logger.error("Unable to load server plugin from %s" % (element+".py"))
+                        self.logger.error("Unable to load server plugin from %s" % (element + ".py"))
                         self.logger.error("Error: %s" % a)
                         i = i + 1
                         continue
@@ -370,7 +376,7 @@ class ArcFactory(Factory):
                         mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
                         name = mod.name # get the name
                     except Exception as a:
-                        self.logger.error("Unable to load server plugin from %s" % (element+".py"))
+                        self.logger.error("Unable to load server plugin from %s" % (element + ".py"))
                         self.logger.error("Error: %s" % a)
                         i = i + 1
                         continue
@@ -389,7 +395,8 @@ class ArcFactory(Factory):
             for element, fname in plugin.hooks.items(): # For every hook in the plugin,
                 if element not in self.serverHooks.keys():
                     self.serverHooks[element] = [] # Make a note of the hook in the hooks dict
-                self.serverHooks[element].append([plugin, getattr(plugin, fname)]) # Make a note of the hook in the hooks dict
+                self.serverHooks[element].append(
+                    [plugin, getattr(plugin, fname)]) # Make a note of the hook in the hooks dict
                 self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
         self.logger.debug("self.serverHooks: %s" % self.serverHooks)
         self.runHook("serverPluginsLoaded")
@@ -418,7 +425,7 @@ class ArcFactory(Factory):
         # Warn if already registered
         if command in self.commands:
             self.logger.warn("Command '%s' is already registered. Overriding." % command)
-        # Register
+            # Register
         self.commands[command] = (func, aliases)
         for alias in aliases:
             # Register the aliases
@@ -466,7 +473,7 @@ class ArcFactory(Factory):
         self.loops["saveworlds"].start(60, now=False)
         gc.disable()
         self.loops["cleangarbage"] = task.LoopingCall(self.cleanGarbage)
-        self.loops["cleangarbage"].start(60*15)
+        self.loops["cleangarbage"].start(60 * 15)
         self.runHook("factoryStarted")
 
     def cleanGarbage(self):
@@ -523,52 +530,56 @@ class ArcFactory(Factory):
         else:
             self.cfginfo["version"]["bans.meta"] = "1.0.0"
         if not checkConfigVersion(self.cfginfo["version"]["ranks.meta"], CFGVERSION["ranks.meta"]):
-            self.logger.error("You have an outdated ranks.meta, please redownload the Arc package and fill in the configuration again.")
+            self.logger.error(
+                "You have an outdated ranks.meta, please redownload the Arc package and fill in the configuration again.")
             sys.exit(1)
         if not checkConfigVersion(self.cfginfo["version"]["spectators.meta"], CFGVERSION["spectators.meta"]):
-            self.logger.error("You have an outdated spectators.meta, please redownload the Arc package and fill in the configuration again.")
+            self.logger.error(
+                "You have an outdated spectators.meta, please redownload the Arc package and fill in the configuration again.")
             sys.exit(1)
         if not checkConfigVersion(self.cfginfo["version"]["lastseen.meta"], CFGVERSION["lastseen.meta"]):
-            self.logger.error("You have an outdated lastseen.meta, please redownload the Arc package and fill in the configuration again.")
+            self.logger.error(
+                "You have an outdated lastseen.meta, please redownload the Arc package and fill in the configuration again.")
             sys.exit(1)
         if not checkConfigVersion(self.cfginfo["version"]["bans.meta"], CFGVERSION["bans.meta"]):
-            self.logger.error("You have an outdated bans.meta, please redownload the Arc package and fill in the configuration again.")
+            self.logger.error(
+                "You have an outdated bans.meta, please redownload the Arc package and fill in the configuration again.")
             sys.exit(1)
-        # Read in the admins
+            # Read in the admins
         if config.has_section("admins"):
             for name in config.options("admins"):
                 self.admins.add(name)
-        # Read in the mods
+            # Read in the mods
         if config.has_section("mods"):
             for name in config.options("mods"):
                 self.mods.add(name)
         if config.has_section("helpers"):
             for name in config.options("helpers"):
                 self.helpers.add(name)
-        # Read in the directors
+            # Read in the directors
         if config.has_section("directors"):
             for name in config.options("directors"):
                 self.directors.add(name)
-        # Read in the owners
+            # Read in the owners
         if config.has_section("owners"):
             for name in config.options("owners"):
                 self.owners.add(name)
         if config.has_section("silenced"):
             for name in config.options("silenced"):
                 self.silenced.add(name)
-        # Read in the spectators
+            # Read in the spectators
         if specs.has_section("spectators"):
             for name in specs.options("spectators"):
                 self.spectators.add(name)
-        # Read in the bans
+            # Read in the bans
         if bans.has_section("banned"):
             for name in bans.options("banned"):
                 self.banned[name] = bans.get("banned", name)
-        # Read in the ipbans
+            # Read in the ipbans
         if bans.has_section("ipbanned"):
             for ip in bans.options("ipbanned"):
                 self.ipbanned[ip] = bans.get("ipbanned", ip)
-        # Read in the lastseen
+            # Read in the lastseen
         if lastseen.has_section("lastseen"):
             for username in lastseen.options("lastseen"):
                 self.lastseen[username] = lastseen.getfloat("lastseen", username)
@@ -700,7 +711,7 @@ class ArcFactory(Factory):
         self.runHook("worldSaved", {"world_id": world_id, "shutdown": shutdown})
 
     def claimId(self, client):
-        for i in range(1, self.max_clients+1):
+        for i in range(1, self.max_clients + 1):
             if i not in self.clients:
                 self.clients[i] = client
                 self.runHook("idClaimed", {"id": i, "client": client})
@@ -819,7 +830,7 @@ class ArcFactory(Factory):
             elif issubclass(plugin, ServerPlugin):
                 self.plugins.remove(plugin)
                 plugin.unregister()
-        # Unload it
+            # Unload it
         unload_plugin(plugin_name)
         self.runHook("pluginUnloaded", {"plugin_name": plugin_name})
 
@@ -883,18 +894,20 @@ class ArcFactory(Factory):
                         if value:
                             for client in world.clients:
                                 # Save their initial position
-                                client.initial_position = client.x>>5, client.y>>5, client.z>>5, client.h
+                                client.initial_position = client.x >> 5, client.y >> 5, client.z >> 5, client.h
                                 client.sendPlayerLeave(data)
                                 client.loading_world = True
                                 breakable_admins = client.runHook("canbreakadmin")
-                                client.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.server_name, world.id)), "Respawning world '%s'..." % world.id, 100 if breakable_admins else 0)
+                                client.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.server_name, world.id)),
+                                    "Respawning world '%s'..." % world.id, 100 if breakable_admins else 0)
                                 client.sendLevel()
                     # Someone connected to the server
                     elif task is TASK_PLAYERCONNECT:
                         for client in self.usernames:
                             self.usernames[client].sendNewPlayer(*data)
                             if not self.useLowLag:
-                                self.usernames[client].sendNormalMessage("%s%s&e has come online." % (source_client.userColour(), source_client.username))
+                                self.usernames[client].sendNormalMessage(
+                                    "%s%s&e has come online." % (source_client.userColour(), source_client.username))
                         if self.irc_relay and world:
                             if not self.useLowLag:
                                 self.irc_relay.sendServerMessage("07%s has come online." % source_client.username)
@@ -907,7 +920,8 @@ class ArcFactory(Factory):
                                     client.sendNewPlayer(*data)
                                 sendmessage = self.runHook("worldChanged", {"client": source_client})
                                 if sendmessage and not self.useLowLag:
-                                    client.sendNormalMessage("%s%s&e has joined the world." % (source_client.userColour(), source_client.username))
+                                    client.sendNormalMessage("%s%s&e has joined the world." % (
+                                    source_client.userColour(), source_client.username))
                     # Someone left!
                     elif task is TASK_PLAYERLEAVE:
                         self.runHook("onPlayerLeave", {"client": source_client, "skipmsg": data})
@@ -915,7 +929,8 @@ class ArcFactory(Factory):
                         for client in self.clients.values():
                             client.sendPlayerLeave(data[0])
                             if not source_client.username is None and not self.useLowLag:
-                                client.sendNormalMessage("%s%s&e has gone offline." % (source_client.userColour(), source_client.username))
+                                client.sendNormalMessage(
+                                    "%s%s&e has gone offline." % (source_client.userColour(), source_client.username))
                         if not source_client.username is None:
                             if self.irc_relay and world and not self.useLowLag:
                                 self.irc_relay.sendServerMessage("07%s has gone offline." % source_client.username)
@@ -926,10 +941,12 @@ class ArcFactory(Factory):
                         for client in data[1].clients:
                             client.sendPlayerLeave(data[0])
                             if not self.useLowLag:
-                                client.sendNormalMessage("%s%s&e joined '%s'" % (source_client.userColour(), source_client.username, world.id))
+                                client.sendNormalMessage("%s%s&e joined '%s'" % (
+                                source_client.userColour(), source_client.username, world.id))
                         if self.irc_relay and world and not self.useLowLag:
                             self.irc_relay.sendServerMessage("07%s joined '%s'" % (source_client.username, world.id))
-                        self.logger.info("%s%s&f has now joined '%s'" % (source_client.userColour(), source_client.username, world.id))
+                        self.logger.info("%s%s&f has now joined '%s'" % (
+                        source_client.userColour(), source_client.username, world.id))
                     elif task == TASK_PLAYERRESPAWN:
                         # We need to immediately respawn the user to update their nick.
                         self.runHook("onPlayerRespawn", {"client": source_client})
@@ -942,21 +959,25 @@ class ArcFactory(Factory):
                     elif task is TASK_MESSAGE:
                         # More Word Filter
                         id, colour, username, text, channel, theWorld = data
-                        value = self.runHook("onMessage", {"id": id, "colour": colour, "username": username, "text": text, "channel": channel, "world": (world if theWorld == None else theWorld)})
+                        value = self.runHook("onMessage",
+                                {"id": id, "colour": colour, "username": username, "text": text, "channel": channel,
+                                 "world": (world if theWorld == None else theWorld)})
                         if value:
                             text = self.messagestrip(text)
                             # Send the message to everybody
                             if channel == "world":
                                 if theWorld != None:
                                     for client in self.worlds[theWorld].clients: # World was overriden
-                                        client.sendNormalMessage("%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
+                                        client.sendNormalMessage(
+                                            "%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
                                 else:
                                     for client in world.clients:
-                                        client.sendNormalMessage("%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
+                                        client.sendNormalMessage(
+                                            "%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
                             else:
                                 for client in self.clients.values():
                                     if channel == "staff" and client.isMod():
-                                        client.sendMessage(id, COLOUR_YELLOW+"#"+colour, username, text)
+                                        client.sendMessage(id, COLOUR_YELLOW + "#" + colour, username, text)
                                     elif channel == "action":
                                         client.sendAction(id, colour, username, text)
                                     elif channel == "server":
@@ -965,7 +986,7 @@ class ArcFactory(Factory):
                                         client.sendMessage(id, "[IRC] %s" % COLOUR_PURPLE, username, text)
                                     else:
                                         client.sendMessage(id, colour, username, text)
-                            # Log them
+                                # Log them
                             log = True
                             if channel == "chat":
                                 self.logger.info("%s&f: %s" % (username, text))
@@ -978,30 +999,36 @@ class ArcFactory(Factory):
                             elif channel == "world":
                                 w = (str(world.id) if theWorld == None else theWorld)
                                 self.logger.info("%s in %s: %s" % (username, w, text))
-                                self.chatlogs["world"].write({"time": time, "username": username, "world": w, "text": text})
-                                self.chatlogs["main"].write({"time": time, "username": username, "world": w, "text": text}, formatter=MSGLOGFORMAT["world"])
+                                self.chatlogs["world"].write(
+                                        {"time": time, "username": username, "world": w, "text": text})
+                                self.chatlogs["main"].write(
+                                        {"time": time, "username": username, "world": w, "text": text},
+                                    formatter=MSGLOGFORMAT["world"])
                                 log = False
                             elif channel == "server":
                                 self.logger.info(text)
                             else: # This message has no channel, just dump everything we see
-                                self.logger.warn("Message has no channel. Data: (%s, %s, %s, %s, %s)" % (id, colour, username, text, channel))
+                                self.logger.warn("Message has no channel. Data: (%s, %s, %s, %s, %s)" % (
+                                id, colour, username, text, channel))
                                 continue
                             if log:
                                 self.chatlogs[channel].write({"time": time, "username": username, "text": text})
-                                self.chatlogs["main"].write({"time": time, "username": username, "text": text}, formatter=MSGLOGFORMAT[channel])
-                            # Relay it to the IRC
+                                self.chatlogs["main"].write({"time": time, "username": username, "text": text},
+                                    formatter=MSGLOGFORMAT[channel])
+                                # Relay it to the IRC
                             if self.irc_relay and world and channel not in ["irc", "staff"]:
                                 if channel == "action":
                                     self.irc_relay.sendAction(username, text)
                                 elif channel == "world":
-                                    self.irc.relay.sendMessage("%s!%s in %s" % (COLOUR_YELLOW, colour+username+COLOUR_BLACK, world), text)
+                                    self.irc.relay.sendMessage(
+                                        "%s!%s in %s" % (COLOUR_YELLOW, colour + username + COLOUR_BLACK, world), text)
                                 else:
                                     self.irc_relay.sendMessage(username, text)
                 except Exception as e:
                     self.logger.error(traceback.format_exc())
         except Empty:
             pass
-        # OK, now, for every world, let them read their queues
+            # OK, now, for every world, let them read their queues
         for world in self.worlds.values():
             world.read_queue()
 
@@ -1028,7 +1055,7 @@ class ArcFactory(Factory):
             if not client is None:
                 client.sendServerMessage("Sorry, that world already exists!")
             return False
-        # Find the template files, copy them to the new location
+            # Find the template files, copy them to the new location
         for filename in ["blocks.gz", "world.meta"]:
             try:
                 shutil.copyfile("arc/templates/%s/%s" % (template, filename), "worlds/%s/%s" % (new_name, filename))
@@ -1119,29 +1146,30 @@ class ArcFactory(Factory):
         if not os.path.exists(world_dir):
             self.logger.info("World %s does not exist." % (world.id))
             return
-        if not os.path.exists(world_dir+"backup/"):
-            os.mkdir(world_dir+"backup/")
-        folders = os.listdir(world_dir+"backup/")
+        if not os.path.exists(world_dir + "backup/"):
+            os.mkdir(world_dir + "backup/")
+        folders = os.listdir(world_dir + "backup/")
         backups = list([])
         for x in folders:
             if x.isdigit():
                 backups.append(x)
         backups.sort(lambda x, y: int(x) - int(y))
-        path = os.path.join(world_dir+"backup/", "0")
+        path = os.path.join(world_dir + "backup/", "0")
         if backups:
-            path = os.path.join(world_dir+"backup/", str(int(backups[-1])+1))
+            path = os.path.join(world_dir + "backup/", str(int(backups[-1]) + 1))
         os.mkdir(path)
         shutil.copy(world_dir + "blocks.gz", path)
         shutil.copy(world_dir + "world.meta", path)
         try:
-            self.logger.info("%s's backup %s is saved." % (world_id, str(int(backups[-1])+1)))
+            self.logger.info("%s's backup %s is saved." % (world_id, str(int(backups[-1]) + 1)))
         except:
             self.logger.info("%s's backup 0 is saved." % (world_id))
-        if len(backups)+1 > self.backup_max:
-            for i in range(0, ((len(backups)+1)-self.backup_max)):
-                shutil.rmtree(os.path.join(world_dir+"backup/", str(int(backups[i]))))
+        if len(backups) + 1 > self.backup_max:
+            for i in range(0, ((len(backups) + 1) - self.backup_max)):
+                shutil.rmtree(os.path.join(world_dir + "backup/", str(int(backups[i]))))
         self.runHook("onBackup", {"world_id": world_id})
-    # The above code needs to be rewritten
+
+        # The above code needs to be rewritten
 
     def messagestrip(self, message):
         if self.has_wordfilter:
@@ -1190,6 +1218,7 @@ class ArcFactory(Factory):
                 global ChatBotFactory
                 del ChatBotFactory
                 from arc.irc_client import ChatBotFactory
+
                 if self.ircbot and self.use_irc:
                     self.irc_nick = self.irc_config.get("irc", "nick")
                     self.irc_pass = self.irc_config.get("irc", "password")
@@ -1199,11 +1228,13 @@ class ArcFactory(Factory):
                     self.staffchat = self.irc_config.getboolean("irc", "staffchat")
                     self.irc_relay = ChatBotFactory(self)
                     if self.ircbot and not self.irc_channel == "#channel" and not self.irc_nick == "botname":
-                        reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"), self.irc_relay)
+                        reactor.connectTCP(self.irc_config.get("irc", "server"), self.irc_config.getint("irc", "port"),
+                            self.irc_relay)
                         self.runHook("IRCBotReloaded")
                     else:
                         self.logger.error("IRC Bot failed to connect, you could modify, rename or remove irc.conf")
-                        self.logger.error("You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
+                        self.logger.error(
+                            "You need to change your 'botname' and 'channel' fields to fix this error or turn the bot off by disabling 'ircbot'")
                     return True
             except:
                 return False
