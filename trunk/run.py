@@ -35,16 +35,16 @@ makedatfile("config/data/titles.dat")
 
 try:
     from colorama import init
-
-    init()
-    logger.stdout("&f")
-    logger.debug("&fIf you see this, debug mode is &eon&f!")
-    logger.info("&fColorama &ainstalled&f - Console colours &cENABLED&f.")
 except ImportError:
     logger.warn("Colorama is not installed - console colours DISABLED.")
 except Exception as e:
     logger.warn("Unable to import colorama: %s" % e)
     logger.warn("Console colours DISABLED.")
+else:
+    init()
+    logger.stdout("&f")
+    logger.debug("&fIf you see this, debug mode is &eon&f!")
+    logger.info("&fColorama &ainstalled&f - Console colours &cENABLED&f.")
 
 def doExit():
     if os.name == "nt":
@@ -61,7 +61,7 @@ def main():
     try:
         factory.ip = reactor.listenTCP(factory.server_port, factory).getHost()
     except CannotListenError:
-        logger.critical("Something is already running on port %s" % (factory.server_port))
+        logger.critical("Something is already running on port %s" % factory.server_port)
         doExit()
     if factory.use_controller:
         controller = ControllerFactory(factory)
