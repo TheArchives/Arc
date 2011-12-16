@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cmath, datetime, random, sys, time, traceback
+import datetime, sys, time, traceback
 
 from twisted.internet import protocol
 from twisted.words.protocols import irc
@@ -121,8 +121,8 @@ class ChatBot(irc.IRCClient):
                                         "You were kicked by %s: %s" % (user, " ".join(command[3:])))
                                 else:
                                     self.factory.usernames[theUser.lower()].sendError("You were kicked by %s!" % user)
-                                self.msg(user, "%s has been kicked from the server%s." % (
-                                str(command[2], (" for %s" % " ".join(command[3:]) if len(command) > 2 else ""))))
+                                self.msg(user, "%s has been kicked from the server%s." % (command[2],
+                                        (" for %s" % " ".join(command[3:]) if len(command) > 2 else "")))
                                 return
                             self.msg(user, "%s is not online." % command[2])
                         elif theCommand == ("ban"):
@@ -167,7 +167,7 @@ class ChatBot(irc.IRCClient):
                         elif theCommand == ("boot"):
                             world = str(command[2]).lower()
                             returned = self.factory.loadWorld("worlds/" + world, world)
-                            if returned == False:
+                            if not returned:
                                 self.msg(user, "07 World %s loading failed." % world)
                             else:
                                 self.msg(user, "07World %s booted." % world)
@@ -320,13 +320,8 @@ class ChatBot(irc.IRCClient):
                             else:
                                 self.msg(self.factory.irc_channel, "07That world does not exist. Try !world message")
                 else:
-                    allowed = True
-                    goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q",
-                                 "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6",
-                                 "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{",
-                                 "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                     for character in msg:
-                        if not character.lower() in goodchars:
+                        if not character.lower() in PRINTABLE:
                             msg = msg.replace("&0", "&0")
                             msg = msg.replace("&1", "&1")
                             msg = msg.replace("&2", "&2")
@@ -495,7 +490,7 @@ class ChatBot(irc.IRCClient):
     # irc callbacks
 
     def irc_NICK(self, prefix, params):
-        "Called when an IRC user changes their nickname."
+        """Called when an IRC user changes their nickname."""
         old_nick = prefix.split('!')[0]
         new_nick = params[0]
         if old_nick in self.ops:
@@ -505,7 +500,7 @@ class ChatBot(irc.IRCClient):
         self.factory.sendMessageToAll(msg, "irc", user="")
 
     def userKicked(self, kickee, channel, kicker, message):
-        "Called when I observe someone else being kicked from a channel."
+        """Called when I observe someone else being kicked from a channel."""
         if kickee in self.ops:
             self.ops.remove(kickee)
         msg = "%s%s was kicked from %s by %s" % (COLOUR_YELLOW, kickee, channel, kicker)
@@ -515,21 +510,21 @@ class ChatBot(irc.IRCClient):
             self.factory.sendMessageToAll(msg, "irc", user="")
 
     def userLeft(self, user, channel):
-        "Called when I see another user leaving a channel."
+        """Called when I see another user leaving a channel."""
         if user in self.ops:
             self.ops.remove(user)
         msg = "%s%s has left %s" % (COLOUR_YELLOW, user.split("!")[0], channel)
         self.factory.sendMessageToAll(msg, "irc", user="")
 
     def userJoined(self, user, channel):
-        "Called when I see another user joining a channel."
+        """Called when I see another user joining a channel."""
         if user in self.ops:
             self.ops.remove(user)
         msg = "%s%s has joined %s" % (COLOUR_YELLOW, user.split("!")[0], channel)
         self.factory.sendMessageToAll(msg, "irc", user="")
 
     def modeChanged(self, user, channel, set, modes, args):
-        "Called when someone changes a mode."
+        """Called when someone changes a mode."""
         setUser = user.split("!")[0]
         arguments = []
         for element in args:
@@ -600,13 +595,8 @@ class ChatBot(irc.IRCClient):
             self.ops.remove(userhost)
         msg = "%s%s has quit IRC." % (COLOUR_YELLOW, user)
         self.factory.sendMessageToAll(msg, "irc", user=user)
-        allowed = True
-        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
-                     "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@",
-                     "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<",
-                     ",", ">", ".", "?", "/", "\\", "|"]
         for character in msg:
-            if not character.lower() in goodchars:
+            if not character.lower() in PRINTABLE:
                 msg = msg.replace("&0", "&0")
                 msg = msg.replace("&1", "&1")
                 msg = msg.replace("&2", "&2")
@@ -673,7 +663,7 @@ class ChatBot(irc.IRCClient):
         if len(msg) > 51:
             moddedmsg = msg[:51].replace(" ", "")
             if moddedmsg[len(moddedmsg) - 2] == "&":
-                msg = msg.replace("&", "*")
+                msg.replace("&", "*")
         msg = "%s(%s%s)" % (COLOUR_YELLOW, quitMessage, COLOUR_YELLOW)
         self.factory.sendMessageToAll(msg, "irc", user="")
 
@@ -695,7 +685,7 @@ class ChatBotFactory(protocol.ClientFactory):
     def clientConnectionLost(self, connector, reason):
         """If we get disconnected, reconnect to server."""
         self.instance = None
-        if(self.rebootFlag):
+        if self.rebootFlag:
             connector.connect()
 
     def clientConnectionFailed(self, connector, reason):

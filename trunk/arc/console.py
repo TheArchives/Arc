@@ -26,12 +26,8 @@ class StdinPlugin(threading.Thread):
                         return
                     message = line
                     if len(line) > 1:
-                        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q"
-                            , "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8",
-                                     "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}"
-                            , "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                         for character in message:
-                            if not character.lower() in goodchars:
+                            if not character.lower() in PRINTABLE:
                                 message = message.replace("&0", "&0")
                                 message = message.replace("&1", "&1")
                                 message = message.replace("&2", "&2")
@@ -130,7 +126,8 @@ class StdinPlugin(threading.Thread):
                                             print("%s has been banned." % username)
                             elif message[0] == "ipban":
                                 if len(message) < 2:
-                                    print("Please specify a username and the reason.")
+                                    print("Please specify a username and a reason.")
+                                    continue
                                 else:
                                     username = message[1].lower()
                                 if username not in self.factory.usernames:
@@ -210,7 +207,7 @@ class StdinPlugin(threading.Thread):
                                     world_id = message[1].lower()
                                     self.factory.newWorld(world_id, template)
                                     returned = self.factory.loadWorld("worlds/%s" % world_id, world_id)
-                                    if returned == False:
+                                    if not returned:
                                         print("World %s loading failed." % world_id)
                                     self.factory.worlds[world_id].status["all_build"] = False
                                     if len(message) < 4:
@@ -244,7 +241,7 @@ class StdinPlugin(threading.Thread):
                                 "about boot ban banb cmdlist cpr derank despec gc help ircrehash ipban kick me new pll plr plu rank rehash say sendhb shutdown spec srb srs u")
                             elif message[0] == ("about"):
                                 print("About The Server")
-                                print("Powered by Arc %s" % (INFO_VERSION))
+                                print("Powered by Arc %s" % INFO_VERSION)
                                 print("Name: %s" % self.factory.server_name)
                                 try:
                                     print("URL: %s" % self.factory.heartbeat.url)
