@@ -491,7 +491,7 @@ class ArcFactory(Factory):
                 name = world.id
                 self.unloadWorld(name)
             else:
-                if not len(world.clients): # Nobody's in it
+                if len(world.clients) == 0: # Nobody's in it
                     world.status["last_access_count"] += 1
 
     def loadMeta(self):
@@ -959,12 +959,12 @@ class ArcFactory(Factory):
                         id, colour, username, text, channel, theWorld = data
                         value = self.runHook("onMessage",
                                 {"id": id, "colour": colour, "username": username, "text": text, "channel": channel,
-                                 "world": (world if not theWorld else theWorld)})
+                                 "world": (world if theWorld == None else theWorld)})
                         if value:
                             text = self.messagestrip(text)
                             # Send the message to everybody
                             if channel == "world":
-                                if not theWorld:
+                                if theWorld != None::
                                     for client in self.worlds[theWorld].clients: # World was overriden
                                         client.sendNormalMessage(
                                             "%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
@@ -995,7 +995,7 @@ class ArcFactory(Factory):
                             elif channel == "action":
                                 self.logger.info("* %s %s" % (username, text))
                             elif channel == "world":
-                                w = (str(world.id) if not theWorld else theWorld)
+                                w = (str(world.id) if theWorld == None else theWorld)
                                 self.logger.info("%s in %s: %s" % (username, w, text))
                                 self.chatlogs["world"].write(
                                         {"time": time, "username": username, "world": w, "text": text})
@@ -1032,16 +1032,16 @@ class ArcFactory(Factory):
 
     def sendMessageToAll(self, message, channel="chat", client=None, id=None, colour=None, user=None, world=None):
         """Quick method for sending message to all clients."""
-        if not client:
-            uid = id if not id else 127
-            c = colour if not colour else COLOUR_WHITE
-            username = user if not user else "Server"
+        if client == None:
+            uid = id if id != None else 127
+            c = colour if colour != None else COLOUR_WHITE
+            username = user if user != None else "Server"
             w = world
         else:
-            uid = id if not id else client.id
-            c = colour if not colour else client.userColour()
-            username = user if not user else client.username
-            w = world if not world else client.username
+            uid = id if id != None else client.id
+            c = colour if colour != None else client.userColour()
+            username = user if user != None else client.username
+            w = world if world != None else client.username
         self.queue.put((client, TASK_MESSAGE, (uid, c, username, message, channel, w)))
 
     def newWorld(self, new_name, template="default"):

@@ -390,6 +390,7 @@ class ChatBot(irc.IRCClient):
                         moddedmsg = msg[:51].replace(" ", "")
                         if moddedmsg[len(moddedmsg) - 2] == "&":
                             msg = msg.replace("&", "*")
+                    print user
                     self.factory.sendMessageToAll(msg, "irc", user=user)
         except:
             self.logger.error(traceback.format_exc())
