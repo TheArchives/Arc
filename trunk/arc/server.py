@@ -964,7 +964,7 @@ class ArcFactory(Factory):
                             text = self.messagestrip(text)
                             # Send the message to everybody
                             if channel == "world":
-                                if theWorld != None::
+                                if theWorld != None:
                                     for client in self.worlds[theWorld].clients: # World was overriden
                                         client.sendNormalMessage(
                                             "%s!%s%s%s: %s" % (COLOUR_YELLOW, colour, username, COLOUR_WHITE, text))
