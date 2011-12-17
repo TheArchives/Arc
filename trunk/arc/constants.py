@@ -580,5 +580,8 @@ from arc.globals import invertDict
 
 MSGREPLACE["irc_colour_to_game"] = invertDict(MSGREPLACE["game_colour_to_irc"])
 
+import string
+PRINTABLE = string.printable
+
 class ServerFull(Exception):
     pass
