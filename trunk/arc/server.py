@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, datetime, gc, os, re, shutil, sys, time, traceback
+import cPickle, datetime, gc, os, re, shutil, string, sys, time, traceback
 from collections import defaultdict
 import ConfigParser
 from Queue import Queue, Empty
@@ -33,6 +33,7 @@ class ArcFactory(Factory):
     protocol = ArcServerProtocol
 
     def __init__(self, debug=False):
+        self.printable = string.printable
         self.logger = ColouredLogger(debug)
         self.cfginfo = {"version": defaultdict(str)}
         # Load up the server plugins right away
@@ -82,7 +83,7 @@ class ArcFactory(Factory):
             self.messages = cPickle.load(file)
             file.close()
         self.use_irc = False
-        if os.path.exists("config/irc.conf"): # IRC bot will be updated soon, no need for cfginfo
+        if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
             self.use_irc = True
             self.irc_config = ConfigParser.RawConfigParser()
             try:
@@ -157,7 +158,7 @@ class ArcFactory(Factory):
             self.logger.info("Generating %s world..." % self.default_name)
             sx, sy, sz = 64, 64, 64
             grass_to = (sy // 2)
-            World.create(
+            world = World.create(
                 "worlds/%s" % self.default_name,
                 sx, sy, sz, # Size
                 sx // 2, grass_to + 2, sz // 2, 0, # Spawn
@@ -206,7 +207,7 @@ class ArcFactory(Factory):
                         self.logger.error("You have an outdated %s, please contact the plugin author." % config[1][0])
                         sys.exit(1)
                 # Any prerequistics?
-            if config[2]:
+            if config[2] != None:
                 evaluate = eval(config[2], {"self": self})
                 self.logger.debug("Criteria result: %s" % str(evaluate))
                 if not evaluate:
@@ -246,7 +247,7 @@ class ArcFactory(Factory):
                     self.logger.error("Unable to set %s (%s)" % (config[0], e))
                     sys.exit(1)
                 else:
-                    if config[5]:
+                    if config[5] != None:
                         try:
                             callbackFunc = getattr(self, config[5])
                             callbackFunc(reload=reload)
@@ -263,13 +264,12 @@ class ArcFactory(Factory):
             sys.exit(1)
 
     def modifyHeartbeatURL(self, reload):
-        """Called to recheck URL."""
+        "Called to recheck URL."
         if reload:
-            self.heartbeat.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else \
-                                    "http://direct.worldofminecraft.com/hb.php"
+            self.heartbeat.hburl = "http://www.minecraft.net/heartbeat.jsp" if not self.factory.wom_heartbeat else "http://direct.worldofminecraft.com/hb.php"
 
     def startASDLoop(self, reload):
-        """Called to start the ASD loop."""
+        "Called to start the ASD loop."
         if reload:
             self.loops["asd"].stop()
         if self.asd_delay != 0:
@@ -283,20 +283,20 @@ class ArcFactory(Factory):
         "Called to initialize the backup loop."
         if reload:
             self.loops["autobackup"].stop()
-        elif self.backup_auto:
+        elif self.backup_auto != False:
             self.loops["autobackup"] = task.LoopingCall(self.AutoBackup)
 
     def modifyBackupFrequency(self, reload):
-        """Called to start the backup loop."""
+        "Called to start the backup loop."
         if reload:
             self.loops["autobackup"].stop()
-        elif self.backup_auto:
+        elif self.backup_auto != False:
             self.loops["autobackup"].run(self.backup_freq, now=False)
 
     def enableArchiver(self, reload):
         if reload:
             self.loops["loadarchives"].stop()
-        elif self.enable_archives:
+        elif self.enable_archives != False:
             self.loops["loadarcives"] = task.LoopingCall(self.loadArchives)
             self.loops["loadarcives"].start(300)
 
@@ -320,7 +320,7 @@ class ArcFactory(Factory):
 
     # End of dummy callbacks
     def loadServerPlugins(self, reload=False):
-        """Used to load up all the server plugins."""
+        "Used to load up all the server plugins."
         files = []
         self.serverHooks = {} # Clear the list of hooks
         self.logger.debug("Listing server plugins..")
@@ -343,7 +343,7 @@ class ArcFactory(Factory):
                 except Exception as a: # Got an error!
                     self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
-                    i += 1
+                    i = i + 1
                     continue
                 else:
                     try:
@@ -357,7 +357,7 @@ class ArcFactory(Factory):
                     except Exception as a:
                         self.logger.error("Unable to load server plugin from %s" % (element + ".py"))
                         self.logger.error("Error: %s" % a)
-                        i += 1
+                        i = i + 1
                         continue
             else: # We already imported it
                 mod = self.serverPlugins[element][0]
@@ -369,7 +369,7 @@ class ArcFactory(Factory):
                 except Exception as a: # Got an error!
                     self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
-                    i += 1
+                    i = i + 1
                     continue
                 else:
                     try:
@@ -378,7 +378,7 @@ class ArcFactory(Factory):
                     except Exception as a:
                         self.logger.error("Unable to load server plugin from %s" % (element + ".py"))
                         self.logger.error("Error: %s" % a)
-                        i += 1
+                        i = i + 1
                         continue
                 reloaded = True # Remember that we reloaded it
             mod.filename = element
@@ -387,7 +387,7 @@ class ArcFactory(Factory):
                 self.logger.debug("Loaded server plugin: %s" % name)
             else:
                 self.logger.debug("Reloaded server plugin: %s" % name)
-            i += 1
+            i = i + 1
         self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
         #The following code should be handled by the ServerPlugins class and registerHook
         self.logger.debug("Getting hooks..")
@@ -405,7 +405,7 @@ class ArcFactory(Factory):
         return plugin in self.serverPlugins.keys()
 
     def runHook(self, hook, data=None):
-        """Used to run hooks for ServerPlugins"""
+        "Used to run hooks for ServerPlugins"
         finalvalue = True
         if hook in self.serverHooks.keys():
             for element in self.serverHooks[hook]:
@@ -413,12 +413,12 @@ class ArcFactory(Factory):
                     value = element[1](data)
                 else:
                     value = element[1]()
-                if not value:
+                if value == False:
                     finalvalue = False
         return finalvalue
 
     def registerCommand(self, command, func, aliases, rank):
-        """Registers func as the handler for the command named 'command'."""
+        "Registers func as the handler for the command named 'command'."
         # Make sure case doesn't matter
         command = command.lower()
         aliases = [i.lower() for i in aliases]
@@ -432,7 +432,7 @@ class ArcFactory(Factory):
             self.aliases[alias] = command
 
     def unregisterCommand(self, command, func):
-        """Unregisters func as command's handler, if it is currently the handler."""
+        "Unregisters func as command's handler, if it is currently the handler."
         # Make sure case doesn't matter
         command = command.lower()
         try:
@@ -448,7 +448,7 @@ class ArcFactory(Factory):
         pass # To be implemented
 
     def buildProtocol(self, addr):
-        """Builds the protocol. Used to switch between Manic Digger and Minecraft."""
+        "Builds the protocol. Used to switch between Manic Digger and Minecraft."
         # Some male/female/alien idenfication code here
         p = self.protocol()
         p.factory = self
@@ -495,7 +495,7 @@ class ArcFactory(Factory):
                     world.status["last_access_count"] += 1
 
     def loadMeta(self):
-        """Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"""
+        "Loads the 'meta' - variables that change with the server (worlds, admins, etc.)"
         config = ConfigParser.RawConfigParser()
         specs = ConfigParser.RawConfigParser()
         lastseen = ConfigParser.RawConfigParser()
@@ -586,7 +586,7 @@ class ArcFactory(Factory):
         self.runHook("metaLoaded")
 
     def saveMeta(self):
-        """Saves the server's meta back to a file."""
+        "Saves the server's meta back to a file."
         config = ConfigParser.RawConfigParser()
         specs = ConfigParser.RawConfigParser()
         lastseen = ConfigParser.RawConfigParser()
@@ -656,16 +656,16 @@ class ArcFactory(Factory):
                 if len(self.worlds[key].clients) > 0:
                     self.logger.info("%s: %s" % (key, ", ".join(str(c.username) for c in self.worlds[key].clients)))
             if len(self.clients) >= self.lowlag_players:
-                if not self.useLowLag:
+                if self.useLowLag != True:
                     self.useLowLag = True
                     self.logger.warn("Enabling low lag mode.")
             else:
-                if self.useLowLag:
+                if self.useLowLag != False:
                     self.useLowLag = False
                     self.logger.warn("Disabling low lag mode.")
 
     def loadArchive(self, filename):
-        """Boots an archive given a filename. Returns the new world ID."""
+        "Boots an archive given a filename. Returns the new world ID."
         # Get an unused world name
         i = 1
         while self.world_exists("a-%i" % i):
@@ -680,11 +680,11 @@ class ArcFactory(Factory):
         return world_id
 
     def saveWorlds(self):
-        """Saves the worlds, one at a time, with a 1 second delay."""
+        "Saves the worlds, one at a time, with a 1 second delay."
         self._saveWorlds()
 
     def _saveWorlds(self):
-        """Handles actual world saving process."""
+        "Handles actual saving process."
         if not self.saving:
             if not self.world_save_stack:
                 self.world_save_stack = list(self.worlds)
@@ -731,7 +731,7 @@ class ArcFactory(Factory):
         try:
             self.logger.info("%s is joining world %s" % (user.username, new_world.basename))
         except:
-            self.logger.info("%s is joining world %s" % (user.ip, new_world.basename))
+            self.logger.info("%s is joining world %s" % (user.transport.getPeer().host, new_world.basename))
         if hasattr(user, "world") and user.world:
             self.leaveWorld(user.world, user)
         user.world = new_world
@@ -814,12 +814,14 @@ class ArcFactory(Factory):
                 yield world_id
 
     def recordPresence(self, username):
-        """Records a sighting of 'username' in the lastseen dict."""
+        """
+        Records a sighting of 'username' in the lastseen dict.
+        """
         self.runHook("lastseenRecorded", {"username": username, "time": time.time()})
         self.lastseen[username.lower()] = time.time()
 
     def unloadPlugin(self, plugin_name):
-        """Unloads the plugin with the given module name."""
+        "Unloads the plugin with the given module name."
         # Unload the plugin from everywhere
         for plugin in plugins_by_module_name(plugin_name):
             if issubclass(plugin, ProtocolPlugin):
@@ -845,7 +847,7 @@ class ArcFactory(Factory):
         self.runHook("pluginLoaded", {"plugin_name": plugin_name})
 
     def sendMessages(self):
-        """Sends all queued messages, and lets worlds recieve theirs."""
+        "Sends all queued messages, and lets worlds recieve theirs."
         try:
             while True: # I don't get this line? -tyteen
                 # Get the next task
@@ -1022,7 +1024,7 @@ class ArcFactory(Factory):
                                         "%s!%s in %s" % (COLOUR_YELLOW, colour + username + COLOUR_BLACK, world), text)
                                 else:
                                     self.irc_relay.sendMessage(username, text)
-                except:
+                except Exception as e:
                     self.logger.error(traceback.format_exc())
         except Empty:
             pass
@@ -1045,7 +1047,7 @@ class ArcFactory(Factory):
         self.queue.put((client, TASK_MESSAGE, (uid, c, username, message, channel, w)))
 
     def newWorld(self, new_name, template="default"):
-        """Creates a new world from some template."""
+        "Creates a new world from some template."
         # Make the directory
         try:
             os.mkdir("worlds/%s" % new_name)
@@ -1065,15 +1067,15 @@ class ArcFactory(Factory):
         return True
 
     def renameWorld(self, old_worldid, new_worldid):
-        """Renames a world."""
+        "Renames a world."
         assert old_worldid not in self.worlds
         assert self.world_exists(old_worldid)
         assert not self.world_exists(new_worldid)
-        os.rename("worlds/%s" % old_worldid, "worlds/%s" % new_worldid)
+        os.rename("worlds/%s" % (old_worldid), "worlds/%s" % (new_worldid))
         self.runHook("worldRenamed", {"old_world_id": old_worldid, "new_world_id": new_worldid})
 
     def numberWithPhysics(self):
-        """Returns the number of worlds with physics enabled."""
+        "Returns the number of worlds with physics enabled."
         return len([world for world in self.worlds.values() if world.physics])
 
     def isSilenced(self, username):
@@ -1126,13 +1128,13 @@ class ArcFactory(Factory):
         return self.ipbanned[ip]
 
     def world_exists(self, world_id):
-        """Says if the world exists (even if unbooted)"""
+        "Says if the world exists (even if unbooted)"
         return os.path.isdir("worlds/%s/" % world_id)
 
     # The following code needs to be rewritten
     def AutoBackup(self):
         for world in self.worlds:
-            if world.status["modified"]:
+            if world.status["modified"] == True:
                 self.Backup(world)
                 # Reset modification flag
                 world.status["modified"] = False
@@ -1142,7 +1144,7 @@ class ArcFactory(Factory):
         if world_id == self.default_name and not self.backup_default:
             return
         if not os.path.exists(world_dir):
-            self.logger.info("World %s does not exist." % world.id)
+            self.logger.info("World %s does not exist." % (world.id))
             return
         if not os.path.exists(world_dir + "backup/"):
             os.mkdir(world_dir + "backup/")
@@ -1161,7 +1163,7 @@ class ArcFactory(Factory):
         try:
             self.logger.info("%s's backup %s is saved." % (world_id, str(int(backups[-1]) + 1)))
         except:
-            self.logger.info("%s's backup 0 is saved." % world_id)
+            self.logger.info("%s's backup 0 is saved." % (world_id))
         if len(backups) + 1 > self.backup_max:
             for i in range(0, ((len(backups) + 1) - self.backup_max)):
                 shutil.rmtree(os.path.join(world_dir + "backup/", str(int(backups[i]))))
@@ -1176,7 +1178,7 @@ class ArcFactory(Factory):
                 if isinstance(x, list):
                     strippedmessage = strippedmessage + self.messagestrip(x)
                 elif isinstance(x, str):
-                    if str(x) in PRINTABLE:
+                    if str(x) in self.printable:
                         strippedmessage = strippedmessage + str(x)
                 else:
                     self.logger.error("Unknown message type passed to the message stripper.")
@@ -1200,7 +1202,7 @@ class ArcFactory(Factory):
                         when = match.groups()[0]
                         try:
                             when = datetime.datetime.strptime(when, "%Y/%m/%d %H:%M:%S")
-                        except ValueError:
+                        except ValueError as e:
                             self.logger.warning("Bad archive filename %s." % subfilename)
                             continue
                         if name not in self.archives:
@@ -1210,7 +1212,7 @@ class ArcFactory(Factory):
         self.runHook("archivesLoaded", {"number": len(self.archives)})
 
     def reloadIrcBot(self):
-        if self.irc_relay:
+        if (self.irc_relay):
             try:
                 self.irc_relay.quit("Reloading the IRC Bot...")
                 global ChatBotFactory
