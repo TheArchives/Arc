@@ -153,7 +153,7 @@ class ArcServerProtocol(Protocol):
                 pass
             # Remove from ID list, send removed msgs
         self.factory.releaseId(self.id)
-        self.factory.queue.put((self, TASK_PLAYERLEAVE, self.id))
+        self.factory.queue.put((self, TASK_PLAYERLEAVE, (self.id)))
         if self.username:
             self.factory.logger.info("Disconnected '%s'" % self.username)
             self.factory.runHook("playerQuit", {"client": self})
