@@ -15,6 +15,7 @@ class BlbPlugin(ProtocolPlugin):
         "cuboid": "commandBlb",
         "cub": "commandBlb",
         "box": "commandBlb",
+        "z": "commandBlb",
         "bhb": "commandHBlb",
         "hbox": "commandHBlb",
         "bwb": "commandWBlb",
@@ -178,7 +179,7 @@ class BlbPlugin(ProtocolPlugin):
     @config("category", "build")
     @config("rank", "builder")
     def commandBlb(self, parts, fromloc, overriderank):
-        "/blb blockname [x y z x2 y2 z2] - Builder\nAliases: box, cub, cuboid, draw\nSets all blocks in this area to block.\nClick 2 corners then do the command."
+        "/blb blockname [x y z x2 y2 z2] - Builder\nAliases: box, cub, cuboid, draw, z\nSets all blocks in this area to block.\nClick 2 corners then do the command."
         if len(parts) < 8 and len(parts) != 2:
             self.client.sendServerMessage("Please enter a type (and possibly two coord triples)")
         else:

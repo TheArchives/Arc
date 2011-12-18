@@ -300,7 +300,7 @@ class BuildLibPlugin(ProtocolPlugin):
                         var_y = calcCoord(y, y2, t, steps1, steps2)
                         var_z = calcCoord(z, z2, t, steps1, steps2)
                         coordinatelist.append((int(var_x) + x, int(var_y) + y, int(var_z) + z))
-                    finalcoordinatelist = [coordtuple for coordtuple in coordinatelist if
+                    finalcoordinatelist = [coordtuple for coordtuple in coordinatelist if \
                                            coordtuple not in finalcoordinatelist]
                     for coordtuple in finalcoordinatelist:
                         i = coordtuple[0]
@@ -316,7 +316,7 @@ class BuildLibPlugin(ProtocolPlugin):
                     self.client.sendServerMessage("Out of bounds curve error.")
                     return
 
-                # Now, set up a loop delayed by the reactor
+            # Now, set up a loop delayed by the reactor
             block_iter = iter(generate_changes())
 
             def do_step():

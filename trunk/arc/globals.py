@@ -381,6 +381,13 @@ def find(f, seq):
     for it in (item for item in seq if f(item)):
         return it
 
+from arc.constants import PRINTABLE
+
+def filter(text):
+    final = ""
+    for char in text:
+         final += "" if char not in PRINTABLE else char
+    return final
 
 class Popxrange(): # There is probably a way to do this without this class but where?
     def __init__(self, start, end):
