@@ -60,6 +60,8 @@ class ArcFactory(Factory):
         self.default_loaded = False
         self.useLowLag = False
         self.hooks = {}
+        self.serverCommands = {}
+        self.serverCommandAliases = {}
         self.saving = False
         self.chatlogs = {}
         for k, v in MSGLOGFORMAT.items():
@@ -323,6 +325,8 @@ class ArcFactory(Factory):
         "Used to load up all the server plugins."
         files = []
         self.serverHooks = {} # Clear the list of hooks
+        self.serverCommands = {} # Clear the list of server commands
+        self.serverCommandAliases = {} # Clear the list of server command aliases
         self.logger.debug("Listing server plugins..")
         for element in os.listdir("arc/serverplugins"): # List the plugins
             ext = element.split(".")[-1]
@@ -398,12 +402,31 @@ class ArcFactory(Factory):
                 self.serverHooks[element].append(
                     [plugin, getattr(plugin, fname)]) # Make a note of the hook in the hooks dict
                 self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
+            for element, data in plugin.commands.items():
+                if element not in self.serverCommands.keys():
+                    self.serverCommands[element] = data
+                    for alias in data["aliases"]:
+                        self.serverCommandAliases[alias] = element
+                    self.logger.debug("Loaded serverCommand '%s' for serverPlugin '%s' (Aliases: %s)" % (element, plugin.name, plugin.commands[element]["aliases"]))
+                else:
+                    self.logger.warn("ServerCommand conflict in command '%s'" % (element))
         self.logger.debug("self.serverHooks: %s" % self.serverHooks)
         self.runHook("serverPluginsLoaded")
 
     def serverPluginExists(self, plugin):
         return plugin in self.serverPlugins.keys()
 
+    def runServerCommand(self, command, parts, fromloc, overriderank, client = None):
+        data = {"client": client, "parts": parts, "fromloc": fromloc, "overriderank": overriderank}
+        if command in self.serverCommands.keys():
+            rval = self.serverCommands[command]["command"](data)
+            return True
+        elif command in self.serverCommandAliases.keys():
+            rval = self.serverCommands[self.serverCommandAliases[command]]["command"](data)
+            return True
+        else:
+            return False
+        
     def runHook(self, hook, data=None):
         "Used to run hooks for ServerPlugins"
         finalvalue = True
