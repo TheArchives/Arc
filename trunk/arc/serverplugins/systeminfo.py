@@ -11,6 +11,8 @@ class SystemInfoServerPlugin():
         "heartbeatSent": "onHeartbeat"
     }
 
+    commands = {}
+
     def calculateSystemUsage(self):
         cpuall = psutil.cpu_percent(interval=0)
         cores = len(psutil.cpu_percent(interval=0, percpu=True))

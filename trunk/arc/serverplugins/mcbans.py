@@ -19,6 +19,8 @@ class McBansServerPlugin():
         "heartbeatSent": "callback"
     }
 
+    commands = {}
+
     def gotServer(self):
         self.logger.debug("[&1MCBans&f] Reading in API Key..")
         config = ConfigParser.RawConfigParser()
