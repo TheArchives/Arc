@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, datetime, hashlib, os, traceback, shutil
+import cPickle, datetime, hashlib, os, traceback, shutil, random
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
@@ -12,6 +12,7 @@ from arc.decorators import *
 from arc.irc_client import ChatBotFactory
 from arc.plugins import protocol_plugins
 from arc.playerdata import *
+from master.trunk.arc.constants import TYPE_MESSAGE, TASK_PLAYERDIR, TASK_PLAYERPOS, PRINTABLE
 
 class ArcServerProtocol(Protocol):
     """
@@ -67,6 +68,11 @@ class ArcServerProtocol(Protocol):
         self.last_block_changes = []
         self.last_block_position = (-1, -1, -1)
         self.frozen = False
+        # XMAS
+        self.specialending = ""
+        self.specialendings = [" &cClause", " &fSnowman", " &4Reindeer", " &bYeti", " &2Tree", " &dFairy", " &aElf", " &8Pudding"]
+        specialnum = random.randint(0, len(self.specialendings) - 1)
+        self.specialending = self.specialendings[specialnum]
 
     def registerCommand(self, command, func):
         "Registers func as the handler for the command named 'command'."
@@ -417,7 +423,7 @@ class ArcServerProtocol(Protocol):
                     self.title = rank[user] + " "
                 else:
                     self.title = ""
-                usertitlename = self.title + self.username
+                usertitlename = self.title + self.username + self.specialending # XMAS
                 override = self.runHook("chatmsg", message)
                 for c in message.lower():
                     if not c in PRINTABLE:
