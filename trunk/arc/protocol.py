@@ -2,7 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import cPickle, datetime, hashlib, os, traceback, shutil, random
+import cPickle, datetime, hashlib, os, traceback, shutil
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
@@ -12,15 +12,12 @@ from arc.decorators import *
 from arc.irc_client import ChatBotFactory
 from arc.plugins import protocol_plugins
 from arc.playerdata import *
-from master.trunk.arc.constants import TYPE_MESSAGE, TASK_PLAYERDIR, TASK_PLAYERPOS, PRINTABLE
 
 class ArcServerProtocol(Protocol):
     """
     Main protocol class for communicating with clients.
     Commands are mainly provided by plugins (protocol plugins).
     """
-
-    hooks = {}
 
     def connectionMade(self):
         "We've got a TCP connection, let's set ourselves up."
@@ -45,7 +42,7 @@ class ArcServerProtocol(Protocol):
                     if not element.strip(" ") == "":
                         self.factory.logger.debug(element)
                 continue
-            # Set identification variable to false
+        # Set identification variable to false
         self.identified = False
         # Get an ID for ourselves
         try:
@@ -68,11 +65,6 @@ class ArcServerProtocol(Protocol):
         self.last_block_changes = []
         self.last_block_position = (-1, -1, -1)
         self.frozen = False
-        # XMAS
-        self.specialending = ""
-        self.specialendings = [" &cClause", " &fSnowman", " &4Reindeer", " &bYeti", " &2Tree", " &dFairy", " &aElf", " &8Pudding"]
-        specialnum = random.randint(0, len(self.specialendings) - 1)
-        self.specialending = self.specialendings[specialnum]
 
     def registerCommand(self, command, func):
         "Registers func as the handler for the command named 'command'."
@@ -131,17 +123,9 @@ class ArcServerProtocol(Protocol):
         "Adds the given task to the factory's queue."
         # If they've overridden the world, use that as the client.
         if world:
-            self.factory.queue.put((
-                world,
-                task,
-                data,
-                ))
+            self.factory.queue.put((world, task, data))
         else:
-            self.factory.queue.put((
-                self,
-                task,
-                data,
-                ))
+            self.factory.queue.put((self, task, data))
 
     def sendWorldMessage(self, message):
         "Sends a message to everyone in the current world."
@@ -191,20 +175,8 @@ class ArcServerProtocol(Protocol):
         self.sendPacked(TYPE_ERROR, error)
         reactor.callLater(0.2, self.transport.loseConnection)
 
-    def duplicateKick(self):
-        "Called when someone else logs in with our username"
-        self.sendError("You logged in on another computer.")
-
     def packString(self, string, length=64, packWith=" "):
         return string + (packWith * (length - len(string)))
-
-    def isOp(self):
-        return (
-               self.username.lower() in self.world.ops) or self.isWorldOwner() or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
-
-    def isWorldOwner(self):
-        return (self.username.lower() == self.world.status[
-                                         "owner"].lower()) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
 
     def isOwner(self):
         return self.factory.isOwner(self.username.lower())
@@ -213,32 +185,34 @@ class ArcServerProtocol(Protocol):
         return self.factory.isDirector(self.username.lower()) or self.isOwner()
 
     def isAdmin(self):
-        return self.factory.isAdmin(self.username.lower()) or self.isDirector() or self.isOwner()
-
-    def isSilenced(self):
-        return self.factory.isSilenced(self.username.lower())
+        return self.factory.isAdmin(self.username.lower()) or self.isDirector()
 
     def isMod(self):
-        return self.factory.isMod(self.username.lower()) or self.isAdmin() or self.isDirector() or self.isOwner()
+        return self.factory.isMod(self.username.lower()) or self.isAdmin()
 
     def isHelper(self):
-        return self.factory.isHelper(
-            self.username.lower()) or self.isMod() or self.isAdmin() or self.isDirector() or self.isOwner()
+        return self.factory.isHelper(self.username.lower()) or self.isMod()
+
+    def isWorldOwner(self):
+        return (self.username.lower() == self.world.status["owner"].lower()) or self.isHelper()
+
+    def isOp(self):
+        return (self.username.lower() in self.world.ops) or self.isWorldOwner()
 
     def isBuilder(self):
-        return (
-               self.username.lower() in self.world.builders) or self.isOp() or self.isWorldOwner() or self.isHelper() or self.isMod()
+        return (self.username.lower() in self.world.builders) or self.isOp()
 
     def isSpectator(self):
         return self.factory.isSpectator(self.username.lower())
+
+    def isSilenced(self):
+        return self.factory.isSilenced(self.username.lower())
 
     def canEnter(self, world):
         if not world.status["private"] and not world.isWorldBanned(self.username.lower()):
             return True
         else:
-            return (self.username.lower() in world.builders) or (self.username.lower() in world.ops) or (
-            self.username.lower() == world.status[
-                                     "owner"].lower()) or self.isHelper() or self.isMod() or self.isAdmin() or self.isDirector()
+            return self.isBuilder()
 
     def dataReceived(self, data):
         "Called when data is received over the socket."
@@ -290,7 +264,7 @@ class ArcServerProtocol(Protocol):
                     return
                     # OK, see if there's anyone else with that username
                 if not self.factory.duplicate_logins and self.username.lower() in self.factory.usernames:
-                    self.factory.usernames[self.username.lower()].duplicateKick()
+                    self.factory.usernames[self.username.lower()].sendError("You logged in on another computer.")
                 self.factory.usernames[self.username.lower()] = self
                 self.factory.joinWorld(self.factory.default_name, self)
                 # Send them back our info.
@@ -311,6 +285,7 @@ class ArcServerProtocol(Protocol):
                 self.data = PlayerData(self) # Create a player data object
                 self.settings["tpprotect"] = self.data.bool("misc", "tpprotect") # Get their teleport protection setting
                 self.factory.runHook("onPlayerConnect", {"client": self}) # Run the player connect hook
+                self.logger.info("hi")
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if self.identified == False:
@@ -387,8 +362,8 @@ class ArcServerProtocol(Protocol):
                 else:
                     self.factory.queue.put((self, TASK_BLOCKSET, (x, y, z, block)))
                     if len(self.last_block_changes) >= 2:
-                        self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1] + self.last_block_changes[
-                                                                                              1:2]
+                        self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1]\
+                                                  + self.last_block_changes[1:2]
                     else:
                         self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1]
             elif type == TYPE_PLAYERPOS:
@@ -417,14 +392,17 @@ class ArcServerProtocol(Protocol):
             elif type == TYPE_MESSAGE:
                 # We got a message.
                 byte, message = parts
-                rank = self.loadRank()
-                user = self.username.lower()
-                if self.username.lower() in rank:
-                    self.title = rank[user] + " "
+                usernameoverride = self.factory.runHook("chatUsername", {"client": self})
+                if usernameoverride["data"] != True:
+                    user = usernameoverride["data"][0]
                 else:
-                    self.title = ""
-                usertitlename = self.title + self.username + self.specialending # XMAS
+                    user = self.username
                 override = self.runHook("chatmsg", message)
+                if self.identified == False:
+                    self.factory.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (
+                    self.transport.getPeer().host, message))
+                    self.sendError("Provide an authentication before chatting.")
+                    return
                 for c in message.lower():
                     if not c in PRINTABLE:
                         self.factory.logger.info("Kicked '%s'; Tried to use invalid characters; Message: '%s'" % (
@@ -485,16 +463,15 @@ class ArcServerProtocol(Protocol):
                     moddedmsg = message[:51].replace(" ", "")
                     if moddedmsg[len(moddedmsg) - 2] == "&":
                         message = message.replace("&", "*")
-                if self.identified == False:
-                    self.factory.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (
-                    self.transport.getPeer().host, message))
-                    self.sendError("Provide an authentication before chatting.")
-                    return
                 time = datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")
                 if message.startswith("/"):
                     # It's a command
                     parts = [x.strip() for x in message.split() if x.strip()]
                     command = parts[0].strip("/")
+                    # Look at the ServerPlugins dict first.
+                    if command.lower() in (self.factory.commands.keys() + self.factory.aliases.keys()):
+                        self.factory.runCommand(command.lower(), parts, "user", False, self)
+                        return # Let them handle the rest of it
                     # See if we can handle it internally
                     try:
                         func = getattr(self, "command%s" % command.title())
@@ -619,7 +596,7 @@ class ArcServerProtocol(Protocol):
                         if self.isMod():
                             self.sendServerMessage("Please include a message to send.")
                         else:
-                            self.factory.sendMessageToAll(text, "chat", self, usertitlename)
+                            self.factory.sendMessageToAll(text, "chat", self, username)
                     else:
                         text = message[1:]
                         self.factory.sendMessageToAll(text, "staff", self)
@@ -631,7 +608,7 @@ class ArcServerProtocol(Protocol):
                         self.sendServerMessage("You are silenced and cannot speak.")
                     else:
                         if not override:
-                            self.factory.sendMessageToAll(message, "chat", client=self, user=usertitlename)
+                            self.factory.sendMessageToAll(message, "chat", client=self, user=user)
             else:
                 if type == 2:
                     self.factory.logger.warn("Beta client attempted to connect.")

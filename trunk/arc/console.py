@@ -26,8 +26,12 @@ class StdinPlugin(threading.Thread):
                         return
                     message = line
                     if len(line) > 1:
+                        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q"
+                            , "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8",
+                                     "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}"
+                            , "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                         for character in message:
-                            if not character.lower() in PRINTABLE:
+                            if not character.lower() in goodchars:
                                 message = message.replace("&0", "&0")
                                 message = message.replace("&1", "&1")
                                 message = message.replace("&2", "&2")

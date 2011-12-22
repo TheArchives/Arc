@@ -320,8 +320,13 @@ class ChatBot(irc.IRCClient):
                             else:
                                 self.msg(self.factory.irc_channel, "07That world does not exist. Try !world message")
                 else:
+                    allowed = True
+                    goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q",
+                                 "r", "s", "t", "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6",
+                                 "7", "8", "9", " ", "!", "@", "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{",
+                                 "[", "}", "]", ":", ";", "\"", "\'", "<", ",", ">", ".", "?", "/", "\\", "|"]
                     for character in msg:
-                        if not character.lower() in PRINTABLE:
+                        if not character.lower() in goodchars:
                             msg = msg.replace("&0", "&0")
                             msg = msg.replace("&1", "&1")
                             msg = msg.replace("&2", "&2")
@@ -595,8 +600,13 @@ class ChatBot(irc.IRCClient):
             self.ops.remove(userhost)
         msg = "%s%s has quit IRC." % (COLOUR_YELLOW, user)
         self.factory.sendMessageToAll(msg, "irc", user=user)
+        allowed = True
+        goodchars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+                     "u", "v", "w", "x", "y", "z", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@",
+                     "#", "$", "%", "*", "(", ")", "-", "_", "+", "=", "{", "[", "}", "]", ":", ";", "\"", "\'", "<",
+                     ",", ">", ".", "?", "/", "\\", "|"]
         for character in msg:
-            if not character.lower() in PRINTABLE:
+            if not character.lower() in goodchars:
                 msg = msg.replace("&0", "&0")
                 msg = msg.replace("&1", "&1")
                 msg = msg.replace("&2", "&2")
