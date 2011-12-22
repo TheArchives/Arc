@@ -22,9 +22,7 @@ class XMasPlugin():
     specialendings = [" &cClause", " &fSnowman", " &4Reindeer", " &bYeti", " &2Tree", " &dFairy", " &aElf", " &8Pudding"]
 
     def playerConnected(self, data):
-        print data["client"]
-        self.factory.usernames[data["client"].username].specialending = self.specialendings[random.randint(0, len(self.specialendings) - 1)]
-        print("Special ending set as %s." % data["client"].specialending)
+        data["client"].specialending = self.specialendings[random.randint(0, len(self.specialendings) - 1)]
 
     def changeUsername(self, data):
         if data["client"].specialending != "":
@@ -35,8 +33,6 @@ class XMasPlugin():
     @config("disabled-on", ["console", "irc"])
     def commandXmas(self, data):
         "Toggles XMas Special Endings in your chat messages."
-        if not hasattr(data["client"], "specialending"):
-            data["client"].specialending = "" # Lazy workaround
         if data["client"].specialending != "":
             data["client"].specialending == ""
             data["client"].sendServerMessage("XMas Special Ending has been disabled.")

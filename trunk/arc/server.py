@@ -59,9 +59,6 @@ class ArcFactory(Factory):
         self.lastseen = {}
         self.default_loaded = False
         self.useLowLag = False
-        self.hooks = {}
-        self.serverCommands = {}
-        self.aliases = {}
         self.saving = False
         self.chatlogs = {}
         for k, v in MSGLOGFORMAT.items():
@@ -528,8 +525,7 @@ class ArcFactory(Factory):
                     self.logger.error(element)
 
     def runHook(self, hook, data=None):
-        "Used to run hooks for ServerPlugins"
-        print hook, data
+        """Used to run hooks for ServerPlugins"""
         finaldata = []
         if hook in self.hooks.keys():
             for element in self.hooks[hook]:
@@ -545,7 +541,7 @@ class ArcFactory(Factory):
         return {"result": True, "data": finaldata} # Stupid workaround, need to fix
 
     def buildProtocol(self, addr):
-        "Builds the protocol. Used to switch between Manic Digger and Minecraft."
+        """Builds the protocol. Used to switch between Manic Digger and Minecraft."""
         # Some male/female/alien idenfication code here
         p = self.protocol()
         p.factory = self

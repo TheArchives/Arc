@@ -285,7 +285,6 @@ class ArcServerProtocol(Protocol):
                 self.data = PlayerData(self) # Create a player data object
                 self.settings["tpprotect"] = self.data.bool("misc", "tpprotect") # Get their teleport protection setting
                 self.factory.runHook("onPlayerConnect", {"client": self}) # Run the player connect hook
-                self.logger.info("hi")
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if self.identified == False:
