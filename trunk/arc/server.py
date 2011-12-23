@@ -344,6 +344,7 @@ class ArcFactory(Factory):
                 except Exception as a: # Got an error!
                     self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
+                    self.logger.error(traceback.format_exc())
                     i += 1
                     continue
                 else:
@@ -402,15 +403,20 @@ class ArcFactory(Factory):
                 self.hooks[element].append([plugin, getattr(plugin, fname)])
                 self.logger.debug("Loaded hook '%s' for server plugin '%s'." % (element, plugin.name))
             for element, data in plugin.commands.items():
+                try:
+                    func = getattr(plugin, data)
+                except AttributeError:
+                    self.logger.warn("Cannot find command code for command %s (plugin is %s)." % (element, plugin))
+                    continue
                 if element in self.commands.keys():
                     self.logger.warn("Command %s is already registered. Overriding." % element)
-                self.commands[element] = getattr(plugin, data)
-                for alias in self.commands[element].config["aliases"]:
-                    if alias in self.aliases:
-                        self.logger.warn("Alias %s is already registered. Overriding." % alias)
-                    self.aliases[alias] = element
-                self.logger.debug("Loaded command '%s' for serverPlugin '%s' (Aliases: %s)" % (element, plugin.name, self.commands[element].config["aliases"]))
-        self.logger.debug("self.hooks: %s" % self.hooks)
+                self.commands[element] = func
+                if hasattr(func, "config"):
+                    for alias in func.config["aliases"]:
+                        if alias in self.aliases:
+                            self.logger.warn("Alias %s is already registered. Overriding." % alias)
+                        self.aliases[alias] = element
+                self.logger.debug("Loaded command '%s' for serverPlugin '%s'." % (element, plugin.name))
         self.runHook("serverPluginsLoaded")
 
     def serverPluginExists(self, plugin):
@@ -418,43 +424,53 @@ class ArcFactory(Factory):
 
     def runCommand(self, command, parts, fromloc, overriderank, client=None, username=None):
         data = {"client": client, "command": command, "parts": parts, "fromloc": fromloc, "overriderank": overriderank}
+        print data
+        if fromloc in ["user", "cmdblock"]: # User
+            user = client.username
+            def sendMessage(message):
+                client.sendServerMessage(message)
+        elif fromloc in ["irc", "irc_query"]: # IRC client
+            user = username if username != None else "IRC Client"
+            def sendMessage(message):
+                if username != None: # If we overrided the username
+                    client.msg(username, message)
+                else: # Else send this as a server message
+                    self.irc_relay.sendServerMessage(message)
+        elif fromloc == "console":
+            user = "Console"
+            def sendMessage(message):
+                print(message)
+        else: # Where does this come from?
+            self.logger.warn("Unknown source tried to run a command.")
+            self.logger.warn("Command: %s, fromloc: %s, client: %s" % (command, fromloc, repr(client)))
+            return
         if command in self.commands.keys():
             func = self.commands[command]
         elif command in self.aliases.keys():
             func = self.commands[self.aliases[command]]
         else: # Nope, did't find it
+            sendMessage("Command %s does not exist." % command)
             return
         if hasattr(func, "config"):
             config = func.config
         else:
             config = {"aliases": "", "rank": "guest", "disabled-on": "", "category": ""}
-        if fromloc == "user": # User
-            user = client.username
-            def sendMessage(message):
-                client.sendServerMessage(message)
-        elif fromloc == "irc": # IRC client
-            user = username if username != None else "IRC Client"
-            def sendMessage(message):
-                if username != None: # If we overrided the username
-                    self.irc_relay.instance.msg(username, message)
-                else: # Else send this as a server message
-                    self.irc_relay.sendServerMessage(message)
-        elif fromloc == "console": # Console
-            user = "Console"
-            def sendMessage(message):
-                sys.stdout.write(message)
-        else: # Where does this come from?
-            self.logger.warn("Unknown source tried to run a command.")
-            self.logger.warn("Command: %s, fromloc: %s, client: %s" % (command, fromloc, repr(client)))
-            return
         # Check if the command can be run from that source.
         if fromloc == "user" and "user" in config["disabled-on"]:
             sendMessage("This command cannot be run from the game.")
             self.logger.info("%s just tried '%s' but it has been disabled for in-game users." % (user, " ".join(parts)))
             return
+        elif fromloc == "cmdblock" and "cmdblock" in config["disabled-on"]:
+            sendMessage("This command cannot be run from a cmdblock.")
+            self.logger.info("%s just tried '%s' but it has been disabled for CMD Block usage." % (user, " ".join(parts)))
+            return
         elif fromloc == "irc" and "irc" in config["disabled-on"]:
             sendMessage("This command cannot be run from the IRC Client.")
             self.logger.info("%s just tried '%s' but it has been disabled for the IRC Client." % (user, " ".join(parts)))
+            return
+        elif fromloc == "irc_query" and "irc_query" in config["disabled-on"]:
+            sendMessage("This command cannot be run from an IRC query.")
+            self.logger.info("%s just tried '%s' but it has been disabled from an IRC query." % (user, " ".join(parts)))
             return
         elif fromloc == "console" and "console" in config["disabled-on"]:
             sendMessage("This command cannot be run from the console.")
@@ -500,17 +516,20 @@ class ArcFactory(Factory):
                 sendMessage("'%s' is a Builder-only command!" % command)
                 self.logger.info("%s just tried '%s' but is not a builder." % (user, " ".join(parts)))
                 return
+        elif fromloc == "irc" or fromloc == "irc_query":
+            if not username in self.irc_relay.instance.ops:
+                sendMessage("'%s' is an channelop-only command!" % command)
+                self.logger.info("%s just tried '%s' but is not a channel operator." % (user, " ".join(parts)))
+                return
         # Using custom message?
         if config["custom_cmdlog_msg"]:
-            self.logger.info("%s %s" % (user, config["custom_cmdlog_msg"]))
+            self.logger.command("%s %s" % (user, config["custom_cmdlog_msg"]))
             if self.irc_relay and self.irc_cmdlogs:
                 self.irc_relay.sendServerMessage("%s %s" % (user, config["custom_cmdlog_msg"]))
         else:
-            self.logger.info("%s just used '%s'" % (user, " ".join(parts)))
+            self.logger.command("(%s) /%s" % (user, " ".join(parts)))
             if self.irc_relay and self.irc_cmdlogs:
-                self.irc_relay.sendServerMessage("%s just used: %s" % (user, " ".join(parts)))
-        # Log it as a command
-        self.logger.command("(%s) %s" % (user, " ".join(parts)))
+                self.irc_relay.sendServerMessage("%s just used: /%s" % (user, " ".join(parts)))
         try:
             func(data) # fromloc is user, overriderank is false
         except Exception as e:
@@ -529,7 +548,6 @@ class ArcFactory(Factory):
         finaldata = []
         if hook in self.hooks.keys():
             for element in self.hooks[hook]:
-                print element
                 if data is not None:
                     value = element[1](data)
                 else:

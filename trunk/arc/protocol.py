@@ -759,7 +759,7 @@ class ArcServerProtocol(Protocol):
     def sendWhisper(self, username, text):
         self.sendNormalMessage("%s@%s%s: %s%s" % (COLOUR_YELLOW, self.userColour(), username, COLOUR_WHITE, text))
 
-    def sendServerMessage(self, message):
+    def sendServerMessage(self, message, user=None):
         self.sendPacked(TYPE_MESSAGE, 255, message)
 
     def sendNormalMessage(self, message):
