@@ -4,7 +4,7 @@
 
 #!/usr/bin/python
 
-import  sys, time, traceback, os
+import sys, time, traceback, os
 from ConfigParser import RawConfigParser as ConfigParser
 
 from twisted.internet import reactor
@@ -16,22 +16,17 @@ from arc.globals import *
 from arc.logger import ColouredLogger
 from arc.server import ArcFactory
 
-debug = (True if "--debug" in sys.argv else False)
-logger = ColouredLogger(debug)
-
-makefile("logs/")
-makefile("logs/console/")
-makefile("arc/archives/")
-makefile("logs/chat.log")
-makefile("logs/server.log")
-makefile("logs/staff.log")
-makefile("logs/whisper.log")
-makefile("logs/world.log")
-makefile("config/data/")
+FILES_TO_MAKE = ["logs/", "logs/console/", "logs/levels/", # Log folders
+                "arc/archives/", # Archives
+                "config/data/"] # Config data
+makefiles(FILES_TO_MAKE)
 makedatfile("config/data/balances.dat")
 makedatfile("config/data/inbox.dat")
 makedatfile("config/data/jail.dat")
 makedatfile("config/data/titles.dat")
+
+debug = (True if "--debug" in sys.argv else False)
+logger = ColouredLogger(debug)
 
 try:
     from colorama import init

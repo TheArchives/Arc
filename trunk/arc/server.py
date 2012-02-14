@@ -13,7 +13,7 @@ except:
     NOSSL = True
 else:
     from twisted.internet import ssl
-from twisted.internet import reactor, task
+from twisted.internet import defer, reactor, task
 from twisted.internet.protocol import Factory
 
 from arc.console import StdinPlugin
@@ -22,7 +22,6 @@ from arc.globals import *
 from arc.heartbeat import Heartbeat
 from arc.irc_client import ChatBotFactory
 from arc.logger import ColouredLogger, ChatLogHandler
-from arc.plugins import *
 from arc.protocol import ArcServerProtocol
 from arc.world import World
 
@@ -36,13 +35,24 @@ class ArcFactory(Factory):
         self.printable = string.printable
         self.logger = ColouredLogger(debug)
         self.cfginfo = {"version": defaultdict(str)}
-        # Load up the server plugins right away
-        self.logger.info("Loading server plugins..")
-        self.serverPlugins = {} # {"Name": class()}
+        self.logger.info("Loading plugins..")
+        self.plugins = {} # {"Name": class()}
         self.commands = {}
         self.hooks = {}
         self.aliases = {}
-        self.loadServerPlugins()
+        # Load up the plugins specified
+        self.plugins_config = ConfigParser.RawConfigParser()
+        try:
+            self.plugins_config.read("config/plugins.conf")
+        except Exception as e:
+            self.logger.error("Unable to read plugins.conf (%s)" % e)
+            sys.exit(1)
+        try:
+            plugins = self.plugins_config.options("plugins")
+        except Exception as e:
+            print ("Error parsing plugins.conf: %s" % e)
+            sys.exit(1)
+        self.loadPlugins(plugins)
         self.logger.info("Loaded server plugins.")
         # Initialise internal datastructures
         self.loops = {}
@@ -63,7 +73,7 @@ class ArcFactory(Factory):
         self.chatlogs = {}
         for k, v in MSGLOGFORMAT.items():
             self.chatlogs[k] = ChatLogHandler("logs/%s.log" % k, v)
-            # Load the config
+        # Load the config
         self.loadConfig()
         # Read in the greeting
         try:
@@ -72,15 +82,6 @@ class ArcFactory(Factory):
             r = open('config/greeting.example.txt', 'r')
         self.greeting = r.readlines()
         r.close()
-        # Read in the titles
-        file = open('config/data/titles.dat', 'r')
-        self.rank_dic = cPickle.load(file)
-        file.close()
-        # Read in the messages
-        if os.path.exists("config/data/inbox.dat"):
-            file = open('config/data/inbox.dat', 'r')
-            self.messages = cPickle.load(file)
-            file.close()
         self.use_irc = False
         if (os.path.exists("config/irc.conf")): # IRC bot will be updated soon, no need for cfginfo
             self.use_irc = True
@@ -112,44 +113,7 @@ class ArcFactory(Factory):
                 self.irc_relay = None
         else:
             self.irc_relay = None
-            # Word Filter
-        # Note: worldfilter.conf has no cfgversion at the moment, because we might rewrite this bit - g will know more
-        wordfilter = ConfigParser.RawConfigParser()
-        try:
-            wordfilter.read("config/wordfilter.conf")
-        except Exception as e:
-            self.logger.error("Unable to read wordfilter.conf (%s)" % e)
-            self.logger.error("Word filtering has been disabled.")
-            self.has_wordfilter = False
-        else:
-            self.has_wordfilter = True
-        self.filter = []
-        if self.has_wordfilter:
-            try:
-                number = int(wordfilter.get("filter", "count"))
-            except Exception as e:
-                self.logger.error("Error parsing wordfilter.conf (%s)" % e)
-                sys.exit(1)
-            for x in range(number):
-                self.filter = self.filter + [
-                    [wordfilter.get("filter", "s" + str(x)), wordfilter.get("filter", "r" + str(x))]]
-            # Load up the plugins specified
-        self.plugins_config = ConfigParser.RawConfigParser()
-        try:
-            self.plugins_config.read("config/plugins.conf")
-        except Exception as e:
-            self.logger.error("Unable to read plugins.conf (%s)" % e)
-            sys.exit(1)
-        try:
-            plugins = self.plugins_config.options("plugins")
-        except Exception as e:
-            print ("Error parsing plugins.conf: %s" % e)
-            sys.exit(1)
         self.runHook("configLoaded")
-        self.logger.info("Loading plugins...")
-        load_plugins(plugins)
-        self.runHook("pluginsLoaded")
-        self.logger.info("Loaded plugins.")
         # Open the chat log, ready for appending
         self.chatlog = open("logs/chat.log", "a")
         # Create a default world, if there isn't one.
@@ -318,29 +282,19 @@ class ArcFactory(Factory):
         self.blblimit["owner"] = config.getint("blb", "owner")
 
     # End of dummy callbacks
-    def loadServerPlugins(self, reload=False):
-        "Used to load up all the server plugins."
-        files = []
+    def loadPlugins(self, plugins, reload=False):
+        "Used to load up all the plugins."
         self.hooks = {} # Clear the list of hooks
         self.commands = {} # Clear the list of server commands
         self.aliases = {} # Clear the list of server command aliases
-        self.logger.debug("Listing server plugins..")
-        for element in os.listdir("arc/serverplugins"): # List the plugins
-            ext = element.split(".")[-1]
-            file = element.split(".")[0]
-            if element == "__init__.py": # Skip the initialiser
-                continue
-            elif ext == "py": # Check if it ends in .py
-                files.append(file)
-        self.logger.debug("Possible server plugins (%s): %s" % (len(files), ".py, ".join(files) + ".py"))
         self.logger.info("Loading server plugins..")
         i = 0
-        while i < len(files):
-            element = files[i]
+        while i < len(plugins):
+            element = plugins[i]
             reloaded = False
-            if not "arc.serverplugins.%s" % element in sys.modules.keys(): # Check if we already imported it
+            if not "arc.plugins.%s" % element in sys.modules.keys(): # Check if we already imported it
                 try:
-                    __import__("arc.serverplugins.%s" % element) # If not, import it
+                    __import__("arc.plugins.%s" % element) # If not, import it
                 except Exception as a: # Got an error!
                     self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
@@ -349,7 +303,7 @@ class ArcFactory(Factory):
                     continue
                 else:
                     try:
-                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin()
+                        mod = sys.modules["arc.plugins.%s" % element].serverPlugin()
                         name = mod.name # What's the name?
                         mod.factory = self
                         mod.logger = self.logger
@@ -365,12 +319,12 @@ class ArcFactory(Factory):
                         i += 1
                         continue
             else: # We already imported it
-                mod = self.serverPlugins[element][0]
+                mod = self.plugins[element][0]
                 del mod
-                del self.serverPlugins[element]
-                del sys.modules["arc.serverplugins.%s" % element] # Unimport it by deleting it
+                del self.plugins[element]
+                del sys.modules["arc.plugins.%s" % element] # Unimport it by deleting it
                 try:
-                    __import__("arc.serverplugins.%s" % element) # import it again
+                    __import__("arc.plugins.%s" % element) # import it again
                 except Exception as a: # Got an error!
                     self.logger.error("Unable to load server plugin from %s.py!" % element)
                     self.logger.error("Error: %s" % a)
@@ -378,7 +332,7 @@ class ArcFactory(Factory):
                     continue
                 else:
                     try:
-                        mod = sys.modules["arc.serverplugins.%s" % element].serverPlugin(self)
+                        mod = sys.modules["arc.plugins.%s" % element].serverPlugin(self)
                         name = mod.name # get the name
                     except Exception as a:
                         self.logger.error("Unable to load server plugin from %s" % (element + ".py"))
@@ -387,16 +341,15 @@ class ArcFactory(Factory):
                         continue
                 reloaded = True # Remember that we reloaded it
             mod.filename = element
-            self.serverPlugins[name] = mod # Put it in the plugins list
+            self.plugins[name] = mod # Put it in the plugins list
             if not reloaded:
                 self.logger.debug("Loaded server plugin: %s" % name)
             else:
                 self.logger.debug("Reloaded server plugin: %s" % name)
             i += 1
-        self.logger.debug("self.serverPlugins: %s" % self.serverPlugins)
-        #The following code should be handled by the ServerPlugins class and registerHook
+        self.logger.debug("self.plugins: %s" % self.plugins)
         self.logger.debug("Getting hooks..")
-        for plugin in self.serverPlugins.values(): # For every plugin,
+        for plugin in self.plugins.values(): # For every plugin,
             for element, fname in plugin.hooks.items(): # For every hook in the plugin,
                 if element not in self.hooks.keys():
                     self.hooks[element] = [] # Make a note of the hook in the hooks dict
@@ -417,10 +370,10 @@ class ArcFactory(Factory):
                             self.logger.warn("Alias %s is already registered. Overriding." % alias)
                         self.aliases[alias] = element
                 self.logger.debug("Loaded command '%s' for serverPlugin '%s'." % (element, plugin.name))
-        self.runHook("serverPluginsLoaded")
+        self.runHook("pluginsLoaded")
 
     def serverPluginExists(self, plugin):
-        return plugin in self.serverPlugins.keys()
+        return plugin in self.plugins.keys()
 
     def runCommand(self, command, parts, fromloc, overriderank, client=None, username=None):
         data = {"client": client, "command": command, "parts": parts, "fromloc": fromloc, "overriderank": overriderank}
@@ -544,7 +497,7 @@ class ArcFactory(Factory):
                     self.logger.error(element)
 
     def runHook(self, hook, data=None):
-        """Used to run hooks for ServerPlugins"""
+        """Used to run hooks for plugins"""
         finaldata = []
         if hook in self.hooks.keys():
             for element in self.hooks[hook]:
@@ -1074,7 +1027,6 @@ class ArcFactory(Factory):
                                 {"id": id, "colour": colour, "username": username, "text": text, "channel": channel,
                                  "world": (world if theWorld == None else theWorld)})
                         if value:
-                            text = self.messagestrip(text)
                             # Send the message to everybody
                             if channel == "world":
                                 if theWorld != None:
@@ -1094,7 +1046,7 @@ class ArcFactory(Factory):
                                     elif channel == "server":
                                         client.sendNormalMessage(text)
                                     elif channel == "irc":
-                                        client.sendMessage(id, "[IRC] %s" % COLOUR_PURPLE, username, text)
+                                        client.sendMessage(id, ("[IRC] %s" % COLOUR_PURPLE), username, text)
                                     else:
                                         client.sendMessage(id, colour, username, text)
                                 # Log them
@@ -1282,27 +1234,6 @@ class ArcFactory(Factory):
 
         # The above code needs to be rewritten
 
-    def messagestrip(self, message):
-        if self.has_wordfilter:
-            strippedmessage = ""
-            for x in message:
-                if isinstance(x, list):
-                    strippedmessage = strippedmessage + self.messagestrip(x)
-                elif isinstance(x, str):
-                    if str(x) in self.printable:
-                        strippedmessage = strippedmessage + str(x)
-                else:
-                    self.logger.error("Unknown message type passed to the message stripper.")
-                    self.logger.error("Data: %s" % x)
-                    return "Error!"
-            message = strippedmessage
-            for x in self.filter:
-                rep = re.compile(x[0], re.IGNORECASE)
-                message = rep.sub(x[1], message)
-            return message
-        else: # No word filter, just return the message
-            return message
-
     def loadArchives(self):
         self.archives = {}
         for name in os.listdir("arc/archives/"):
@@ -1350,3 +1281,29 @@ class ArcFactory(Factory):
             except:
                 return False
         return False
+
+    def applyBlockChanges(self, changeset, world, save=True, secperloop=10, count=False):
+        """Applies block changes."""
+        # Check if world is booted
+        if world not in self.worlds:
+            raise ValueError, "World not booted"
+        else:
+            w = self.worlds[world]
+        d = defer.Deferred()
+        blocks = 0
+        iter = changeset.iteritems()
+        def doStep():
+            try:
+                for x in range(secperloop):
+                    key, value = iter.next()
+                    x, y, z = key
+                    if save: w[x, y, z] = value
+                    self.queue.add((w, TASK_BLOCKSET, (x, y, z, value)))
+                    if count: blocks += 1
+                    reactor.callLater(0.01, doStep)
+            except StopIteration:
+                d.callback(blocks if count else True)
+            except Exception as e:
+                d.errback(e)
+        doStep()
+        return d

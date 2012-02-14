@@ -119,4 +119,24 @@ class StdinPlugin(threading.Thread):
     def sendServerMessage(self, message, user=None):
         print(message)
 
-    sendSplitServerMessage = sendServerMessage
+    sendSplitServerMessage = sendWorldMessage = sendPlainWorldMessage = sendNormalMessage = sendServerMessage
+
+    def isSpectator():
+        return False
+
+    def isRank():
+        return True # The console is everything. Really.
+
+    isSpectator = isBuilder = isOp = isWorldOwner = isHelper = isMod = isAdmin = isDirector = isOwner = AllowedToBuild = canBreakAdminBlocks = isRank
+
+    def GetBlockValue(self, block):
+        return None
+
+    def send(self, *args, **kwargs):
+        pass
+
+    canBreakAdminBlocks = sendPacked = sendError = sendRankUpdate = respawn = sendBlock = sendPlayerPos = sendPlayerDir = sendNewPlayer = sendPlayerLeave = sendKeepAlive = sendOverload =\
+        sendOverloadChunk = sendLevel = sendLevelStart = sendLevelChunk = endSendLevel = sendAllNew = sendWelcome = send
+
+    def getBlbLimit(self):
+        return 0

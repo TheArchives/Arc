@@ -12,7 +12,6 @@ from arc.constants import *
 from arc.decorators import *
 from arc.globals import *
 from arc.logger import ColouredLogger
-from arc.plugins import protocol_plugins
 
 debug = (True if "--debug" in sys.argv else False)
 
@@ -79,23 +78,22 @@ class ChatBot(irc.IRCClient):
         """This will get called when the bot receives a message."""
         try:
             user = user.split('!', 1)[0]
-            msg = self.factory.messagestrip(msg)
             if channel == self.nickname:
                 if not (self.nickname == user or "Serv" in user):
                     msg_command = msg.split()
-                    self.factory.runCommand(msg_command[0], msg_command, "irc_query", False, client=self, username=user)
+                    self.factory.runCommand(msg_command[0], msg_command, "irc_query", (True if user in self.ops else False), client=self, username=user)
             elif channel.lower() == self.factory.irc_channel.lower():
                 if msg.lower().lstrip(self.nickname.lower()).startswith("$" + self.nickname.lower()):
                     msg_command = msg.split()
                     msg_command[1] = msg_command[1].lower()
-                    self.factory.runCommand(msg_command[1], msg_command, "irc", False, client=self)
+                    self.factory.runCommand(msg_command[1], msg_command, "irc", (True if user in self.ops else False), client=self)
                 elif msg.startswith("$"):
                     self.logger.info("<$%s> %s" % (user, msg))
                 elif msg.startswith("!"):
                     # It's a world message.
                     message = msg.split(" ")
                     if len(message) == 1:
-                        self.msg(self.factory.irc_channel, "07Please include a message to send.")
+                        self.msg(self.factory.irc_channel, "Please include a message to send.")
                     else:
                         try:
                             world = message[0][1:len(message[0])]
@@ -108,76 +106,13 @@ class ChatBot(irc.IRCClient):
                             else:
                                 self.msg(self.factory.irc_channel, "07That world does not exist. Try !world message")
                 else:
+                    sanitizeMessage(msg, [MSGREPLACE["text_colour_to_game"], MSGREPLACE["irc_colour_to_game"], MSGREPLACE["escape_commands"]])
                     for character in msg:
                         if not character.lower() in PRINTABLE:
-                            msg = msg.replace("&0", "&0")
-                            msg = msg.replace("&1", "&1")
-                            msg = msg.replace("&2", "&2")
-                            msg = msg.replace("&3", "&3")
-                            msg = msg.replace("&4", "&4")
-                            msg = msg.replace("&5", "&5")
-                            msg = msg.replace("&6", "&6")
-                            msg = msg.replace("&7", "&7")
-                            msg = msg.replace("&8", "&8")
-                            msg = msg.replace("&9", "&9")
-                            msg = msg.replace("&a", "&a")
-                            msg = msg.replace("&b", "&b")
-                            msg = msg.replace("&c", "&c")
-                            msg = msg.replace("&d", "&d")
-                            msg = msg.replace("&e", "&e")
-                            msg = msg.replace("&f", "&f")
-                            msg = msg.replace("0", "&f")
-                            msg = msg.replace("00", "&f")
-                            msg = msg.replace("1", "&0")
-                            msg = msg.replace("01", "&0")
-                            msg = msg.replace("2", "&1")
-                            msg = msg.replace("02", "&1")
-                            msg = msg.replace("3", "&2")
-                            msg = msg.replace("03", "&2")
-                            msg = msg.replace("4", "&c")
-                            msg = msg.replace("04", "&c")
-                            msg = msg.replace("5", "&4")
-                            msg = msg.replace("05", "&4")
-                            msg = msg.replace("6", "&5")
-                            msg = msg.replace("06", "&5")
-                            msg = msg.replace("7", "&6")
-                            msg = msg.replace("07", "&6")
-                            msg = msg.replace("8", "&e")
-                            msg = msg.replace("08", "&e")
-                            msg = msg.replace("9", "&a")
-                            msg = msg.replace("09", "&a")
-                            msg = msg.replace("10", "&3")
-                            msg = msg.replace("11", "&b")
-                            msg = msg.replace("12", "&9")
-                            msg = msg.replace("13", "&d")
-                            msg = msg.replace("14", "&8")
-                            msg = msg.replace("15", "&7")
                             msg = msg.replace(character, "*")
-                    msg = msg.replace("%0", "&0")
-                    msg = msg.replace("%1", "&1")
-                    msg = msg.replace("%2", "&2")
-                    msg = msg.replace("%3", "&3")
-                    msg = msg.replace("%4", "&4")
-                    msg = msg.replace("%5", "&5")
-                    msg = msg.replace("%6", "&6")
-                    msg = msg.replace("%7", "&7")
-                    msg = msg.replace("%8", "&8")
-                    msg = msg.replace("%9", "&9")
-                    msg = msg.replace("%a", "&a")
-                    msg = msg.replace("%b", "&b")
-                    msg = msg.replace("%c", "&c")
-                    msg = msg.replace("%d", "&d")
-                    msg = msg.replace("%e", "&e")
-                    msg = msg.replace("%f", "&f")
-                    msg = msg.replace("./", " /")
-                    msg = msg.replace(".!", " !")
                     if msg[len(msg) - 2] == "&":
                         self.msg(self.factory.irc_channel, "07You cannot use a color at the end of a message.")
                         return
-                    if len(msg) > 51:
-                        moddedmsg = msg[:51].replace(" ", "")
-                        if moddedmsg[len(moddedmsg) - 2] == "&":
-                            msg = msg.replace("&", "*")
                     self.factory.sendMessageToAll(msg, "irc", user=user)
         except:
             self.logger.error(traceback.format_exc())
@@ -196,82 +131,52 @@ class ChatBot(irc.IRCClient):
         self.factory.chatlog.flush()
 
     def sendMessage(self, username, message):
-        message = message.replace("&0", "01")
-        message = message.replace("&1", "02")
-        message = message.replace("&2", "03")
-        message = message.replace("&3", "10")
-        message = message.replace("&4", "05")
-        message = message.replace("&5", "06")
-        message = message.replace("&6", "07")
-        message = message.replace("&7", "15")
-        message = message.replace("&8", "14")
-        message = message.replace("&9", "12")
-        message = message.replace("&a", "09")
-        message = message.replace("&b", "11")
-        message = message.replace("&c", "04")
-        message = message.replace("&d", "13")
-        message = message.replace("&e", "08")
-        message = message.replace("&f", "14")
-        username = username.replace("&0", "01")
-        username = username.replace("&1", "02")
-        username = username.replace("&2", "03")
-        username = username.replace("&3", "10")
-        username = username.replace("&4", "05")
-        username = username.replace("&5", "06")
-        username = username.replace("&6", "07")
-        username = username.replace("&7", "15")
-        username = username.replace("&8", "14")
-        username = username.replace("&9", "12")
-        username = username.replace("&a", "09")
-        username = username.replace("&b", "11")
-        username = username.replace("&c", "04")
-        username = username.replace("&d", "13")
-        username = username.replace("&e", "08")
-        username = username.replace("&f", "14")
+        sanitizeMessage(username, MSGREPLACE["game_colour_to_irc"])
+        sanitizeMessage(message, [MSGREPLACE["game_colour_to_irc"], MSGREPLACE["escape_commands"]])
         self.msg(self.factory.irc_channel, "%s: %s" % (username, message))
 
     def sendServerMessage(self, message, user=None):
-        message = message.replace("./", " /")
-        message = message.replace(".!", " !")
-        message = message.replace("&0", "01")
-        message = message.replace("&1", "02")
-        message = message.replace("&2", "03")
-        message = message.replace("&3", "10")
-        message = message.replace("&4", "05")
-        message = message.replace("&5", "06")
-        message = message.replace("&6", "07")
-        message = message.replace("&7", "15")
-        message = message.replace("&8", "14")
-        message = message.replace("&9", "12")
-        message = message.replace("&a", "09")
-        message = message.replace("&b", "11")
-        message = message.replace("&c", "04")
-        message = message.replace("&d", "13")
-        message = message.replace("&e", "08")
-        message = message.replace("&f", "14")
+        sanitizeMessage(message, [MSGREPLACE["game_colour_to_irc"], MSGREPLACE["escape_commands"]])
         if user != None:
             self.msg(user, "%s" % message)
         else:
             self.msg(self.factory.irc_channel, "%s" % message)
 
     def sendAction(self, username, message):
-        message = message.replace("&0", "01")
-        message = message.replace("&1", "02")
-        message = message.replace("&2", "03")
-        message = message.replace("&3", "10")
-        message = message.replace("&4", "05")
-        message = message.replace("&5", "06")
-        message = message.replace("&6", "07")
-        message = message.replace("&7", "15")
-        message = message.replace("&8", "14")
-        message = message.replace("&9", "12")
-        message = message.replace("&a", "09")
-        message = message.replace("&b", "11")
-        message = message.replace("&c", "04")
-        message = message.replace("&d", "13")
-        message = message.replace("&e", "08")
-        message = message.replace("&f", "14")
+        sanitizeMessage(message, MSGREPLACE["game_colour_to_irc"])
+        sanitizeMessage(message, [MSGREPLACE["game_colour_to_irc"], MSGREPLACE["escape_commands"]])
         self.msg(self.factory.irc_channel, "* %s %s" % (username, message))
+
+    sendSplitServerMessage = sendWorldMessage = sendPlainWorldMessage = sendNormalMessage = sendServerMessage
+
+    def sendServerList(self, items, wrap_at=63, plain=False, username=None):
+        "Sends the items as server messages, wrapping them correctly."
+        current_line = items[0]
+        for item in items[1:]:
+            if len(current_line) + len(item) + 1 > wrap_at:
+                if plain:
+                    if username != None:
+                        self.sendNormalMessage(current_line, user=username)
+                    else:
+                        self.sendNormalMessage(current_line)
+                else:
+                    if username != None:
+                        self.sendServerMessage(current_line, user=username)
+                    else:
+                        self.sendServerMessage(current_line)
+                current_line = item
+            else:
+                current_line += " " + item
+        if plain:
+            if username != None:
+                self.sendNormalMessage(current_line, user=username)
+            else:
+                self.sendNormalMessage(current_line)
+        else:
+            if username != None:
+                self.sendServerMessage(current_line, user=username)
+            else:
+                self.sendServerMessage(current_line)
 
     # irc callbacks
 
@@ -381,78 +286,43 @@ class ChatBot(irc.IRCClient):
             self.ops.remove(userhost)
         msg = "%s%s has quit IRC." % (COLOUR_YELLOW, user)
         self.factory.sendMessageToAll(msg, "irc", user=user)
+        sanitizeMessage(msg, [MSGREPLACE["irc_colour_to_game"], MSGREPLACE["escape_commands"]])
         for character in msg:
             if not character.lower() in PRINTABLE:
-                msg = msg.replace("&0", "&0")
-                msg = msg.replace("&1", "&1")
-                msg = msg.replace("&2", "&2")
-                msg = msg.replace("&3", "&3")
-                msg = msg.replace("&4", "&4")
-                msg = msg.replace("&5", "&5")
-                msg = msg.replace("&6", "&6")
-                msg = msg.replace("&7", "&7")
-                msg = msg.replace("&8", "&8")
-                msg = msg.replace("&9", "&9")
-                msg = msg.replace("&a", "&a")
-                msg = msg.replace("&b", "&b")
-                msg = msg.replace("&c", "&c")
-                msg = msg.replace("&d", "&d")
-                msg = msg.replace("&e", "&e")
-                msg = msg.replace("&f", "&f")
-                msg = msg.replace("0", "&f")
-                msg = msg.replace("00", "&f")
-                msg = msg.replace("1", "&0")
-                msg = msg.replace("01", "&0")
-                msg = msg.replace("2", "&1")
-                msg = msg.replace("02", "&1")
-                msg = msg.replace("3", "&2")
-                msg = msg.replace("03", "&2")
-                msg = msg.replace("4", "&c")
-                msg = msg.replace("04", "&c")
-                msg = msg.replace("5", "&4")
-                msg = msg.replace("05", "&4")
-                msg = msg.replace("6", "&5")
-                msg = msg.replace("06", "&5")
-                msg = msg.replace("7", "&6")
-                msg = msg.replace("07", "&6")
-                msg = msg.replace("8", "&e")
-                msg = msg.replace("08", "&e")
-                msg = msg.replace("9", "&a")
-                msg = msg.replace("09", "&a")
-                msg = msg.replace("10", "&3")
-                msg = msg.replace("11", "&b")
-                msg = msg.replace("12", "&9")
-                msg = msg.replace("13", "&d")
-                msg = msg.replace("14", "&8")
-                msg = msg.replace("15", "&7")
                 msg = msg.replace(character, "*")
-        msg = msg.replace("%0", "&0")
-        msg = msg.replace("%1", "&1")
-        msg = msg.replace("%2", "&2")
-        msg = msg.replace("%3", "&3")
-        msg = msg.replace("%4", "&4")
-        msg = msg.replace("%5", "&5")
-        msg = msg.replace("%6", "&6")
-        msg = msg.replace("%7", "&7")
-        msg = msg.replace("%8", "&8")
-        msg = msg.replace("%9", "&9")
-        msg = msg.replace("%a", "&a")
-        msg = msg.replace("%b", "&b")
-        msg = msg.replace("%c", "&c")
-        msg = msg.replace("%d", "&d")
-        msg = msg.replace("%e", "&e")
-        msg = msg.replace("%f", "&f")
-        msg = msg.replace("./", " /")
-        msg = msg.replace(".!", " !")
         if msg[len(msg) - 2] == "&":
             return
-        if len(msg) > 51:
-            moddedmsg = msg[:51].replace(" ", "")
-            if moddedmsg[len(moddedmsg) - 2] == "&":
-                msg = msg.replace("&", "*")
         msg = "%s(%s%s)" % (COLOUR_YELLOW, quitMessage, COLOUR_YELLOW)
         self.factory.sendMessageToAll(msg, "irc", user="")
 
+    def isRank(self):
+        return False # For whatever rank, just return False. overriderank is turned on for query so doesn't matter
+
+    isSpectator = isBuilder = isOp = isWorldOwner = isHelper = isMod = isAdmin = isDirector = isOwner = AllowedToBuild = canBreakAdminBlocks = isRank
+
+    def GetBlockValue(self, block):
+        # Try getting the block as a direct integer type.
+        try:
+            block = chr(int(value))
+        except ValueError:
+            # OK, try a symbolic type.
+            try:
+                block = chr(globals()['BLOCK_%s' % value.upper()])
+            except KeyError:
+                return None
+            # Check the block is valid
+        if ord(block) > 49:
+            return None
+        return block
+
+    def send(self, *args, **kwargs):
+        pass
+
+    canBreakAdminBlocks = sendPacked = sendError = sendRankUpdate = respawn = sendBlock = sendPlayerPos = sendPlayerDir = sendNewPlayer = sendPlayerLeave = sendKeepAlive = sendOverload =\
+        sendOverloadChunk = sendLevel = sendLevelStart = sendLevelChunk = endSendLevel = sendAllNew = sendWelcome = send
+
+    def getBlbLimit(self):
+        return 0
 
 class ChatBotFactory(protocol.ClientFactory):
     # the class of the protocol to build when new connection is made
@@ -480,72 +350,12 @@ class ChatBotFactory(protocol.ClientFactory):
 
     def sendMessage(self, username, message):
         if self.instance:
-            message = message.replace("&0", "01")
-            message = message.replace("&1", "02")
-            message = message.replace("&2", "03")
-            message = message.replace("&3", "10")
-            message = message.replace("&4", "05")
-            message = message.replace("&5", "06")
-            message = message.replace("&6", "07")
-            message = message.replace("&7", "15")
-            message = message.replace("&8", "14")
-            message = message.replace("&9", "12")
-            message = message.replace("&a", "09")
-            message = message.replace("&b", "11")
-            message = message.replace("&c", "04")
-            message = message.replace("&d", "13")
-            message = message.replace("&e", "08")
-            message = message.replace("&f", "00")
-            message = message.replace("./", " /")
-            message = message.replace(".!", " !")
-            message = message.replace(".@", " @")
-            message = message.replace(".#", " #")
             self.instance.sendMessage(username, message)
 
     def sendAction(self, username, message):
         if self.instance:
-            message = message.replace("&0", "01")
-            message = message.replace("&1", "02")
-            message = message.replace("&2", "03")
-            message = message.replace("&3", "10")
-            message = message.replace("&4", "05")
-            message = message.replace("&5", "06")
-            message = message.replace("&6", "07")
-            message = message.replace("&7", "15")
-            message = message.replace("&8", "14")
-            message = message.replace("&9", "12")
-            message = message.replace("&a", "09")
-            message = message.replace("&b", "11")
-            message = message.replace("&c", "04")
-            message = message.replace("&d", "13")
-            message = message.replace("&e", "08")
-            message = message.replace("&f", "00")
-            message = message.replace("./", " /")
-            message = message.replace(".!", " !")
-            message = message.replace(".@", " @")
-            message = message.replace(".#", " #")
             self.instance.sendAction(username, message)
 
     def sendServerMessage(self, message, user=None):
         if self.instance:
-            message = message.replace("&0", "01")
-            message = message.replace("&1", "02")
-            message = message.replace("&2", "03")
-            message = message.replace("&3", "10")
-            message = message.replace("&4", "05")
-            message = message.replace("&5", "06")
-            message = message.replace("&6", "07")
-            message = message.replace("&7", "15")
-            message = message.replace("&8", "14")
-            message = message.replace("&9", "12")
-            message = message.replace("&a", "09")
-            message = message.replace("&b", "11")
-            message = message.replace("&c", "04")
-            message = message.replace("&d", "13")
-            message = message.replace("&e", "08")
-            message = message.replace("&f", "00")
-            message = message.replace("./", " /")
-            message = message.replace(".!", " !")
-            message = message.replace(".@", " @")
-            message = message.replace(".#", " #")
             self.instance.sendServerMessage(message, user)

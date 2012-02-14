@@ -35,9 +35,9 @@ class Format(object):
         data = ""
         for char, arg in zip(self.format, args):
             if char == "a": # Array, 1024 long
-                data += self.packString(arg[:1024], length=1024, packWith="\0")
+                data += packString(arg[:1024], length=1024, packWith="\0")
             elif char == "s": # String, 64 long
-                data += self.packString(arg[:64])
+                data += packString(arg[:64])
             elif char == "h": # Short
                 data += struct.pack("!h", arg)
             elif char == "i": # Integer
@@ -50,6 +50,3 @@ class Format(object):
                 else:
                     raise ValueError("Invalid value for byte: %r" % arg)
         return data
-
-    def packString(self, string, length=64, packWith=" "):
-        return string + (packWith * (length - len(string)))

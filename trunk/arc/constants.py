@@ -28,16 +28,14 @@ CONFIG = [
     ("public", ("main.conf", "main", "public"), None, True, "getboolean", None, True, None),
     ("salt", ("main.conf", "main", "salt"), None, False, "get", "checkSalt", True, None),
     ("use_controller", ("main.conf", "network", "use_controller"), None, False, "getboolean", None, False, False),
-    (
-    "controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint", None
-    , False, None),
+    ("controller_port", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "getint",
+    None, False, None),
     ("controller_password", ("main.conf", "network", "controller_port"), "self.use_controller == True", False, "get",
      None, False, None),
     ("hbs", ("main.conf", "heartbeatnames", None), None, False, "options", None, True, None),
     ("duplicate_logins", ("options.conf", "options", "duplicate_logins"), None, True, "getboolean", None, False, False),
-    (
-    "wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL", False
-    , False),
+    ("wom_heartbeat", ("options.conf", "options", "wom_heartbeat"), None, True, "getboolean", "modifyHeartbeatURL",
+    False, False),
     ("enable_lowlag", ("options.conf", "options", "enable_lowlag"), None, True, "getboolean", None, False, False),
     ("lowlag_players", ("options.conf", "options", "lowlag_players"), None, True, "getint", None, False, 0),
     #("use_irc", ("irc.conf", "irc", "use_irc"), None, False, "getboolean", "initIRC", False, False),
@@ -57,9 +55,7 @@ CONFIG = [
     ("enable_archives", ("options.conf", "archiver", "enable_archives"), None, True, "getboolean", "enableArchiver",
      False, False),
     ("currency", ("options.conf", "bank", "currency"), None, True, "get", None, False, "Minecash"),
-    (
-    "useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter", False, False)
-    ,
+    ("useblblimit", ("options.conf", "blb", "use_blb_limiter"), None, True, "getboolean", "initBLBLimiter", False, False),
     ]
 
 INFO_VIPLIST = [
@@ -68,29 +64,24 @@ INFO_VIPLIST = [
     "dock",
     "ez",
     "jeb_",
-    "kappe",
     "mollstam",
     "notch",
     # Founders of Arc or other products before Arc
     "andrewgodwin",
+    "arbot",
+    "gdude2002",
     "pixeleater",
-    # Developers/contributors of Arc
-    "fizyplankton",
     "tyteen4a03",
-    "uberfox",
-    "opticalza",
-    # Code contributors to products before Arc
-    "099",
+    # Developers/contributors of Arc
     "adam01",
     "andrewph",
     "destroyerx1",
     "dwarfy",
     "erronjason",
+    "fizyplankton",
     "gdude2002",
     "goober",
     "gothfox",
-    "kelraider",
-    "notmeh",
     "revenant",
     "willempiee",
     "varriount",
@@ -98,7 +89,16 @@ INFO_VIPLIST = [
     "fragmer",
     "pyropyro",
     "tktech",
-    "jte"
+    "jte",
+    "opticalza",
+]
+
+CREDITS_TEXT = [
+    "Thanks to the following people for making Arc possible...",
+    "Mojang Specifications (Minecraft): Notch, c418, ez, jeb, mollstam...",
+    "Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives), tyteen4a03 (Maintainer of Arc)",
+    "Devs (Arc): Adam01, AndrewPH, Antoligy, blahblahbal, destroyerx1, Dwarfy, erronjason, fizyplankton, goober, gothfox, ntfwc, revenant, Varriount, willempiee",
+    "Others: 099, 2k10, Akai, Aquaskys, Bidoof_King, Bioniclegenius, CDRom, fragmer, GLaDOS (Cortana), Kelraider, MystX, PyroPyro, Roadcrosser, Saanix, setveen, TkTech",
 ]
 
 FORMAT_LENGTHS = {
@@ -107,7 +107,7 @@ FORMAT_LENGTHS = {
     "s": 64,
     "h": 2,
     "i": 4,
-    }
+}
 
 TYPE_INITIAL = 0
 TYPE_KEEPALIVE = 1
@@ -125,7 +125,7 @@ TYPE_PLAYERLEAVE = 12
 TYPE_MESSAGE = 13
 TYPE_ERROR = 14
 
-from arc.format import Format
+from arc.format import *
 
 TYPE_FORMATS = {
     TYPE_INITIAL: Format("bssb"),
@@ -201,6 +201,22 @@ IRCCOLOUR_WHITE = chr(3) + '0'
 IRCCOLOUR_DEFAULT = chr(15)
 IRCCOLOUR_BOLD = chr(2)
 IRCCOLOUR_UNDERLINE = chr(31)
+
+# Rank colours (currently hardcoded)
+RANK_COLOURS = [
+    "owner": COLOUR_GREEN,
+    "director": COLOUR_DARKRED,
+    "admin": COLOUR_RED,
+    "mod": COLOUR_DARKBLUE,
+    "helper": COLOUR_DARKGREY,
+    "vip": COLOUR_YELLOW,
+    "worldowner": COLOUR_DARKYELLOW,
+    "op": COLOUR_DARKCYAN,
+    "builder": COLOUR_CYAN,
+    "guest": COLOUR_WHITE,
+    "spectator": COLOUR_BLACK,
+    "default": COLOUR_WHITE
+]
 
 BLOCK_NOTHING = 0
 BLOCK_NONE = 0
@@ -537,8 +553,9 @@ MSGLOGFORMAT = {
     "server": "[%{time}s] %{text}s"
 }
 MSGREPLACE = {
-    "escape_commands": {"./": " /", ".!": " !"},
-    }
+    "escape_commands": {"./": " /", ".!": " !", ".@": " @", ".#": " #"},
+}
+
 MSGREPLACE["game_colour_to_irc"] = {
     COLOUR_BLACK: IRCCOLOUR_BLACK,
     COLOUR_DARKBLUE: IRCCOLOUR_DARKBLUE,
@@ -557,28 +574,29 @@ MSGREPLACE["game_colour_to_irc"] = {
     COLOUR_YELLOW: IRCCOLOUR_YELLOW,
     COLOUR_WHITE: IRCCOLOUR_WHITE
 }
-MSGREPLACE["text_colour_to_game"] = {# % to &
-                                     "%0": "&0",
-                                     "%1": "&1",
-                                     "%2": "&2",
-                                     "%3": "&3",
-                                     "%4": "&4",
-                                     "%5": "&5",
-                                     "%6": "&6",
-                                     "%7": "&7",
-                                     "%8": "&8",
-                                     "%9": "&9",
-                                     "%a": "&a",
-                                     "%b": "&b",
-                                     "%c": "&c",
-                                     "%d": "&d",
-                                     "%e": "&e",
-                                     "%f": "&f"
-}
 
 from arc.globals import invertDict
 
 MSGREPLACE["irc_colour_to_game"] = invertDict(MSGREPLACE["game_colour_to_irc"])
+
+MSGREPLACE["text_colour_to_game"] = {# % to &
+    "%0": "&0",
+    "%1": "&1",
+    "%2": "&2",
+    "%3": "&3",
+    "%4": "&4",
+    "%5": "&5",
+    "%6": "&6",
+    "%7": "&7",
+    "%8": "&8",
+    "%9": "&9",
+    "%a": "&a",
+    "%b": "&b",
+    "%c": "&c",
+    "%d": "&d",
+    "%e": "&e",
+    "%f": "&f"
+}
 
 import string
 

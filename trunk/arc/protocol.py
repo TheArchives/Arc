@@ -10,7 +10,6 @@ from twisted.internet.protocol import Protocol
 from arc.constants import *
 from arc.decorators import *
 from arc.irc_client import ChatBotFactory
-from arc.plugins import protocol_plugins
 from arc.playerdata import *
 
 class ArcServerProtocol(Protocol):
@@ -25,23 +24,7 @@ class ArcServerProtocol(Protocol):
         self.buffer = ""
         self.loading_world = False
         self.logger = self.factory.logger
-        # Load plugins for ourselves
-        self.hooks = {}
-        self.commands = {}
-        self.plugins = []
         self.settings = {}
-        for plugin in protocol_plugins:
-            try:
-                self.plugins.append(plugin(self))
-            except Exception as a:
-                self.factory.logger.error("Unable to load protocol plugin '%s'" % plugin.__name__)
-                self.factory.logger.error("Error: %s" % a)
-                error = traceback.format_exc()
-                errorsplit = error.split("\n")
-                for element in errorsplit:
-                    if not element.strip(" ") == "":
-                        self.factory.logger.debug(element)
-                continue
         # Set identification variable to false
         self.identified = False
         # Get an ID for ourselves
@@ -52,8 +35,8 @@ class ArcServerProtocol(Protocol):
                 self.sendError("The server is full.")
                 return
             # Check for IP bans
-        ip = self.transport.getPeer().host
-        if self.factory.isIpBanned(ip):
+        self.ip = self.ip
+        if self.factory.isIpBanned(self.ip):
             self.sendError("You are banned: %s" % self.factory.ipBanReason(ip))
             return
         self.factory.logger.debug("Assigned ID %i" % self.id)
@@ -66,59 +49,6 @@ class ArcServerProtocol(Protocol):
         self.last_block_position = (-1, -1, -1)
         self.frozen = False
 
-    def registerCommand(self, command, func):
-        "Registers func as the handler for the command named 'command'."
-        # Make sure case doesn't matter
-        command = command.lower()
-        # Warn if already registered
-        if command in self.commands:
-            self.factory.logger.warn("Command '%s' is already registered. Overriding." % command)
-            self.factory.logger.info("This means that the plugin containing %s has been loaded twice." % command)
-            # Register
-        self.commands[command] = func
-
-    def unregisterCommand(self, command, func):
-        "Unregisters func as command's handler, if it is currently the handler."
-        # Make sure case doesn't matter
-        command = command.lower()
-        try:
-            if self.commands[command] == func:
-                del self.commands[command]
-        except KeyError:
-            self.factory.logger.warn("Command '%s' is not registered to %s." % (command, func))
-
-    def registerHook(self, hook, func):
-        "Registers func as something to be run for hook 'hook'."
-        if hook not in self.hooks:
-            self.hooks[hook] = []
-        self.hooks[hook].append(func)
-
-    def unregisterHook(self, hook, func):
-        "Unregisters func from hook 'hook'."
-        try:
-            self.hooks[hook].remove(func)
-        except (KeyError, ValueError):
-            self.factory.logger.warn("Hook '%s' is not registered to %s." % (hook, func))
-
-    def unloadPlugin(self, plugin_class):
-        "Unloads the given plugin class."
-        for plugin in self.plugins:
-            if isinstance(plugin, plugin_class):
-                self.plugins.remove(plugin)
-                plugin.unregister()
-
-    def loadPlugin(self, plugin_class):
-        self.plugins.append(plugin_class(self))
-
-    def runHook(self, hook, *args, **kwds):
-        "Runs the hook 'hook'."
-        for func in self.hooks.get(hook, []):
-            result = func(*args, **kwds)
-            # If they return False, we can skip over and return
-            if result is not None:
-                return result
-        return None
-
     def queueTask(self, task, data=[], world=None):
         "Adds the given task to the factory's queue."
         # If they've overridden the world, use that as the client.
@@ -126,14 +56,6 @@ class ArcServerProtocol(Protocol):
             self.factory.queue.put((world, task, data))
         else:
             self.factory.queue.put((self, task, data))
-
-    def sendWorldMessage(self, message):
-        "Sends a message to everyone in the current world."
-        self.factory.sendMessageToAll(COLOUR_YELLOW + message, "world", self)
-
-    def sendPlainWorldMessage(self, message):
-        "Sends a message to everyone in the current world, without any added color."
-        self.factory.sendMessageToAll(message, "world", self)
 
     def connectionLost(self, reason):
         # Leave the world
@@ -149,18 +71,13 @@ class ArcServerProtocol(Protocol):
                     del self.factory.usernames[self.username.lower()]
             except KeyError:
                 pass
-            # Remove from ID list, send removed msgs
+        # Remove from ID list, send removed msgs
         self.factory.releaseId(self.id)
         self.factory.queue.put((self, TASK_PLAYERLEAVE, (self.id,)))
         if self.username:
             self.factory.logger.info("Disconnected '%s'" % (self.username))
             self.factory.runHook("playerQuit", {"client": self})
-            self.runHook("playerquit", self.username)
             self.factory.logger.debug("(reason: %s)" % (reason))
-            # Kill all plugins
-        del self.plugins
-        del self.commands
-        del self.hooks
         self.connected = 0
 
     def send(self, data):
@@ -174,9 +91,6 @@ class ArcServerProtocol(Protocol):
         self.factory.logger.info("Sending error: %s" % error)
         self.sendPacked(TYPE_ERROR, error)
         reactor.callLater(0.2, self.transport.loseConnection)
-
-    def packString(self, string, length=64, packWith=" "):
-        return string + (packWith * (length - len(string)))
 
     def isOwner(self):
         return self.factory.isOwner(self.username.lower())
@@ -248,7 +162,7 @@ class ArcServerProtocol(Protocol):
                     # Check their password
                 correct_pass = hashlib.md5(self.factory.salt + self.username).hexdigest()[-32:].strip("0")
                 mppass = mppass.strip("0")
-                if not self.transport.getHost().host.split(".")[0:2] == self.transport.getPeer().host.split(".")[0:2]:
+                if not self.transport.getHost().host.split(".")[0:2] == self.ip.split(".")[0:2]:
                     if mppass != correct_pass:
                         self.factory.logger.info(
                             "Kicked '%s'; invalid password (%s, %s)" % (self.username, mppass, correct_pass))
@@ -271,8 +185,8 @@ class ArcServerProtocol(Protocol):
                 self.sendPacked(
                     TYPE_INITIAL,
                     7, # Protocol version
-                    self.packString(self.factory.server_name),
-                    self.packString(self.factory.server_message),
+                    packString(self.factory.server_name),
+                    packString(self.factory.server_message),
                     100 if (self.isOp() if hasattr(self, "world") else False) else 0,
                 )
                 # Then... stuff
@@ -288,24 +202,23 @@ class ArcServerProtocol(Protocol):
             elif type == TYPE_BLOCKCHANGE:
                 x, y, z, created, block = parts
                 if self.identified == False:
-                    self.factory.logger.info(
-                        "Kicked '%s'; did not send a login before building" % (self.transport.getPeer().host))
+                    self.factory.logger.info("Kicked '%s'; did not send a login before building" % (self.ip))
                     self.sendError("Provide an authentication before building.")
                     return
                 if block == 255:
                     block = 0
                 if block > 49: # Out of block range
                     self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (
-                    self.transport.getPeer().host, block))
+                                            self.ip, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
                 if block in [8, 10]: # Active Water and Lava
                     self.factory.logger.info("Kicked '%s'; Tried to place an invalid block.; Block: '%s'" % (
-                    self.transport.getPeer().host, block))
+                                            self.ip, block))
                     self.sendError("Invalid blocks are not allowed!")
                     return
                 if block == 7 and not self.isOp():
-                    self.factory.logger.info("Kicked '%s'; Tried to place admincrete." % self.transport.getPeer().host)
+                    self.factory.logger.info("Kicked '%s'; Tried to place admincrete." % self.ip)
                     self.sendError("Don't build admincrete!")
                     return
                 try:
@@ -314,7 +227,7 @@ class ArcServerProtocol(Protocol):
                         self.sendBlock(x, y, z)
                         self.sendServerMessage("Spectators cannot edit worlds.")
                         return
-                    allowbuild = self.runHook("blockclick", x, y, z, block, "user")
+                    allowbuild = self.factory.runHook("onBlockClick", {"x": x, "y": y, "z": z, "block": block, "client": self})
                     if allowbuild is False:
                         self.sendBlock(x, y, z)
                         return
@@ -329,15 +242,15 @@ class ArcServerProtocol(Protocol):
                     # (note the selected block is still stored as selected_block)
                     if not created:
                         block = 0
-                        # Pre-hook, for stuff like /paint
-                    new_block = self.runHook("preblockchange", x, y, z, block, selected_block, "user")
+                    # Pre-hook, for stuff like /paint
+                    new_block = self.factory.runHook("preBlockChange", {"x": x, "y": y, "z": z, "block": block, "selected_block": selected_block, "client": self})
                     if new_block is not None:
                         block = new_block
                         overridden = True
-                        # Block detection hook that does not accept any parameters
-                    self.runHook("blockdetect", x, y, z, block, selected_block, "user")
+                    # Block detection hook that does not accept any parameters
+                    self.factory.runHook("blockDetect", {"x": x, "y": y, "z": z, "block": block, "client": self})
                     # Call hooks
-                    new_block = self.runHook("blockchange", x, y, z, block, selected_block, "user")
+                    new_block = self.factory.runHook("blockChange", {"x": x, "y": y, "z": z, "block": block, "selected_block": selected_block, "client": self})
                     # After the runHook iteration, insert a linebreak
                     if new_block is False:
                         # They weren't allowed to build here!
@@ -378,9 +291,9 @@ class ArcServerProtocol(Protocol):
                     newz = self.z >> 5
                     self.teleportTo(newx, newy, newz, h, p)
                     return
-                override = self.runHook("poschange", x, y, z, h, p)
+                override = self.factory.runHook("posChange", {"x": x, "y": y, "z": z, "h": h, "p": p})
                 # Only send changes if the hook didn't say no
-                if override is not False:
+                if override != False:
                     if pos_change:
                         # Send everything to the other clients
                         self.factory.queue.put(
@@ -396,16 +309,16 @@ class ArcServerProtocol(Protocol):
                     user = usernameoverride["data"][0]
                 else:
                     user = self.username
-                override = self.runHook("chatmsg", message)
+                override = self.factory.runHook("messageSent", {"client": self, "message": message})
                 if self.identified == False:
                     self.factory.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (
-                    self.transport.getPeer().host, message))
+                    self.ip, message))
                     self.sendError("Provide an authentication before chatting.")
                     return
                 for c in message.lower():
                     if not c in PRINTABLE:
                         self.factory.logger.info("Kicked '%s'; Tried to use invalid characters; Message: '%s'" % (
-                        self.transport.getPeer().host, message))
+                        self.ip, message))
                         self.sendError("Invalid characters are not allowed!")
                         return
                 message = message.replace("%0", "&0")
@@ -611,39 +524,39 @@ class ArcServerProtocol(Protocol):
             else:
                 if type == 2:
                     self.factory.logger.warn("Beta client attempted to connect.")
-                    self.sendPacked(255, self.packString("Sorry, but this is a Classic-only server."))
+                    self.sendPacked(255, packString("Sorry, but this is a Classic-only server."))
                     self.transport.loseConnection()
                 else:
                     self.factory.logger.warn("Unable to handle type %s" % type)
 
     def userColour(self):
         if self.factory.colors:
-            if not hasattr(self, "world"):
-                colour = COLOUR_WHITE
-            elif (self.username.lower() in self.factory.spectators):
-                colour = COLOUR_BLACK
+            if (self.username.lower() in self.factory.spectators):
+                colour = RANK_COLOURS["spectator"]
             elif (self.username.lower() in self.factory.owners):
-                colour = COLOUR_GREEN
+                colour = RANK_COLOURS["owner"]
             elif (self.username.lower() in self.factory.directors):
-                colour = COLOUR_DARKRED
+                colour = RANK_COLOURS["director"]
             elif (self.username.lower() in self.factory.admins):
-                colour = COLOUR_RED
+                colour = RANK_COLOURS["admin"]
             elif (self.username.lower() in self.factory.mods):
-                colour = COLOUR_DARKBLUE
+                colour = RANK_COLOURS["mod"]
             elif (self.username.lower() in self.factory.helpers):
-                colour = COLOUR_DARKGREY
+                colour = RANK_COLOURS["helper"]
             elif self.username.lower() in INFO_VIPLIST:
-                colour = COLOUR_YELLOW
+                colour = RANK_COLOURS["vip"]
+            elif not hasattr(self, "world"):
+                colour = RANK_COLOURS["default"]
             elif (self.username.lower() == self.world.status["owner"].lower()):
-                colour = COLOUR_DARKYELLOW
+                colour = RANK_COLOURS["worldowner"]
             elif (self.username.lower() in self.world.ops):
-                colour = COLOUR_DARKCYAN
+                colour = RANK_COLOURS["op"]
             elif (self.username.lower() in self.world.builders):
-                colour = COLOUR_CYAN
+                colour = RANK_COLOURS["builder"]
             else:
-                colour = COLOUR_WHITE
+                colour = RANK_COLOURS["guest"]
         else:
-            colour = COLOUR_WHITE
+            colour = RANK_COLOURS["default"]
         return colour
 
     def colouredUsername(self):
@@ -659,7 +572,7 @@ class ArcServerProtocol(Protocol):
         self.factory.queue.put((self, TASK_WORLDCHANGE, (self.id, self.world)))
         self.loading_world = True
         world = self.factory.joinWorld(world_id, self)
-        self.runHook("newworld", world)
+        self.factory.runHook("newWorld", {"client": self, "world": world})
         # These code should be plugin-fied, can anybody check?
         if not self.isOp():
             self.block_overrides = {}
@@ -674,14 +587,14 @@ class ArcServerProtocol(Protocol):
             self.sendSplitServerMessage(COLOUR_GREEN + "This world is hidden, and does not show up on the world list.")
         if self.world.status["last_access_count"] > 0:
             self.world.status["last_access_count"] = 0
-        breakable_admins = self.runHook("canbreakadmin")
+        breakable_admins = self.factory.runHook("canBreakAdmincrete", {"client": self})
         self.sendPacked(TYPE_INITIAL, 7, ("%s: %s" % (self.factory.server_name, world_id)),
             "Entering world '%s'" % world_id, 100 if breakable_admins else 0)
         self.sendLevel()
 
     def sendRankUpdate(self):
         "Sends a rank update."
-        self.runHook("rankchange")
+        self.factory.runHook("rankChanged", {"client": self})
         self.respawn()
 
     def respawn(self):
@@ -706,10 +619,14 @@ class ArcServerProtocol(Protocol):
     def sendPlayerDir(self, id, h, p):
         self.sendPacked(TYPE_PLAYERDIR, id, h, p)
 
+    def sendAdminBlockUpdate(self):
+        "Sends a packet that updates the client's admin-building ability"
+        self.sendPacked(TYPE_INITIAL, 6, ("%s: %s" % (self.factory.server_name, self.world.id)), "Reloading the server...", self.isOp() and 100 or 0)
+
     def sendMessage(self, id, colour, username, text, action=False):
         "Sends a message to the user, splitting it up if needed."
         # See if it's muted.
-        replacement = self.runHook("recvmessage", colour, username, text, action)
+        replacement = self.factory.runHook("messageReceived", {"client": self, "colour": colour, "username": username, "text": text, "action": action})
         if replacement == False: return
         # See if we should highlight the names
         if action:
@@ -765,6 +682,14 @@ class ArcServerProtocol(Protocol):
     def sendNormalMessage(self, message):
         self._sendMessage("", message)
 
+    def sendWorldMessage(self, message):
+        "Sends a message to everyone in the current world."
+        self.factory.sendMessageToAll(COLOUR_YELLOW + message, "world", self)
+
+    def sendPlainWorldMessage(self, message):
+        "Sends a message to everyone in the current world, without any added color."
+        self.factory.sendMessageToAll(message, "world", self)
+
     def sendServerList(self, items, wrap_at=63, plain=False):
         "Sends the items as server messages, wrapping them correctly."
         current_line = items[0]
@@ -800,20 +725,6 @@ class ArcServerProtocol(Protocol):
                 self.sendNormalMessage(line)
             else:
                 self.sendNormalMessage(line)
-
-    def splitMessage(self, message, linelen=63):
-        lines = []
-        thisline = ""
-        words = message.split()
-        for x in words:
-            if len(thisline + " " + x) < linelen:
-                thisline = thisline + " " + x
-            else:
-                lines.append(thisline)
-                thisline = x
-        if thisline != "":
-            lines.append(thisline)
-        return lines
 
     def sendNewPlayer(self, id, username, x, y, z, h, p):
         self.sendPacked(TYPE_SPAWNPOINT, id, username, x, y, z, h, p)
@@ -907,7 +818,6 @@ class ArcServerProtocol(Protocol):
             for line in self.factory.greeting:
                 self.sendPacked(TYPE_MESSAGE, 127, line)
             self.sent_first_welcome = True
-            self.runHook("playerjoined", self.username)
             self.MessageAlert()
         else:
             self.sendPacked(TYPE_MESSAGE, 255, "You are now in world '%s'" % self.world.id)
@@ -1069,17 +979,6 @@ class ArcServerProtocol(Protocol):
         else:
             return False
 
-    def MessageAlert(self):
-        if os.path.exists("config/data/inbox.dat"):
-            self.messages = self.factory.messages
-            for client in self.factory.clients.values():
-                try:
-                    if client.username in self.messages:
-                        client.sendServerMessage("You have a message waiting in your Inbox.")
-                        client.sendServerMessage("Use /inbox to check and see.")
-                except AttributeError:
-                    continue # Lazy workaround - we seriously need to rewrite this part
-
     def getBlbLimit(self, factor=1):
         """Fetches BLB Limit, and returns limit multiplied by a factor. 0 is returned if blb is disabled for that usergroup, and -1 for no limit."""
         if self.factory.useblblimit:
@@ -1127,6 +1026,3 @@ class ArcServerProtocol(Protocol):
         if limit > -1:
             limit *= factor
         return limit
-
-    def loadRank(self):
-        return self.factory.rank_dic

@@ -2,6 +2,7 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
+import cPickle, os
 from collections import defaultdict
 
 def Rank(self, parts, fromloc, overriderank, server=None):
@@ -248,42 +249,7 @@ def DeSpec(self, username, fromloc, overriderank, server=None):
     return ("%s is no longer a spec." % username)
 
 
-def Staff(self, server=None):
-    Temp = []
-    if server:
-        factory = server
-    else:
-        factory = self.client.factory
-    if len(factory.owners): # This doesn't make much sense but okay
-        Temp.append(["Owners:"] + list(factory.owners))
-    if len(factory.directors):
-        Temp.append(["Directors:"] + list(factory.directors))
-    if len(factory.admins):
-        Temp.append(["Admins:"] + list(factory.admins))
-    if len(factory.mods):
-        Temp.append(["Mods:"] + list(factory.mods))
-    if len(factory.helpers):
-        Temp.append(["Helpers:"] + list(factory.helpers))
-    return Temp
-
-
-def Credits():
-    Temp = []
-    Temp.append("Thanks to the following people for making Arc possible...")
-    Temp.append("Mojang Specifications (Minecraft): Notch, c418, ez, jeb, kappe, mollstam...")
-    Temp.append(
-        "Creators: aera (Myne and The Archives), PixelEater (MyneCraft and blockBox), gdude2002/arbot (Maintainer of The Archives)")
-    Temp.append(
-        "Devs (Arc): Adam01, AndrewPH, destroyerx1, Dwarfy, erronjason, eugo (Knossus), goober, gothfox, ntfwc, revenant, Saanix, sk8rjwd, tehcid, Varriount, willempiee")
-    Temp.append("Devs (blockBox): fizyplankton, tyteen4a03, UberFoX")
-    Temp.append(
-        "Others: 099, 2k10, Akai, Antoligy, Aquaskys, Bidoof_King, Bioniclegenius, blahblahbal, BlueProtoman, CDRom, fragmer, GLaDOS (Cortana), iMak, Kelraider, MAup, MystX, PyroPyro, Rils, Roadcrosser, Roujo, setveen, TkTech, Uninspired")
-    return Temp
-
-
 def makefile(filename):
-    import os
-
     dir = os.path.dirname(filename)
     try:
         os.stat(dir)
@@ -295,12 +261,8 @@ def makefile(filename):
     if not os.path.exists(filename):
         with open(filename, "w") as f:
             f.write("")
-    del os
-
 
 def makedatfile(filename):
-    import os
-
     dir = os.path.dirname(filename)
     try:
         os.stat(dir)
@@ -311,11 +273,7 @@ def makedatfile(filename):
             pass
     if not os.path.exists(filename):
         with open(filename, "w") as f:
-            import cPickle
-
             cPickle.dump("", f)
-            del cPickle
-    del os
 
 
 def makefiles(l):
@@ -358,9 +316,9 @@ def checkConfigVersion(version, current):
             return True
 
 
-def sanitizeMessage(message, replaceSets):
+def sanitizeMessage(message, replacesets):
     def _messageReplace(message, dict):
-        for key, value in dict:
+        for key, value in dict.items():
             message = message.replace(key, value)
         return message
 
@@ -376,18 +334,26 @@ def sanitizeMessage(message, replaceSets):
         raise ValueError("Replace set not a dict or a list of dicts")
     return message
 
+def packString(self, string, length=64, packWith=" "):
+    return string + (packWith * (length - len(string)))
 
-def find(f, seq):
-    for it in (item for item in seq if f(item)):
-        return it
+def splitMessage(message, linelen=63):
+    lines = []
+    thisline = ""
+    words = message.split()
+    for x in words:
+        if len(thisline + " " + x) < linelen:
+            thisline = thisline + " " + x
+        else:
+            lines.append(thisline)
+            thisline = x
+    if thisline != "":
+        lines.append(thisline)
+    return lines
 
-from arc.constants import PRINTABLE
-
-def filter(text):
-    final = ""
-    for char in text:
-         final += "" if char not in PRINTABLE else char
-    return final
+def find_keys(dic, val):
+    """Returns a list of keys in a dict with the value val."""
+    return [k for k, v in dic.iteritems() if v == val]
 
 class Popxrange(): # There is probably a way to do this without this class but where?
     def __init__(self, start, end):
