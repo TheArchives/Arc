@@ -1,8 +1,12 @@
-# Arc is copyright 2009-2012 the Arc team and other contributors.
+# Arc is copyright 2009-2011 the Arc team and other contributors.
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import ConfigParser
+
+from twisted.web.client import getPage
+from twisted.internet.task import LoopingCall
+from twisted.internet.defer import TimeoutError
 
 from arc.includes.mcbans_api import McBans
 
@@ -17,19 +21,58 @@ class McBansServerPlugin():
         "playerQuit": "disconnected",
         "playerBanned": "banned",
         "playerUnbanned": "unbanned",
-        "heartbeatSent": "callback"
+        "heartbeatSent": "callback",
+        "onBlockset": "blockChanged"
     }
 
     commands = {
         "mcbans": "commandMCBans"
     }
 
+    # Hook for a changed block
+
+    def blockChanged(self, data):
+        client = data["client"]
+        rdata = {"data": True}
+        if not client.has_mcbans_data:
+            client.sendServerMessage("Unable to edit: Still fetching MCBans data.")
+            client.sendBlock(client.world.blockstore(data["data"][0], data["data"][1], data["data"][2]))
+            rdata["data"] = False
+        else:
+            rdata["data"] = True
+        return rdata
+
+    # Looping callback to keep an eye on API speed
+
+    def isitup(self):
+        getPage("http://api.mcbans.com/v2/" + api_key, method="POST", postdata={"exec": "check"},
+            timeout=5).addCallback(
+            self.up_win).addErrback(self.up_fail)
+
+    def up_win(self, result):
+        if result == "up":
+            self.is_up = True
+        else:
+            if self.is_up:
+                self.is_up = False
+                self.logger.warn("MCBans API responded in time but didn't return the correct data!")
+
+    def up_fail(self, result):
+        if self.is_up:
+            self.is_up = False
+            if isinstance(result, twistedError):
+                self.logger.warn("MCBans API failed to respond within a reasonable time!")
+            else:
+                self.logger.error("Unable to reach MCBans API: %s" % result)
+
+    # Commands and hooks
+
     def gotServer(self):
         self.logger.debug("[&1MCBans&f] Reading in API Key..")
         config = ConfigParser.RawConfigParser()
         try:
             config.read("config/plugins/mcbans.conf")
-            api_key = config.get("mcbans", "apikey")
+            self.api_key = config.get("mcbans", "apikey")
         except Exception as a:
             self.logger.error("[&1MCBans&f] &4Unable to find API key in config/plugins/mcbans.conf!")
             self.logger.error("[&1MCBans&f] &4%s" % a)
@@ -37,7 +80,7 @@ class McBansServerPlugin():
         else:
             self.logger.debug("[&1MCBans&f] Found API key: &1%s&f" % api_key)
             self.logger.info("[&1MCBans&f] MCBans enabled!")
-            self.handler = McBans(api_key)
+            self.handler = McBans(self.api_key)
             self.has_api = True
             try:
                 self.threshold = config.getint("mcbans", "ban_threshold")
@@ -55,381 +98,408 @@ class McBansServerPlugin():
                 self.exceptions = []
             else:
                 self.logger.info("[&1MCBans&f] %s exceptions loaded." % len(self.exceptions))
+            self.is_up = False
+            self.loop = LoopingCall(self.isitup)
+            self.loop.start(5)
+
 
     def connected(self, data):
         if self.has_api:
-            client = data["client"]
-            data = self.handler.connect(client.username, client.transport.getPeer().host)
-            try:
-                error = value["error"]
-            except:
-                status = data["banStatus"]
-                if status == u'n':
-                    self.logger.info(
-                        "[&1MCBans&f] User %s has a reputation of %s/10." % (client.username, data["playerRep"]))
-                    client.sendServerMessage("[%sMCBans%s] You have a reputation of %s%s/10." % (
-                    COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, data["playerRep"]))
-                else:
-                    self.logger.warn("[&1MCBans&f] User %s has a reputation of %s/10 with bans on record." % (
-                    client.username, data["playerRep"]))
-                    client.sendServerMessage("[%sMCBans%s] Your reputation is %s%s/10%s with recorded bans." % (
-                    COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["playerRep"], COLOUR_YELLOW))
-                    if status == u'l':
-                        if client.username not in self.exceptions:
-                            self.logger.info(
-                                "[&1MCBans&f] Kicking user %s as they are locally banned." % client.username)
-                            client.sendError("[MCBans] You are locally banned.")
-                        else:
-                            self.logger.info(
-                                "[&1MCBans&f] User %s has a local ban but is on the exclusion list." % client.username)
-                    elif status == u's':
-                        if client.username not in self.exceptions:
-                            self.logger.info(
-                                "[&1MCBans&f] Kicking user %s as they are banned in another server in the group." % client.username)
-                            client.sendError("[MCBans] You banned on another server in this group.")
-                        else:
-                            self.logger.info(
-                                "[&1MCBans&f] User %s is banned on another server in the group but is on the exclusion list." % client.username)
-                    elif status == u't':
-                        if client.username not in self.exceptions:
-                            self.logger.info(
-                                "[&1MCBans&f] Kicking user %s as they are temporarily banned." % client.username)
-                            client.sendError("[MCBans] You are temporarily banned.")
-                        else:
-                            self.logger.info(
-                                "[&1MCBans&f] User %s has a temporary ban but is on the exclusion list." % client.username)
-                    elif status == u'i':
-                        if client.username not in self.exceptions:
-                            self.logger.info(
-                                "[&1MCBans&f] Kicking user %s as they are banned on another IP." % client.username)
-                            client.sendError("[MCBans] You are IP banned.")
-                        else:
-                            self.logger.info(
-                                "[&1MCBans&f] User %s has a ban for another IP but is on the exclusion list." % client.username)
-                if int(data["playerRep"]) < self.threshold:
-                    if client.username not in self.exceptions:
+            if self.is_up:
+                client = data["client"]
+                data = self.handler.connect(client.username, client.transport.getPeer().host)
+                try:
+                    error = value["error"]
+                except:
+                    status = data["banStatus"]
+                    if status == u'n':
                         self.logger.info(
-                            "[&1MCBans&1] Kicking %s because their reputation of %s/10 is below the threshold!" % (
-                            client.username, data["playerRep"]))
-                        client.sendError("Your MCBans reputation of %s/10 is too low!" % data["playerRep"])
+                            "[&1MCBans&f] User %s has a reputation of %s/10." % (client.username, data["playerRep"]))
+                        client.sendServerMessage("[%sMCBans%s] You have a reputation of %s%s/10." % (
+                        COLOUR_BLUE, COLOUR_YELLOW, COLOUR_GREEN, data["playerRep"]))
                     else:
-                        self.logger.info(
-                            "[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (
-                            client.username, data["playerRep"]))
+                        self.logger.warn("[&1MCBans&f] User %s has a reputation of %s/10 with bans on record." % (
+                        client.username, data["playerRep"]))
+                        client.sendServerMessage("[%sMCBans%s] Your reputation is %s%s/10%s with recorded bans." % (
+                        COLOUR_BLUE, COLOUR_YELLOW, COLOUR_RED, data["playerRep"], COLOUR_YELLOW))
+                        if status == u'l':
+                            if client.username not in self.exceptions:
+                                self.logger.info(
+                                    "[&1MCBans&f] Kicking user %s as they are locally banned." % client.username)
+                                client.sendError("[MCBans] You are locally banned.")
+                            else:
+                                self.logger.info(
+                                    "[&1MCBans&f] User %s has a local ban but is on the exclusion list." % client.username)
+                        elif status == u's':
+                            if client.username not in self.exceptions:
+                                self.logger.info(
+                                    "[&1MCBans&f] Kicking user %s as they are banned in another server in the group." % client.username)
+                                client.sendError("[MCBans] You banned on another server in this group.")
+                            else:
+                                self.logger.info(
+                                    "[&1MCBans&f] User %s is banned on another server in the group but is on the exclusion list." % client.username)
+                        elif status == u't':
+                            if client.username not in self.exceptions:
+                                self.logger.info(
+                                    "[&1MCBans&f] Kicking user %s as they are temporarily banned." % client.username)
+                                client.sendError("[MCBans] You are temporarily banned.")
+                            else:
+                                self.logger.info(
+                                    "[&1MCBans&f] User %s has a temporary ban but is on the exclusion list." % client.username)
+                        elif status == u'i':
+                            if client.username not in self.exceptions:
+                                self.logger.info(
+                                    "[&1MCBans&f] Kicking user %s as they are banned on another IP." % client.username)
+                                client.sendError("[MCBans] You are IP banned.")
+                            else:
+                                self.logger.info(
+                                    "[&1MCBans&f] User %s has a ban for another IP but is on the exclusion list." % client.username)
+                    if int(data["playerRep"]) < self.threshold:
+                        if client.username not in self.exceptions:
+                            self.logger.info(
+                                "[&1MCBans&1] Kicking %s because their reputation of %s/10 is below the threshold!" % (
+                                client.username, data["playerRep"]))
+                            client.sendError("Your MCBans reputation of %s/10 is too low!" % data["playerRep"])
+                        else:
+                            self.logger.info(
+                                "[%sMCBans%s] %s has a reputation of %s/10 which is below the threshold, but is on the exceptions list." % (
+                                client.username, data["playerRep"]))
+                else:
+                    self.factory.logger.error("MCBans error: %s" % str(error))
+                finally:
+                    client.reason = ""
             else:
-                self.factory.logger.error("MCBans error: %s" % str(error))
-            finally:
-                client.reason = ""
+                self.factory.logger.warn("MCBans appears down or too slow.")
 
     def disconnected(self, data):
         if self.has_api:
-            value = self.handler.disconnect(data["client"].username)
-        try:
-            error = value["error"]
-        except:
-            pass
-        else:
-            self.factory.logger.error("MCBans error: %s" % str(error))
+            if self.is_up:
+                value = self.handler.disconnect(data["client"].username)
+                try:
+                    error = value["error"]
+                except:
+                    pass
+                else:
+                    self.factory.logger.error("MCBans error: %s" % str(error))
+            else:
+                self.factory.logger.warn("MCBans appears down or too slow.")
 
     def banned(self, data):
         if self.has_api:
-            value = self.handler.localBan(data["username"],
-                self.factory.clients[data["username"]].getPeer().host if data[
-                                                                         "username"] in self.factory.clients.keys() else "Offline"
-                , data["reason"], data["admin"])
-            try:
-                error = value["error"]
-            except:
-                if value["result"] != u'y':
-                    self.factory.logger.warn("Unable to add %s to the MCBans local ban list!")
+            if self.is_up:
+                value = self.handler.localBan(data["username"],
+                    self.factory.clients[data["username"]].getPeer().host if data[
+                                                                             "username"] in self.factory.clients.keys() else "Offline"
+                    , data["reason"], data["admin"])
+                try:
+                    error = value["error"]
+                except:
+                    if value["result"] != u'y':
+                        self.factory.logger.warn("Unable to add %s to the MCBans local ban list!")
+                else:
+                    self.factory.logger.error("MCBans error: %s" % str(error))
             else:
-                self.factory.logger.error("MCBans error: %s" % str(error))
+                self.factory.logger.warn("MCBans appears down or too slow.")
 
     def unbanned(self, data):
         if self.has_api:
-            value = self.handler.unban(data["username"], "Local")
-            try:
-                error = value["error"]
-            except:
-                if value["result"] != u'y':
-                    self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
+            if self.is_up:
+                value = self.handler.unban(data["username"], "Local")
+                try:
+                    error = value["error"]
+                except:
+                    if value["result"] != u'y':
+                        self.factory.logger.warn("Unable to remove %s from the MCBans local ban list!")
+                else:
+                    self.factory.logger.error("MCBans error: %s" % str(error))
             else:
-                self.factory.logger.error("MCBans error: %s" % str(error))
+                self.factory.logger.warn("MCBans appears down or too slow.")
 
     def callback(self):
         if self.has_api:
-            version = "13.37"
-            maxplayers = self.factory.max_clients
-            playerlist = []
-            for element in self.factory.usernames.keys():
-                playerlist.append(element)
-            done = ",".join(playerlist)
-            value = self.handler.callBack(maxplayers, done, version)
-            try:
-                error = value["error"]
-            except:
-                pass
+            if self.is_up:
+                version = "3.6"
+                maxplayers = self.factory.max_clients
+                playerlist = []
+                for element in self.factory.usernames.keys():
+                    playerlist.append(element)
+                done = ",".join(playerlist)
+                value = self.handler.callBack(maxplayers, done, version)
+                try:
+                    error = value["error"]
+                except:
+                    pass
+                else:
+                    self.factory.logger.error("MCBans error: %s" % str(error))
             else:
-                self.factory.logger.error("MCBans error: %s" % str(error))
+                self.factory.logger.warn("MCBans appears down or too slow.")
 
     @config("category", "build")
-    @config("disabled-on", ["cmdblock"])
     def commandMCBans(self, data):
-        "Used to interact with the MCBans API."
+        """Used to interact with the MCBans API."""
         if self.has_api:
-            if len(data["parts"]) < 2:
-                data["client"].sendServerMessage("--- MCBans API help ---")
-                data["client"].sendServerMessage("Commands list")
-                data["client"].sendServerMessage("/mcbans help [command/topic]")
-                data["client"].sendServerMessage("/mcbans lookup [type] [player]")
-                data["client"].sendServerMessage("/mcbans unban [player]")
-                data["client"].sendServerMessage("/mcbans ban [player] [type]")
-                data["client"].sendServerMessage("/mcbans reason [reason]")
-                data["client"].sendServerMessage("/mcbans confirm [key]")
-            else:
-                selection = data["parts"][1].lower()
-                if selection == "help":
-                    if len(data["parts"]) < 3:
-                        data["client"].sendServerMessage("--- MCBans API help ---")
-                        data["client"].sendSplitServerMessage("MCBans is a global ban system using a http API.")
-                        data["client"].sendSplitServerMessage("There are three MCBans commands available.")
-                        data["client"].sendSplitServerMessage(
-                            "Admin commands in %sred%s." % (COLOUR_RED, COLOUR_YELLOW))
-                        data["client"].sendServerMessage("* lookup: Looks up a player's info")
-                        data["client"].sendServerMessage(
-                            "* %sban%s: Bans a player on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
-                        data["client"].sendServerMessage(
-                            "* %sunban%s: Reverses a ban on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
-                        data["client"].sendServerMessage(
-                            "* %sreason%s: Set the ban reason for your next ban" % (COLOUR_RED, COLOUR_YELLOW))
-                        data["client"].sendSplitServerMessage("Do /mcbans help command for more info.")
-                    else:
-                        command = data["parts"][2].lower()
-                        if command == "lookup":
-                            data["client"].sendSplitServerMessage("USAGE: /mcbans lookup [type] [player]")
-                            data["client"].sendSplitServerMessage("This command is used to look up player info.")
-                            data["client"].sendSplitServerMessage("Type may be one of the following..")
-                            data["client"].sendSplitServerMessage("all: Displays all information")
-                            data["client"].sendSplitServerMessage("global: Displays global bans")
-                            data["client"].sendSplitServerMessage("local: Displays local bans")
-                            data["client"].sendSplitServerMessage("minimal: Displays reputation and ban count")
-                        elif command == "ban":
+            if self.is_up:
+                if len(data["parts"]) < 2:
+                    data["client"].sendServerMessage("--- MCBans API help ---")
+                    data["client"].sendServerMessage("Commands list")
+                    data["client"].sendServerMessage("/mcbans help [command/topic]")
+                    data["client"].sendServerMessage("/mcbans lookup [type] [player]")
+                    data["client"].sendServerMessage("/mcbans unban [player]")
+                    data["client"].sendServerMessage("/mcbans ban [player] [type]")
+                    data["client"].sendServerMessage("/mcbans reason [reason]")
+                    data["client"].sendServerMessage("/mcbans confirm [key]")
+                else:
+                    selection = data["parts"][1].lower()
+                    if selection == "help":
+                        if len(data["parts"]) < 3:
+                            data["client"].sendServerMessage("--- MCBans API help ---")
+                            data["client"].sendSplitServerMessage("MCBans is a global ban system using a http API.")
+                            data["client"].sendSplitServerMessage("There are three MCBans commands available.")
                             data["client"].sendSplitServerMessage(
-                                "USAGE: /mcbans ban [player] [type] (duration) (measure)")
-                            data["client"].sendSplitServerMessage("This command is used to make a ban on MCBans.")
-                            data["client"].sendSplitServerMessage("Type may be one of the following..")
-                            data["client"].sendSplitServerMessage("global: A global ban.")
-                            data["client"].sendSplitServerMessage("- Only use this if you have conclusive proof!")
-                            data["client"].sendSplitServerMessage("- This includes screenshots and /checkblock.")
-                            data["client"].sendSplitServerMessage("temp: A temporary ban.")
-                            data["client"].sendSplitServerMessage("- Duration is a number.")
-                            data["client"].sendSplitServerMessage("- Measure can be 'm', 'h' or 'd'.")
-                            data["client"].sendSplitServerMessage("Local bans are handled by /ban.")
-                        elif command == "unban":
-                            data["client"].sendSplitServerMessage("USAGE: /mcbans ban [player]")
-                            data["client"].sendSplitServerMessage("Unbans a player from the server's MCBans entries")
-                        elif command == "reason":
-                            data["client"].sendSplitServerMessage("USAGE: /mcbans reason [reason]")
-                            data["client"].sendSplitServerMessage("Use this to set a ban reason for your next ban.")
-                            data["client"].sendSplitServerMessage("Reasons are manditory.")
-                        elif command == "help":
-                            data["client"].sendSplitServerMessage("USAGE: /mcbans help (topic)")
-                            data["client"].sendSplitServerMessage("You're reading it, stupid.")
-                        elif command == "confirm":
-                            data["client"].sendSplitServerMessage("USAGE: /mcbans confirm [key]")
-                            data["client"].sendSplitServerMessage("Used to confirm your mcbans.com account.")
+                                "Admin commands in %sred%s." % (COLOUR_RED, COLOUR_YELLOW))
+                            data["client"].sendServerMessage("* lookup: Looks up a player's info")
+                            data["client"].sendServerMessage(
+                                "* %sban%s: Bans a player on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
+                            data["client"].sendServerMessage(
+                                "* %sunban%s: Reverses a ban on MCBans" % (COLOUR_RED, COLOUR_YELLOW))
+                            data["client"].sendServerMessage(
+                                "* %sreason%s: Set the ban reason for your next ban" % (COLOUR_RED, COLOUR_YELLOW))
+                            data["client"].sendSplitServerMessage("Do /mcbans help command for more info.")
                         else:
-                            data["client"].sendSplitServerMessage("'%s' is not a help topic." % command)
-                            data["client"].sendSplitServerMessage("Try /mcbans help on its own.")
-                elif selection == "ban":
-                    if self.client.isAdmin():
-                        if len(data["parts"]) > 2:
-                            player = data["parts"][2].lower()
-                            type = data["parts"][3].lower()
-                            if type == "global":
-                                if not data["client"].reason is "":
-                                    if player in self.client.factory.usernames.keys():
-                                        client = self.client.factory.usernames[player]
-                                        try:
-                                            value = self.handler.globalBan(player, client.transport.getPeer().host,
-                                                data["client"].reason, self.client.username)
-                                        except Exception as a:
-                                            data["client"].sendServerMessage("Unable to ban %s globally." % player)
-                                            data["client"].sendServerMessage("Error: %s" % a)
-                                        else:
-                                            if value["result"] == u'y':
-                                                data["client"].sendServerMessage(
-                                                    "Player %s has been globally banned." % player)
-                                                data["client"].sendServerMessage("Reason: %s" % data["client"].reason)
-                                                client.sendError("[MCBans] Global ban: %s" % data["client"].reason)
-                                                data["client"].reason = ""
-                                            else:
-                                                data["client"].sendServerMessage("Unable to ban %s globally." % player)
-                                                data["client"].sendServerMessage("Please check MCBans for more info.")
-                                    else:
-                                        data["client"].sendServerMessage("Player is offline, unable to globally ban.")
-                                else:
-                                    data["client"].sendServerMessage("No reason set - try /mcbans help reason")
-                            elif type == "temp":
-                                if not data["client"].reason is "":
-                                    if len(data["parts"]) > 5:
-                                        duration = data["parts"][4].lower()
-                                        measure = str(data["parts"][5].lower())
-                                        if not (measure == "m" or measure == "h" or measure == "d"):
-                                            data["client"].sendServerMessage("Measure must be m, h or d!")
-                                            data["client"].sendServerMessage("See /mcbans help ban")
-                                        else:
+                            command = data["parts"][2].lower()
+                            if command == "lookup":
+                                data["client"].sendSplitServerMessage("USAGE: /mcbans lookup [type] [player]")
+                                data["client"].sendSplitServerMessage("This command is used to look up player info.")
+                                data["client"].sendSplitServerMessage("Type may be one of the following..")
+                                data["client"].sendSplitServerMessage("all: Displays all information")
+                                data["client"].sendSplitServerMessage("global: Displays global bans")
+                                data["client"].sendSplitServerMessage("local: Displays local bans")
+                                data["client"].sendSplitServerMessage("minimal: Displays reputation and ban count")
+                            elif command == "ban":
+                                data["client"].sendSplitServerMessage(
+                                    "USAGE: /mcbans ban [player] [type] (duration) (measure)")
+                                data["client"].sendSplitServerMessage("This command is used to make a ban on MCBans.")
+                                data["client"].sendSplitServerMessage("Type may be one of the following..")
+                                data["client"].sendSplitServerMessage("global: A global ban.")
+                                data["client"].sendSplitServerMessage("- Only use this if you have conclusive proof!")
+                                data["client"].sendSplitServerMessage("- This includes screenshots and /checkblock.")
+                                data["client"].sendSplitServerMessage("temp: A temporary ban.")
+                                data["client"].sendSplitServerMessage("- Duration is a number.")
+                                data["client"].sendSplitServerMessage("- Measure can be 'm', 'h' or 'd'.")
+                                data["client"].sendSplitServerMessage("Local bans are handled by /ban.")
+                            elif command == "unban":
+                                data["client"].sendSplitServerMessage("USAGE: /mcbans ban [player]")
+                                data["client"].sendSplitServerMessage("Unbans a player from the server's MCBans entries")
+                            elif command == "reason":
+                                data["client"].sendSplitServerMessage("USAGE: /mcbans reason [reason]")
+                                data["client"].sendSplitServerMessage("Use this to set a ban reason for your next ban.")
+                                data["client"].sendSplitServerMessage("Reasons are manditory.")
+                            elif command == "help":
+                                data["client"].sendSplitServerMessage("USAGE: /mcbans help (topic)")
+                                data["client"].sendSplitServerMessage("You're reading it, stupid.")
+                            elif command == "confirm":
+                                data["client"].sendSplitServerMessage("USAGE: /mcbans confirm [key]")
+                                data["client"].sendSplitServerMessage("Used to confirm your mcbans.com account.")
+                            else:
+                                data["client"].sendSplitServerMessage("'%s' is not a help topic." % command)
+                                data["client"].sendSplitServerMessage("Try /mcbans help on its own.")
+                    elif selection == "ban":
+                        if fromloc != "user":
+                            self.sendServerMessage("This command cannot be used in a command block.")
+                            return
+                        if self.client.isAdmin():
+                            if len(data["parts"]) > 2:
+                                player = data["parts"][2].lower()
+                                type = data["parts"][3].lower()
+                                if type == "global":
+                                    if not data["client"].reason is "":
+                                        if player in self.client.factory.usernames.keys():
+                                            client = self.client.factory.usernames[player]
                                             try:
-                                                int(duration)
-                                            except Exception:
-                                                data["client"].sendServerMessage("Duration must be a number!")
+                                                value = self.handler.globalBan(player, client.transport.getPeer().host,
+                                                    data["client"].reason, self.client.username)
+                                            except Exception as a:
+                                                data["client"].sendServerMessage("Unable to ban %s globally." % player)
+                                                data["client"].sendServerMessage("Error: %s" % a)
+                                            else:
+                                                if value["result"] == u'y':
+                                                    data["client"].sendServerMessage(
+                                                        "Player %s has been globally banned." % player)
+                                                    data["client"].sendServerMessage("Reason: %s" % data["client"].reason)
+                                                    client.sendError("[MCBans] Global ban: %s" % data["client"].reason)
+                                                    data["client"].reason = ""
+                                                else:
+                                                    data["client"].sendServerMessage("Unable to ban %s globally." % player)
+                                                    data["client"].sendServerMessage("Please check MCBans for more info.")
+                                        else:
+                                            data["client"].sendServerMessage("Player is offline, unable to globally ban.")
+                                    else:
+                                        data["client"].sendServerMessage("No reason set - try /mcbans help reason")
+                                elif type == "temp":
+                                    if not data["client"].reason is "":
+                                        if len(data["parts"]) > 5:
+                                            duration = data["parts"][4].lower()
+                                            measure = str(data["parts"][5].lower())
+                                            if not (measure == "m" or measure == "h" or measure == "d"):
+                                                data["client"].sendServerMessage("Measure must be m, h or d!")
                                                 data["client"].sendServerMessage("See /mcbans help ban")
                                             else:
-                                                if player in self.client.factory.clients.keys():
-                                                    ip = self.client.factory.clients[
-                                                         player].transport.getPeer().host
-                                                    client = self.client.factory.clients[player]
-                                                else:
-                                                    ip = "Offline"
-                                                    client = None
                                                 try:
-                                                    value = self.handler.tempBan(player, ip, data["client"].reason,
-                                                        self.client.username, duration, measure=measure)
-                                                except Exception as a:
-                                                    data["client"].sendServerMessage(
-                                                        "Unable to ban %s temporarily." % player)
-                                                    data["client"].sendServerMessage("Error: %s" % a)
+                                                    int(duration)
+                                                except Exception:
+                                                    data["client"].sendServerMessage("Duration must be a number!")
+                                                    data["client"].sendServerMessage("See /mcbans help ban")
                                                 else:
-                                                    if value["result"] == u'y':
-                                                        data["client"].sendServerMessage(
-                                                            "Player %s has been temporarily banned." % player)
-                                                        data["client"].sendServerMessage("Reason: %s" % data["client"].reason)
-                                                        if not client is None:
-                                                            client.sendError("[MCBans] Temporary ban: %s" % reason)
-                                                        data["client"].reason = ""
+                                                    if player in self.client.factory.clients.keys():
+                                                        ip = self.client.factory.clients[
+                                                             player].transport.getPeer().host
+                                                        client = self.client.factory.clients[player]
                                                     else:
+                                                        ip = "Offline"
+                                                        client = None
+                                                    try:
+                                                        value = self.handler.tempBan(player, ip, data["client"].reason,
+                                                            self.client.username, duration, measure=measure)
+                                                    except Exception as a:
                                                         data["client"].sendServerMessage(
                                                             "Unable to ban %s temporarily." % player)
-                                                        data["client"].sendServerMessage(
-                                                            "Please check MCBans for more info.")
+                                                        data["client"].sendServerMessage("Error: %s" % a)
+                                                    else:
+                                                        if value["result"] == u'y':
+                                                            data["client"].sendServerMessage(
+                                                                "Player %s has been temporarily banned." % player)
+                                                            data["client"].sendServerMessage("Reason: %s" % data["client"].reason)
+                                                            if not client is None:
+                                                                client.sendError("[MCBans] Temporary ban: %s" % data["client"].reason)
+                                                            data["client"].reason = ""
+                                                        else:
+                                                            data["client"].sendServerMessage(
+                                                                "Unable to ban %s temporarily." % player)
+                                                            data["client"].sendServerMessage(
+                                                                "Please check MCBans for more info.")
+                                        else:
+                                            data["client"].sendServerMessage(
+                                                "Syntax: /mcbans ban [player] [type] (duration) (measure)")
                                     else:
-                                        data["client"].sendServerMessage(
-                                            "Syntax: /mcbans ban [player] [type] (duration) (measure)")
+                                        data["client"].sendServerMessage("No reason set - try /mcbans help reason")
+                                elif type == "local":
+                                    data["client"].sendServerMessage("Local bans are handled by /ban.")
                                 else:
-                                    data["client"].sendServerMessage("No reason set - try /mcbans help reason")
-                            elif type == "local":
-                                data["client"].sendServerMessage("Local bans are handled by /ban.")
+                                    data["client"].sendServerMessage("Ban type %s not recognized." % type)
+                                    data["client"].sendServerMessage("See /mcbans help ban")
                             else:
-                                data["client"].sendServerMessage("Ban type %s not recognized." % type)
-                                data["client"].sendServerMessage("See /mcbans help ban")
+                                data["client"].sendServerMessage(
+                                    "Syntax: /mcbans ban [player] [type] (duration) (measure)")
                         else:
-                            data["client"].sendServerMessage(
-                                "Syntax: /mcbans ban [player] [type] (duration) (measure)")
-                    else:
-                        data["client"].sendServerMessage("/mcbans ban is an admin-only command!")
-                elif selection == "unban":
-                    if self.client.isAdmin():
-                        if len(data["parts"]) > 2:
-                            player = data["parts"][2].lower()
+                            data["client"].sendServerMessage("/mcbans ban is an admin-only command!")
+                    elif selection == "unban":
+                        if self.client.isAdmin():
+                            if len(data["parts"]) > 2:
+                                player = data["parts"][2].lower()
+                                try:
+                                    value = self.handler.unban(player, self.client.username)
+                                except Exception as a:
+                                    data["client"].sendServerMessage("Unable to unban %s." % player)
+                                    data["client"].sendServerMessage("Error: %s" % a)
+                                else:
+                                    if value["result"] == u'y':
+                                        data["client"].sendServerMessage("Player %s has been unbanned." % player)
+                                    else:
+                                        data["client"].sendServerMessage("Unable to unban %s." % player)
+                                        data["client"].sendServerMessage("Please check MCBans for more info.")
+                            else:
+                                data["client"].sendServerMessage("Syntax: /mcbans unban [player]")
+                        else:
+                            data["client"].sendServerMessage("/mcbans unban is an admin-only command!")
+                    elif selection == "reason":
+                        if self.client.isAdmin():
+                            if len(data["parts"]) > 2:
+                                reason = data["parts"][2]
+                                data["client"].reason = reason
+                                data["client"].sendServerMessage("Set reason: %s" % reason)
+                            else:
+                                data["client"].reason = ""
+                                data["client"].sendServerMessage("Unset reason.")
+                        else:
+                            data["client"].sendServerMessage("/mcbans reason is an admin-only command!")
+                    elif selection == "lookup":
+                        if len(data["parts"]) is 4:
+                            type = data["parts"][2].lower()
+                            player = data["parts"][3].lower()
                             try:
-                                value = self.handler.unban(player, self.client.username)
+                                data = self.handler.lookup(player, self.client.username)
                             except Exception as a:
-                                data["client"].sendServerMessage("Unable to unban %s." % player)
+                                data["client"].sendServerMessage("Unable to look up %s!" % player)
                                 data["client"].sendServerMessage("Error: %s" % a)
                             else:
-                                if value["result"] == u'y':
-                                    data["client"].sendServerMessage("Player %s has been unbanned." % player)
+                                if type == "all": # all/global/local/minimal
+                                    data["client"].sendServerMessage("Information on %s" % player)
+                                    data["client"].sendServerMessage("Reputation: %.2f/10" % data["reputation"])
+                                    data["client"].sendServerMessage("Total bans: %s" % data["total"])
+                                    if len(data["local"]) > 0:
+                                        data["client"].sendServerMessage("--- LOCAL BANS ---")
+                                        for element in data["local"]:
+                                            server = element.split(" .:. ")[0].encode("ascii", "ignore")
+                                            reason = element.split(" .:. ")[1].encode("ascii", "ignore")
+                                            data["client"].sendServerMessage("%s: %s" % (server, reason))
+                                    else:
+                                        data["client"].sendServerMessage("No local bans.")
+                                    if len(data["global"]) > 0:
+                                        data["client"].sendServerMessage("--- GLOBAL BANS ---")
+                                        for element in data["global"]:
+                                            server = element.split(" .:. ")[0].encode("ascii", "ignore")
+                                            reason = element.split(" .:. ")[1].encode("ascii", "ignore")
+                                            data["client"].sendServerMessage("%s: %s" % (server, reason))
+                                    else:
+                                        data["client"].sendServerMessage("No global bans.")
+                                elif type == "global":
+                                    data["client"].sendServerMessage("Information on %s" % player)
+                                    if len(data["global"]) > 0:
+                                        data["client"].sendServerMessage("--- GLOBAL BANS ---")
+                                        for element in data["global"]:
+                                            server = element.split(" .:. ")[0].encode("ascii", "ignore")
+                                            reason = element.split(" .:. ")[1].encode("ascii", "ignore")
+                                            data["client"].sendServerMessage("%s: %s" % (server, reason))
+                                    else:
+                                        data["client"].sendServerMessage("No global bans.")
+                                elif type == "local":
+                                    data["client"].sendServerMessage("Information on %s" % player)
+                                    if len(data["local"]) > 0:
+                                        data["client"].sendServerMessage("--- LOCAL BANS ---")
+                                        for element in data["local"]:
+                                            server = element.split(" .:. ")[0].encode("ascii", "ignore")
+                                            reason = element.split(" .:. ")[1].encode("ascii", "ignore")
+                                            data["client"].sendServerMessage("%s: %s" % (server, reason))
+                                    else:
+                                        data["client"].sendServerMessage("No local bans.")
+                                elif type == "minimal":
+                                    data["client"].sendServerMessage("Information on %s" % player)
+                                    data["client"].sendServerMessage("Reputation: %.2f/10" % data["reputation"])
+                                    data["client"].sendServerMessage("Total bans: %s" % data["total"])
                                 else:
-                                    data["client"].sendServerMessage("Unable to unban %s." % player)
-                                    data["client"].sendServerMessage("Please check MCBans for more info.")
+                                    data["client"].sendServerMessage("Type %s not reconized." % type)
+                                    data["client"].sendServerMessage("See /mcbans help lookup")
                         else:
-                            data["client"].sendServerMessage("Syntax: /mcbans unban [player]")
-                    else:
-                        data["client"].sendServerMessage("/mcbans unban is an admin-only command!")
-                elif selection == "reason":
-                    if self.client.isAdmin():
+                            data["client"].sendServerMessage("Syntax: /mcbans lookup [type] [player]")
+                    elif selection == "confirm":
+                        if fromloc != "user":
+                            data["client"].sendServerMessage("This command cannot be used in a command block.")
+                            return
                         if len(data["parts"]) > 2:
-                            reason = data["parts"][2]
-                            data["client"].reason = reason
-                            data["client"].sendServerMessage("Set reason: %s" % reason)
-                        else:
-                            data["client"].reason = ""
-                            data["client"].sendServerMessage("Unset reason.")
-                    else:
-                        data["client"].sendServerMessage("/mcbans reason is an admin-only command!")
-                elif selection == "lookup":
-                    if len(data["parts"]) is 4:
-                        type = data["parts"][2].lower()
-                        player = data["parts"][3].lower()
-                        try:
-                            data = self.handler.lookup(player, self.client.username)
-                        except Exception as a:
-                            data["client"].sendServerMessage("Unable to look up %s!" % player)
-                            data["client"].sendServerMessage("Error: %s" % a)
-                        else:
-                            if type == "all": # all/global/local/minimal
-                                data["client"].sendServerMessage("Information on %s" % player)
-                                data["client"].sendServerMessage("Reputation: %.2f/10" % data["reputation"])
-                                data["client"].sendServerMessage("Total bans: %s" % data["total"])
-                                if len(data["local"]) > 0:
-                                    data["client"].sendServerMessage("--- LOCAL BANS ---")
-                                    for element in data["local"]:
-                                        server = element.split(" .:. ")[0].encode("ascii", "ignore")
-                                        reason = element.split(" .:. ")[1].encode("ascii", "ignore")
-                                        data["client"].sendServerMessage("%s: %s" % (server, reason))
-                                else:
-                                    data["client"].sendServerMessage("No local bans.")
-                                if len(data["global"]) > 0:
-                                    data["client"].sendServerMessage("--- GLOBAL BANS ---")
-                                    for element in data["global"]:
-                                        server = element.split(" .:. ")[0].encode("ascii", "ignore")
-                                        reason = element.split(" .:. ")[1].encode("ascii", "ignore")
-                                        data["client"].sendServerMessage("%s: %s" % (server, reason))
-                                else:
-                                    data["client"].sendServerMessage("No global bans.")
-                            elif type == "global":
-                                data["client"].sendServerMessage("Information on %s" % player)
-                                if len(data["global"]) > 0:
-                                    data["client"].sendServerMessage("--- GLOBAL BANS ---")
-                                    for element in data["global"]:
-                                        server = element.split(" .:. ")[0].encode("ascii", "ignore")
-                                        reason = element.split(" .:. ")[1].encode("ascii", "ignore")
-                                        data["client"].sendServerMessage("%s: %s" % (server, reason))
-                                else:
-                                    data["client"].sendServerMessage("No global bans.")
-                            elif type == "local":
-                                data["client"].sendServerMessage("Information on %s" % player)
-                                if len(data["local"]) > 0:
-                                    data["client"].sendServerMessage("--- LOCAL BANS ---")
-                                    for element in data["local"]:
-                                        server = element.split(" .:. ")[0].encode("ascii", "ignore")
-                                        reason = element.split(" .:. ")[1].encode("ascii", "ignore")
-                                        data["client"].sendServerMessage("%s: %s" % (server, reason))
-                                else:
-                                    data["client"].sendServerMessage("No local bans.")
-                            elif type == "minimal":
-                                data["client"].sendServerMessage("Information on %s" % player)
-                                data["client"].sendServerMessage("Reputation: %.2f/10" % data["reputation"])
-                                data["client"].sendServerMessage("Total bans: %s" % data["total"])
+                            key = data["parts"][2]
+                            data = self.handler.confirm(self.client.username, key)
+                            if data["result"] == u'y':
+                                data["client"].sendServerMessage("Account confirmed. Welcome to MCBans!")
                             else:
-                                data["client"].sendServerMessage("Type %s not reconized." % type)
-                                data["client"].sendServerMessage("See /mcbans help lookup")
-                    else:
-                        data["client"].sendServerMessage("Syntax: /mcbans lookup [type] [player]")
-                elif selection == "confirm":
-                    if len(data["parts"]) > 2:
-                        key = data["parts"][2]
-                        data = self.handler.confirm(self.client.username, key)
-                        if data["result"] == u'y':
-                            data["client"].sendServerMessage("Account confirmed. Welcome to MCBans!")
+                                data["client"].sendServerMessage("Unable to confirm account!")
+                                data["client"].sendServerMessage("Check your confirmation key.")
                         else:
-                            data["client"].sendServerMessage("Unable to confirm account!")
-                            data["client"].sendServerMessage("Check your confirmation key.")
+                            data["client"].sendServerMessage("Syntax: /mcbans confirm [key]")
                     else:
-                        data["client"].sendServerMessage("Syntax: /mcbans confirm [key]")
-                else:
-                    data["client"].sendSplitServerMessage("'%s' is not an MCBans command." % data["parts"][1])
-                    data["client"].sendSplitServerMessage("Try /mcbans help on its own.")
+                        data["client"].sendSplitServerMessage("'%s' is not an MCBans command." % data["parts"][1])
+                        data["client"].sendSplitServerMessage("Try /mcbans help on its own.")
+            else:
+                data["client"].sendSplitServerMessage("MCBans appears down or too slow. This command has therefore been disabled.")
         else:
             data["client"].sendSplitServerMessage("No MCBans API key found! This command has therefore been disabled.")
 
