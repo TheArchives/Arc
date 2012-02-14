@@ -203,7 +203,7 @@ IRCCOLOUR_BOLD = chr(2)
 IRCCOLOUR_UNDERLINE = chr(31)
 
 # Rank colours (currently hardcoded)
-RANK_COLOURS = [
+RANK_COLOURS = {
     "owner": COLOUR_GREEN,
     "director": COLOUR_DARKRED,
     "admin": COLOUR_RED,
@@ -216,7 +216,7 @@ RANK_COLOURS = [
     "guest": COLOUR_WHITE,
     "spectator": COLOUR_BLACK,
     "default": COLOUR_WHITE
-]
+}
 
 BLOCK_NOTHING = 0
 BLOCK_NONE = 0
