@@ -2,16 +2,19 @@
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
-import ConfigParser
+import urllib
 
 from twisted.web.client import getPage
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import TimeoutError
+from twisted.internet import reactor
+from twisted.web.error import Error as twistedError
 
 from arc.includes.mcbans_api import McBans
 
 from arc.constants import *
 from arc.decorators import *
+from arc.world import *
 
 class McBansServerPlugin():
     name = "McBansServerPlugin"
@@ -26,42 +29,48 @@ class McBansServerPlugin():
     }
 
     commands = {
-        "mcbans": "commandMCBans"
+        "mcbans": "commandMCBans",
+        "gban": "commandGlobalBan"
     }
 
     # Hook for a changed block
 
     def blockChanged(self, data):
-        client = data["client"]
-        rdata = {"data": True}
-        if not client.has_mcbans_data:
-            client.sendServerMessage("Unable to edit: Still fetching MCBans data.")
-            client.sendBlock(client.world.blockstore(data["data"][0], data["data"][1], data["data"][2]))
-            rdata["data"] = False
+        if not isinstance(data["client"], World):
+            client = data["client"]
+            rdata = {"data": True}
+            if not client.has_mcbans_data:
+                client.sendServerMessage("Unable to edit: Still fetching MCBans data.")
+                client.sendBlock(client.world.blockstore(data["data"][0], data["data"][1], data["data"][2]))
+                rdata["data"] = False
+            else:
+                rdata["data"] = True
+            return rdata
         else:
-            rdata["data"] = True
-        return rdata
+            return {"data": True}
 
     # Looping callback to keep an eye on API speed
 
     def isitup(self):
-        getPage("http://api.mcbans.com/v2/" + api_key, method="POST", postdata={"exec": "check"},
-            timeout=5).addCallback(
-            self.up_win).addErrback(self.up_fail)
+        future = getPage("http://api.mcbans.com/v2/" + self.api_key , method="POST", postdata=urllib.urlencode({"exec": "check"}), timeout=10)
+        future.addCallback(self.up_win, None)
+        future.addErrback(self.up_fail, None)
+        reactor.callLater(10, self.isitup)
 
-    def up_win(self, result):
-        if result == "up":
-            self.is_up = True
+    def up_win(self, result, thing=None):
+        if len(str(result)) > 0:
+            self.factory.is_mcbans_up = True
         else:
-            if self.is_up:
-                self.is_up = False
+            if self.factory.is_mcbans_up:
+                self.factory.is_mcbans_up = False
                 self.logger.warn("MCBans API responded in time but didn't return the correct data!")
 
-    def up_fail(self, result):
-        if self.is_up:
-            self.is_up = False
+    def up_fail(self, result, thing=None):
+        self.logger.info("MCBans: Fail!")
+        if self.factory.is_mcbans_up:
+            self.factory.is_mcbans_up = False
             if isinstance(result, twistedError):
-                self.logger.warn("MCBans API failed to respond within a reasonable time!")
+                self.logger.warn("MCBans API failed to respond within a reasonable time, or.. %s" % result)
             else:
                 self.logger.error("Unable to reach MCBans API: %s" % result)
 
@@ -69,7 +78,7 @@ class McBansServerPlugin():
 
     def gotServer(self):
         self.logger.debug("[&1MCBans&f] Reading in API Key..")
-        config = ConfigParser.RawConfigParser()
+        config = ConfigParser()
         try:
             config.read("config/plugins/mcbans.conf")
             self.api_key = config.get("mcbans", "apikey")
@@ -78,7 +87,7 @@ class McBansServerPlugin():
             self.logger.error("[&1MCBans&f] &4%s" % a)
             self.has_api = False
         else:
-            self.logger.debug("[&1MCBans&f] Found API key: &1%s&f" % api_key)
+            self.logger.debug("[&1MCBans&f] Found API key: &1%s&f" % self.api_key)
             self.logger.info("[&1MCBans&f] MCBans enabled!")
             self.handler = McBans(self.api_key)
             self.has_api = True
@@ -98,19 +107,22 @@ class McBansServerPlugin():
                 self.exceptions = []
             else:
                 self.logger.info("[&1MCBans&f] %s exceptions loaded." % len(self.exceptions))
-            self.is_up = False
-            self.loop = LoopingCall(self.isitup)
-            self.loop.start(5)
+            self.factory.is_mcbans_up = False
+            self.isitup()
 
 
     def connected(self, data):
+        client = data["client"]
+        client.has_mcbans_data = False
         if self.has_api:
-            if self.is_up:
-                client = data["client"]
+            if self.factory.is_mcbans_up:
                 data = self.handler.connect(client.username, client.transport.getPeer().host)
                 try:
                     error = value["error"]
+                    client.has_mcbans_data = True
+                    client.sendServerMessage("MCbans was unable to check your details.")
                 except:
+                    client.has_mcbans_data = True
                     status = data["banStatus"]
                     if status == u'n':
                         self.logger.info(
@@ -169,11 +181,14 @@ class McBansServerPlugin():
                 finally:
                     client.reason = ""
             else:
+                client.has_mcbans_data = True
+                client.sendServerMessage("Unable to get MCBans data.")
                 self.factory.logger.warn("MCBans appears down or too slow.")
+                self.factory.logger.warn("Allowing user through.")
 
     def disconnected(self, data):
         if self.has_api:
-            if self.is_up:
+            if self.factory.is_mcbans_up:
                 value = self.handler.disconnect(data["client"].username)
                 try:
                     error = value["error"]
@@ -186,7 +201,7 @@ class McBansServerPlugin():
 
     def banned(self, data):
         if self.has_api:
-            if self.is_up:
+            if self.factory.is_mcbans_up:
                 value = self.handler.localBan(data["username"],
                     self.factory.clients[data["username"]].getPeer().host if data[
                                                                              "username"] in self.factory.clients.keys() else "Offline"
@@ -203,7 +218,7 @@ class McBansServerPlugin():
 
     def unbanned(self, data):
         if self.has_api:
-            if self.is_up:
+            if self.factory.is_mcbans_up:
                 value = self.handler.unban(data["username"], "Local")
                 try:
                     error = value["error"]
@@ -217,7 +232,7 @@ class McBansServerPlugin():
 
     def callback(self):
         if self.has_api:
-            if self.is_up:
+            if self.factory.is_mcbans_up:
                 version = "3.6"
                 maxplayers = self.factory.max_clients
                 playerlist = []
@@ -232,13 +247,48 @@ class McBansServerPlugin():
                 else:
                     self.factory.logger.error("MCBans error: %s" % str(error))
             else:
-                self.factory.logger.warn("MCBans appears down or too slow.")
+                self.factory.logger.warn("MCBans appears down or too slow. Not sending callBack.")
+    
+    @config("rank", "admin")
+    def commandGlobalBan(self, data):
+        """/gban user reason - Globally bans a user on mcbans"""
+        parts = data["parts"]
+        if self.has_api:
+            if self.factory.is_mcbans_up:
+                if len(parts) > 2:
+                    player = parts[1].lower()
+                    reason = parts[2]
+                    
+                    if player in self.factory.usernames.keys():
+                        client = self.factory.usernames[player]
+                        try:
+                            value = self.handler.globalBan(player, client.transport.getPeer().host,
+                                reason, self.username)
+                        except Exception as a:
+                            data["client"].sendServerMessage("Unable to ban %s globally." % player)
+                            data["client"].sendServerMessage("Error: %s" % a)
+                        else:
+                            if value["result"] == u'y':
+                                data["client"].sendServerMessage(
+                                    "Player %s has been globally banned." % player)
+                                data["client"].sendServerMessage("Reason: %s" % data["client"].reason)
+                                client.sendError("[MCBans] Global ban: %s" % data["client"].reason)
+                                data["client"].reason = ""
+                            else:
+                                data["client"].sendServerMessage("Unable to ban %s globally." % player)
+                                data["client"].sendServerMessage("Please check MCBans for more info.")
+                else:
+                    data["client"].sendServerMessage("Usage: /gban user reason")
+            else:
+                data["client"].sendServerMessage("MCBans appears down or too slow. This command has therefore been disabled.")
+        else:
+            data["client"].sendServerMessage("No MCBans API key found! This command has therefore been disabled.")
 
     @config("category", "build")
     def commandMCBans(self, data):
         """Used to interact with the MCBans API."""
         if self.has_api:
-            if self.is_up:
+            if self.factory.is_mcbans_up:
                 if len(data["parts"]) < 2:
                     data["client"].sendServerMessage("--- MCBans API help ---")
                     data["client"].sendServerMessage("Commands list")
@@ -304,20 +354,17 @@ class McBansServerPlugin():
                                 data["client"].sendSplitServerMessage("'%s' is not a help topic." % command)
                                 data["client"].sendSplitServerMessage("Try /mcbans help on its own.")
                     elif selection == "ban":
-                        if fromloc != "user":
-                            self.sendServerMessage("This command cannot be used in a command block.")
-                            return
-                        if self.client.isAdmin():
+                        if data["client"].isadmin():
                             if len(data["parts"]) > 2:
                                 player = data["parts"][2].lower()
                                 type = data["parts"][3].lower()
                                 if type == "global":
                                     if not data["client"].reason is "":
-                                        if player in self.client.factory.usernames.keys():
-                                            client = self.client.factory.usernames[player]
+                                        if player in self.factory.usernames.keys():
+                                            client = self.factory.usernames[player]
                                             try:
                                                 value = self.handler.globalBan(player, client.transport.getPeer().host,
-                                                    data["client"].reason, self.client.username)
+                                                    data["client"].reason, self.username)
                                             except Exception as a:
                                                 data["client"].sendServerMessage("Unable to ban %s globally." % player)
                                                 data["client"].sendServerMessage("Error: %s" % a)
@@ -350,16 +397,16 @@ class McBansServerPlugin():
                                                     data["client"].sendServerMessage("Duration must be a number!")
                                                     data["client"].sendServerMessage("See /mcbans help ban")
                                                 else:
-                                                    if player in self.client.factory.clients.keys():
-                                                        ip = self.client.factory.clients[
+                                                    if player in self.factory.clients.keys():
+                                                        ip = self.factory.clients[
                                                              player].transport.getPeer().host
-                                                        client = self.client.factory.clients[player]
+                                                        client = self.factory.clients[player]
                                                     else:
                                                         ip = "Offline"
                                                         client = None
                                                     try:
                                                         value = self.handler.tempBan(player, ip, data["client"].reason,
-                                                            self.client.username, duration, measure=measure)
+                                                            self.username, duration, measure=measure)
                                                     except Exception as a:
                                                         data["client"].sendServerMessage(
                                                             "Unable to ban %s temporarily." % player)
@@ -393,11 +440,11 @@ class McBansServerPlugin():
                         else:
                             data["client"].sendServerMessage("/mcbans ban is an admin-only command!")
                     elif selection == "unban":
-                        if self.client.isAdmin():
+                        if data["client"].isadmin():
                             if len(data["parts"]) > 2:
                                 player = data["parts"][2].lower()
                                 try:
-                                    value = self.handler.unban(player, self.client.username)
+                                    value = self.handler.unban(player, self.username)
                                 except Exception as a:
                                     data["client"].sendServerMessage("Unable to unban %s." % player)
                                     data["client"].sendServerMessage("Error: %s" % a)
@@ -412,7 +459,7 @@ class McBansServerPlugin():
                         else:
                             data["client"].sendServerMessage("/mcbans unban is an admin-only command!")
                     elif selection == "reason":
-                        if self.client.isAdmin():
+                        if data["client"].isAdmin():
                             if len(data["parts"]) > 2:
                                 reason = data["parts"][2]
                                 data["client"].reason = reason
@@ -427,7 +474,7 @@ class McBansServerPlugin():
                             type = data["parts"][2].lower()
                             player = data["parts"][3].lower()
                             try:
-                                data = self.handler.lookup(player, self.client.username)
+                                data = self.handler.lookup(player, self.username)
                             except Exception as a:
                                 data["client"].sendServerMessage("Unable to look up %s!" % player)
                                 data["client"].sendServerMessage("Error: %s" % a)
@@ -482,12 +529,9 @@ class McBansServerPlugin():
                         else:
                             data["client"].sendServerMessage("Syntax: /mcbans lookup [type] [player]")
                     elif selection == "confirm":
-                        if fromloc != "user":
-                            data["client"].sendServerMessage("This command cannot be used in a command block.")
-                            return
                         if len(data["parts"]) > 2:
                             key = data["parts"][2]
-                            data = self.handler.confirm(self.client.username, key)
+                            data = self.handler.confirm(self.username, key)
                             if data["result"] == u'y':
                                 data["client"].sendServerMessage("Account confirmed. Welcome to MCBans!")
                             else:
