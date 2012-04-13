@@ -35,17 +35,18 @@ class World(object):
         # Other settings
         self.ops = set()
         self.builders = set()
-        self.status = dict()
-        self.status["cfgversion"] = ".".join([str(s) for s in CFGVERSION["world.meta"]])
-        self.status["owner"] = "n/a"
-        self.status["all_build"] = True
-        self.status["private"] = False
-        self.status["is_archive"] = False
-        self.status["autoshutdown"] = True
-        self.status["saving"] = False
-        self.status["zoned"] = False
-        self.status["physics"] = False
-        self.status["finite_water"] = True
+        self.status = {
+            "cfgversion": (".".join([str(s) for s in CFGVERSION["world.meta"]])),
+            "owner": "n/a",
+            "all_build": True,
+            "private": False,
+            "is_archive": False,
+            "autoshutdown": True,
+            "saving": False,
+            "zoned": False,
+            "physics": False,
+            "finite_water": True
+        }
         self._physics = False
         self._finite_water = False
         self.portals = {}
@@ -112,7 +113,7 @@ class World(object):
                         self.factory.queue.put((self, TASK_BLOCKSET, task[1]))
                     # Or there's a world message
                     elif task[0] is TASK_MESSAGE:
-                        self.factory.sendMessageToAll(task[1], "world", user="")
+                        self.factory.sendMessageToAll(task[1], "world", user="", fromloc="server")
                     # ???
                     else:
                         raise ValueError("Unknown World task: %s" % task)
@@ -178,7 +179,7 @@ class World(object):
             if config.has_option("options", "owner"):
                 self.status["owner"] = config.get("options", "owner").lower()
             else:
-                self.status["owner"] = "n/a"
+                self.status["owner"] = ""
             if config.has_option("options", "all_build"):
                 self.status["all_build"] = config.getboolean("options", "all_build")
             else:
@@ -531,5 +532,13 @@ class World(object):
                 ))
 
         self.flush_deferred.addCallback(on_flush)
-        self.factory.runHook("worldGzipHandleRequestReceived", {"world": self, "config": config})
+        self.factory.runHook("worldGzipHandleRequestReceived", {"world": self})
         return handle_deferred
+
+    def backup(self, id=None):
+        """
+        Backs up self. Specify an id to use as the backup's name, or let the
+        method generate one.
+        Typically, you should call the factory's backupWorld method instead.
+        """
+        pass

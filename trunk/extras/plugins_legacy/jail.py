@@ -1,4 +1,4 @@
-# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is copyright 2009-2012 the Arc team and other contributors.
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
@@ -6,14 +6,13 @@ import cPickle
 
 from arc.constants import *
 from arc.decorators import *
-from arc.plugins import ProtocolPlugin
 
 # jail constants for jail.dat
 J_USERS = 0
 J_ZONE = 1
 J_WORLD = 2
 
-class JailPlugin(ProtocolPlugin):
+class JailPlugin(object):
     def loadJail(self):
         file = open('config/data/jail.dat', 'r')
         dic = cPickle.load(file)
@@ -33,20 +32,21 @@ class JailPlugin(ProtocolPlugin):
         }
 
     hooks = {
-        "poschange": "posChanged",
-        "playerjoined": "playerJoined",
-        "newworld": "newWorld",
+        "posChange": "posChanged",
+        "onPlayerConnect": "playerConnected",
+        "newWorld": "newWorld",
         }
 
-    def gotClient(self):
-        self.jailed = False
-        self.jailed_until = -1
-        self.jail_zone = ""
-        self.jail_world = ""
+    def playerConnected(self, data):
+        data["client"].jailed = False
+        data["client"].jailed_until = -1
+        data["client"].jail_zone = ""
+        data["client"].jail_world = ""
+        self.prepJail(data["client"])
 
-    def prepJail(self):
+    def prepJail(self, client):
         jail = self.loadJail()
-        user = self.client.username.lower()
+        user = client.username.lower()
         changed = False
         if J_USERS not in jail:
             jail[J_USERS] = {}
@@ -58,15 +58,15 @@ class JailPlugin(ProtocolPlugin):
             jail[J_WORLD] = ""
             changed = True
         if user in jail[J_USERS]:
-            self.jailed = True
-            self.jailed_until = jail[J_USERS][user]
+            client.jailed = True
+            client.jailed_until = jail[J_USERS][user]
         else:
-            self.jailed = False
-            self.jailed_until = -1
-        self.jail_world = jail[J_WORLD]
-        self.jail_zone = jail[J_ZONE]
+            client.jailed = False
+            client.jailed_until = -1
+        client.jail_world = jail[J_WORLD]
+        client.jail_zone = jail[J_ZONE]
         if changed:
-            self.dumpJail(jail)
+            client.dumpJail(jail)
 
     def playerJoined(self, user):
         self.prepJail()
@@ -80,33 +80,33 @@ class JailPlugin(ProtocolPlugin):
         ry = y >> 5
         rz = z >> 5
         if self.jailed:
-            user = self.client.username.lower()
+            user = data["client"].username.lower()
             injail = False
             if self.jail_world == "" or self.jail_zone == "":
                 return
             if clock() >= self.jailed_until and self.jailed_until > 0:
-                self.client.sendWorldMessage("%s has served their sentence and is free." % user)
+                data["client"].sendWorldMessage("%s has served their sentence and is free." % user)
                 self.jailed = False
                 self.jailed_until = -1
                 jail = self.loadJail()
                 jail[J_USERS].pop(user)
                 self.dumpJail(jail)
-                self.client.changeToWorld(self.jail_world)
+                data["client"].changeToWorld(self.jail_world)
                 return
-            if self.client.world.id != self.jail_world:
-                if self.client.world.id not in self.client.factory.worlds:
+            if data["client"].world.id != self.jail_world:
+                if data["client"].world.id not in self.factory.worlds:
                     try:
-                        self.client.factory.loadWorld("worlds/%s" % self.jail_world, self.jail_world)
+                        self.factory.loadWorld("worlds/%s" % self.jail_world, self.jail_world)
                     except AssertionError:
-                        self.client.sendServerMessage("It's your lucky day, world %s is broken!" % self.jail_world)
+                        data["client"].sendServerMessage("It's your lucky day, world %s is broken!" % self.jail_world)
                         return
-                self.client.changeToWorld(self.jail_world)
-            for id, zone in self.client.world.userzones.items():
+                data["client"].changeToWorld(self.jail_world)
+            for id, zone in data["client"].world.userzones.items():
                 if zone[0] == self.jail_zone:
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     found = True
                     break
-            for id, zone in self.client.world.rankzones.items():
+            for id, zone in data["client"].world.rankzones.items():
                 if zone[0] == self.jail_zone:
                     x1, y1, z1, x2, y2, z2 = zone[1:7]
                     found = True
@@ -124,38 +124,38 @@ class JailPlugin(ProtocolPlugin):
                 jx = int((x1 + x2) / 2)
                 jy = int((y1 + y2) / 2)
                 jz = int((z1 + z2) / 2)
-                self.client.teleportTo(jx, jy, jz)
+                data["client"].teleportTo(jx, jy, jz)
 
     @config("rank", "mod")
-    def commandSetJail(self, parts, fromloc, overriderank):
+    def commandSetJail(self, data):
         "/setjail zonename - Mod\nSpecifies the jails zone name"
         if len(parts) != 2:
-            self.client.sendServerMessage("Usage: /setjail zonename")
+            data["client"].sendServerMessage("Usage: /setjail zonename")
             return
         zonename = parts[1]
         exists = False
-        for id, zone in self.client.world.userzones.items():
+        for id, zone in data["client"].world.userzones.items():
             if zone[0] == zonename:
                 exists = True
-        for id, zone in self.client.world.rankzones.items():
+        for id, zone in data["client"].world.rankzones.items():
             if zone[0] == zonename:
                 exists = True
         if not exists:
-            self.client.sendServerMessage("Zone '%s' doesn't exist in this world!" % zonename)
+            data["client"].sendServerMessage("Zone '%s' doesn't exist in this world!" % zonename)
             return
         self.prepJail()
         jail = self.loadJail()
         jail[J_ZONE] = zonename
-        jail[J_WORLD] = self.client.world.id
-        self.client.sendServerMessage("Set jail zone as '%s' in %s!" % (zonename, self.client.world.id))
+        jail[J_WORLD] = data["client"].world.id
+        data["client"].sendServerMessage("Set jail zone as '%s' in %s!" % (zonename, data["client"].world.id))
         self.dumpJail(jail)
 
     @config("rank", "mod")
-    def commandJail(self, parts, fromloc, overriderank):
+    def commandJail(self, data):
         "/jail user [minutes] - Mod\nPuts a user in jail.\nYou can specify a time limit, or leave blank for permajail!"
         if len(parts) == 3:
             if not parts[2].isdigit():
-                self.client.sendServerMessage("You must specify a positive numerical value for minutes!")
+                data["client"].sendServerMessage("You must specify a positive numerical value for minutes!")
                 return
             time = int(parts[2])
             seconds = int(parts[2]) * 60
@@ -163,33 +163,33 @@ class JailPlugin(ProtocolPlugin):
             seconds = 0
             time = 0
         else:
-            self.client.sendServerMessage("Usage: /jail user [minutes]")
+            data["client"].sendServerMessage("Usage: /jail user [minutes]")
             return
-        if self.client.factory.isHelper(parts[1]) or parts[1].lower() == self.client.username.lower():
-            self.client.sendServerMessage("You cannot jail yourself or a staff!")
+        if self.factory.isHelper(parts[1]) or parts[1].lower() == data["client"].username.lower():
+            data["client"].sendServerMessage("You cannot jail yourself or a staff!")
             return
         self.prepJail()
         jail = self.loadJail()
         found = False
         if jail[J_ZONE] == "":
-            self.client.sendServerMessage("You must set a jail zone up first with /znew!")
-            self.client.sendServerMessage("Use /setjail zone_name to set one up!")
+            data["client"].sendServerMessage("You must set a jail zone up first with /znew!")
+            data["client"].sendServerMessage("Use /setjail zone_name to set one up!")
             return
         names = []
         name = parts[1].lower()
-        for id, zone in self.client.factory.worlds[self.jail_world].userzones.items():
+        for id, zone in self.factory.worlds[self.jail_world].userzones.items():
             if zone[0] == self.jail_zone:
                 x1, y1, z1, x2, y2, z2 = zone[1:7]
                 found = True
                 break
-        for id, zone in self.client.factory.worlds[self.jail_world].rankzones.items():
+        for id, zone in self.factory.worlds[self.jail_world].rankzones.items():
             if zone[0] == self.jail_zone:
                 x1, y1, z1, x2, y2, z2 = zone[1:7]
                 found = True
                 break
         if not found:
-            self.client.sendServerMessage("Jail zone '%s' has been removed!" % jail[J_ZONE])
-            self.client.sendServerMessage("Use /znew and /setjail zonename to set one up!")
+            data["client"].sendServerMessage("Jail zone '%s' has been removed!" % jail[J_ZONE])
+            data["client"].sendServerMessage("Use /znew and /setjail zonename to set one up!")
             jail[J_ZONE] = ""
             self.dumpJail(jail)
             return
@@ -198,11 +198,11 @@ class JailPlugin(ProtocolPlugin):
         else:
             jail[J_USERS][name] = int(clock() + seconds)
         self.dumpJail(jail)
-        for username in self.client.factory.usernames:
+        for username in self.factory.usernames:
             if name in username:
                 names.append(username)
         if len(names) == 1:
-            user = self.client.factory.usernames[names[0]]
+            user = self.factory.usernames[names[0]]
             user.jailed = True
             jx = int((x1 + x2) / 2)
             jy = int((y1 + y2) / 2)
@@ -214,10 +214,10 @@ class JailPlugin(ProtocolPlugin):
             jailtime = "for " + str(time) + " minutes"
         else:
             jailtime = "indefinitely"
-        self.client.sendWorldMessage("%s has been jailed %s." % (name, jailtime))
+        data["client"].sendWorldMessage("%s has been jailed %s." % (name, jailtime))
 
     @config("rank", "mod")
-    def commandFree(self, parts, fromloc, overriderank):
+    def commandFree(self, data):
         "/free username - Mod\nLets a user out of jail"
         self.prepJail()
         jail = self.loadJail()
@@ -225,34 +225,34 @@ class JailPlugin(ProtocolPlugin):
         try:
             name = parts[1].lower()
         except:
-            self.client.sendServerMessage("You need to specify a username.")
+            data["client"].sendServerMessage("You need to specify a username.")
         if name in jail[J_USERS]:
             jail[J_USERS].pop(name)
             self.dumpJail(jail)
         else:
-            self.client.sendServerMessage("%s isn't jailed!" % name)
+            data["client"].sendServerMessage("%s isn't jailed!" % name)
             return
-        for username in self.client.factory.usernames:
+        for username in self.factory.usernames:
             if name in username:
                 names.append(username)
         if len(names) == 1:
-            user = self.client.factory.usernames[names[0]]
+            user = self.factory.usernames[names[0]]
             user.changeToWorld(jail[J_WORLD])
-        self.client.sendWorldMessage("%s has been set free." % name)
+        data["client"].sendWorldMessage("%s has been set free." % name)
 
     @config("rank", "mod")
-    def commandPrisoners(self, parts, fromloc, overriderank):
+    def commandPrisoners(self, data):
         "/prisoners - Mod\nLists prisoners and their sentences."
         self.prepJail()
         jail = self.loadJail()
         found = False
-        self.client.sendServerMessage("Listing prisoners:")
+        data["client"].sendServerMessage("Listing prisoners:")
         for name in jail[J_USERS]:
             if jail[J_USERS][name] > 1:
                 remaining = int(jail[J_USERS][name] - clock())
-                self.client.sendServerMessage("%s - %d seconds remaining" % (name, remaining))
+                data["client"].sendServerMessage("%s - %d seconds remaining" % (name, remaining))
             else:
-                self.client.sendServerMessage("%s - Life" % name)
+                data["client"].sendServerMessage("%s - Life" % name)
             found = True
         if not found:
-            self.client.sendServerMessage("Currently no prisoners in jail.")
+            data["client"].sendServerMessage("Currently no prisoners in jail.")

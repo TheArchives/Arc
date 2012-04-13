@@ -5,6 +5,7 @@
 import struct
 
 from arc.constants import *
+from arc.globals import packString
 
 class Format(object):
     def __init__(self, format):

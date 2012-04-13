@@ -52,14 +52,13 @@ class Heartbeat(object):
             getattr(self.factory, "heartbeats")
         except AttributeError:
             if self.factory.hbs != []: # Did we fill in the spoof heartbeat bit?
-                reactor.callLater(3,
-                    self.sendHeartbeat) # Server has not finished loading yet - come back in 3 seconds maybe?
+                # Server has not finished loading yet - come back in 3 seconds
+                reactor.callLater(3, self.sendHeartbeat) 
             return
         try:
             self._sendHeartbeat()
         except ImportError:
-            self.logger.info(
-                "WoM heartbeat has SSL enabled, and OpenSSL is not installed on the system. Falling back to minecraft.net heartbeat.")
+            self.logger.info("WoM heartbeat has SSL enabled, and OpenSSL is not installed on the system. Falling back to minecraft.net heartbeat.")
             self._sendHeartbeat(True)
 
     def _sendHeartbeat(self, overrideurl=False):

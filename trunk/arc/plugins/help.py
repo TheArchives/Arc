@@ -1,25 +1,20 @@
-# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is copyright 2009-2012 the Arc team and other contributors.
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
 import hashlib, socket
 
-from arc.decorators import *
 from arc.constants import *
+from arc.decorators import *
 from arc.globals import *
-from arc.plugins import ProtocolPlugin
 
-class helpPlugin(ProtocolPlugin):
+class HelpPlugin(object):
     commands = {
         "help": "commandHelp",
-        "?": "commandHelp",
         "cmdlist": "commandCmdlist",
-        "commands": "commandCmdlist",
         "about": "commandAbout",
-        "info": "commandAbout",
         "credits": "commandCredits",
         "motd": "commandMOTD",
-        "greeting": "commandMOTD",
         "rules": "commandRules",
 
         "staff": "commandStaff",
@@ -29,256 +24,248 @@ class helpPlugin(ProtocolPlugin):
         "mods": "commandMods",
 
         "dcurl": "commandDCURL",
-        "womurl": "commandDCURL",
-        }
+    }
 
     @config("category", "info")
-    def commandHelp(self, parts, fromloc, overriderank):
-        "/help [document/command] - Guest\nHelp for this server and commands."
-        if len(parts) > 1:
-            try:
-                func = self.client.commands[parts[1].lower()]
-            except KeyError:
-                if parts[1].lower() == "chats":
-                    self.client.sendServerMessage("Help; Chats")
-                    self.client.sendServerMessage("Whispers: @username Whispers")
-                    self.client.sendServerMessage("WorldChat: !message")
-                    if self.client.isMod():
-                        self.client.sendServerMessage("StaffChat: #message")
-                elif parts[1].lower() == "physic":
-                    self.client.sendServerMessage("Help; Physics Engine")
-                    self.client.sendServerMessage(
-                        "Turn physics on to use Physics (max of %s worlds)" % self.client.factory.physics_limit)
-                    self.client.sendServerMessage("If fwater is on then your water won't move.")
-                    self.client.sendServerMessage("Orange blocks make Lavafalls, darkblue blocks make Waterfalls.")
-                    self.client.sendServerMessage("Spouts need fwater to be on in order to work.")
-                    self.client.sendServerMessage("Sand will fall, grass will grow, sponges will absorb.")
-                    self.client.sendServerMessage("Use unflood to move all water, lava, and spouts from the world.")
-                elif parts[1].lower() == "ranks":
-                    self.client.sendNormalMessage(COLOUR_YELLOW + "Help: Server Ranks - " + COLOUR_GREEN +
-                                                  "Owner/Console [9] " + COLOUR_DARKRED + "Director [8] " + COLOUR_RED + "Admin [7] " + COLOUR_DARKBLUE + "Mod [6] "
-                                                  + COLOUR_DARKGREY + "Helper [5] " + COLOUR_DARKYELLOW + "World Owner [4] " + COLOUR_DARKCYAN + "Op [3] " + COLOUR_CYAN + "Builder [2] "
-                                                  + COLOUR_WHITE + "Guest [1] " + COLOUR_YELLOW + "VIP (Guest) " + COLOUR_BLACK + "Spec/Banned [0]")
-                elif parts[1].lower() == "cc":
-                    self.client.sendServerMessage("Help; Color Codes")
-                    self.client.sendNormalMessage("&a%a &b%b &c%c &d%d &e%e &f%f")
-                    self.client.sendNormalMessage("&0%0 &1%1 &2%2 &3%3 &4%4 &5%5 &6%6 &7%7 &8%8 &9%9")
-                elif parts[1].lower() == "guide":
-                    self.client.sendServerMessage("Help; The Guide")
-                    self.client.sendServerMessage("/command required [optional]")
-                    self.client.sendServerMessage("command - the command you're using (like /help)")
-                    self.client.sendServerMessage("required - this stuff is required after the command")
-                    self.client.sendServerMessage("optional - this stuff isn't needed, like blb coords")
-                    self.client.sendServerMessage("Example: /help [document/command]")
-                    self.client.sendServerMessage("You can do /help only or optionally input more.")
-                else:
-                    self.client.sendServerMessage("Unknown command '%s'" % parts[1])
+    @config("usage", "[document|command]")
+    @config("aliases", ["?"])
+    def commandHelp(self, data):
+        "Help for this server and commands."
+        if len(data["parts"]) < 2:
+            data["client"].sendServerMessage("The Central Help Hub")
+            data["client"].sendServerMessage("Documents: /help [cc|chats|guide|physic|ranks]")
+            data["client"].sendServerMessage("Commands: /cmdlist - Lookup: /help command")
+            data["client"].sendServerMessage("About: /about - Credits: /credits")
+            data["client"].sendServerMessage("MOTD: /motd - Rules: /rules")
+            return
+        command = data["parts"][1]
+        if command.lower() == "chats":
+            data["client"].sendServerMessage("Help; Chats")
+            data["client"].sendServerMessage("Whispers: @username Whispers")
+            data["client"].sendServerMessage("WorldChat: !message")
+            if data["client"].isMod(): data["client"].sendServerMessage("StaffChat: #message")
+        elif command.lower() == "physic":
+            data["client"].sendServerMessage("Help; Physics Engine")
+            data["client"].sendServerMessage(
+                "Turn physics on to use Physics (max of %s worlds)" % self.factory.physics_limit)
+            data["client"].sendServerMessage("If fwater is on then your water won't move.")
+            data["client"].sendServerMessage("Orange blocks make Lavafalls, darkblue blocks make Waterfalls.")
+            data["client"].sendServerMessage("Spouts need fwater to be on in order to work.")
+            data["client"].sendServerMessage("Sand will fall, grass will grow, sponges will absorb.")
+            data["client"].sendServerMessage("Use unflood to move all water, lava, and spouts from the world.")
+        elif command.lower() == "ranks":
+            data["client"].sendNormalMessage(COLOUR_YELLOW + "Help: Server Ranks - " + COLOUR_GREEN +
+                                          "Owner/Console [9] " + COLOUR_DARKRED + "Director [8] " + COLOUR_RED + "Admin [7] " + COLOUR_DARKBLUE + "Mod [6] "
+                                          + COLOUR_DARKGREY + "Helper [5] " + COLOUR_DARKYELLOW + "World Owner [4] " + COLOUR_DARKCYAN + "Op [3] " + COLOUR_CYAN + "Builder [2] "
+                                          + COLOUR_WHITE + "Guest [1] " + COLOUR_YELLOW + "VIP (Guest) " + COLOUR_BLACK + "Spec/Banned [0]")
+        elif command.lower() == "cc":
+            data["client"].sendServerMessage("Help; Colour Codes")
+            data["client"].sendNormalMessage("&a%a &b%b &c%c &d%d &e%e &f%f")
+            data["client"].sendNormalMessage("&0%0 &1%1 &2%2 &3%3 &4%4 &5%5 &6%6 &7%7 &8%8 &9%9")
+        elif command.lower() == "guide":
+            data["client"].sendServerMessage("Help; The Guide")
+            data["client"].sendServerMessage("/command required [optional]")
+            data["client"].sendServerMessage("command - the command you're using (like /help)")
+            data["client"].sendServerMessage("required - this stuff is required after the command")
+            data["client"].sendServerMessage("optional - this stuff isn't needed, like blb coords")
+            data["client"].sendServerMessage("Example: /help [document/command]")
+            data["client"].sendServerMessage("You can do /help only or optionally input more.")
+        elif command in (self.factory.commands.keys() + self.factory.aliases.keys()):
+            # Check if they are querying the alias
+            theCommand = command if command in self.factory.commands else self.factory.aliases[command]
+            func = self.factory.commands[theCommand] 
+            data["client"].sendServerMessage("/%s%s - %s" %
+                (theCommand, (" "+func.config["usage"] if "usage" in func.config else ""), (func.config["rank"].capitalize() if func.config["rank"] != "" else "Guest")))
+            aliases = find_keys(self.factory.aliases, theCommand)
+            if aliases != []:
+                data["client"].sendServerMessage("Aliases: %s" % ", ".join(aliases))
+            if func.__doc__:
+                for line in func.__doc__.split("\n"):
+                    data["client"].sendServerMessage(line)
             else:
-                if func.__doc__:
-                    for line in func.__doc__.split("\n"):
-                        self.client.sendServerMessage(line)
-                else:
-                    self.client.sendServerMessage("There's no help for that command.")
+                data["client"].sendServerMessage("There's no help for that command.")
+            return
         else:
-            self.client.sendServerMessage("The Central Help Hub")
-            self.client.sendServerMessage("Documents: /help [cc|chats|guide|physic|ranks]")
-            self.client.sendServerMessage("Commands: /cmdlist - Lookup: /help command")
-            self.client.sendServerMessage("About: /about - Credits: /credits")
-            self.client.sendServerMessage("MOTD: /motd - Rules: /rules")
+            data["client"].sendServerMessage("Unknown command '%s'" % command)
 
     @config("category", "info")
-    def commandCmdlist(self, parts, fromloc, overriderank):
-        "/cmdlist category - Guest\nThe command list of your rank, categories."
-        categories = ["all", "build", "world", "player", "info", "other"]
-        if len(parts) > 1:
-            if parts[1].lower() not in categories:
-                self.client.sendServerMessage("Unknown cmdlist '%s'" % parts[1])
-                self.client.sendServerMessage("Categories: %s" % " ".join(categories))
-            else:
-                self.ListCommands(parts[1].lower())
-        else:
-            self.client.sendServerMessage("Command List - Use: /cmdlist category")
-            self.client.sendServerMessage("Categories: %s" % " ".join(categories))
-
-    def ListCommands(self, list):
-        self.client.sendServerMessage("%s Commands:" % list.title())
+    @config("aliases", ["commands"])
+    def commandCmdlist(self, data):
+        "Lists all commands available."
+        data["client"].sendServerMessage("Commands:")
         commands = []
-        for name, command in self.client.commands.items():
+        cmdlist = sorted(self.factory.commands.keys())
+        for command in cmdlist:
             try:
-                config = getattr(command, "config")
+                config = getattr(self.factory.commands[command], "config")
             except AttributeError:
                 config = recursive_default()
             if config["disabled"]:
                 continue
-            if not list == "other":
-                if not list == "all":
-                    if not config["category"]:
-                        continue
-                if config["rank"] == "owner" and not self.client.isOwner():
-                    continue
-                if config["rank"] == "director" and not self.client.isDirector():
-                    continue
-                if config["rank"] == "admin" and not self.client.isAdmin():
-                    continue
-                if config["rank"] == "mod" and not self.client.isMod():
-                    continue
-                if config["rank"] == "helper" and not self.client.isHelper():
-                    continue
-                if config["rank"] == "worldowner" and not self.client.isWorldOwner():
-                    continue
-                if config["rank"] == "op" and not self.client.isOp():
-                    continue
-                if config["rank"] == "builder" and not self.client.isBuilder():
-                    continue
-            else:
-                if config["category"]:
-                    continue
-                if config["rank"] == "owner" and not self.client.isOwner():
-                    continue
-                if config["rank"] == "director" and not self.client.isDirector():
-                    continue
-                if config["rank"] == "admin" and not self.client.isAdmin():
-                    continue
-                if config["rank"] == "mod" and not self.client.isMod():
-                    continue
-                if config["rank"] == "helper" and not self.client.isHelper():
-                    continue
-                if config["rank"] == "worldowner" and not self.client.isWorldOwner():
-                    continue
-                if config["rank"] == "op" and not self.client.isOp():
-                    continue
-                if config["rank"] == "builder" and not self.client.isBuilder():
-                    continue
-            commands.append(name)
+            if data["fromloc"] in ["user", "cmdblock"]:
+                if config["rank"] == "owner":
+                    command = "%s%s" % (RANK_COLOURS["owner"], command)
+                elif config["rank"] == "director":
+                    command = "%s%s" % (RANK_COLOURS["director"], command)
+                elif config["rank"] == "admin":
+                    command = "%s%s" % (RANK_COLOURS["admin"], command)
+                elif config["rank"] == "mod":
+                    command = "%s%s" % (RANK_COLOURS["mod"], command)
+                elif config["rank"] == "helper":
+                    command = "%s%s" % (RANK_COLOURS["helper"], command)
+                elif config["rank"] == "worldowner":
+                    command = "%s%s" % (RANK_COLOURS["worldowner"], command)
+                elif config["rank"] == "op":
+                    command = "%s%s" % (RANK_COLOURS["op"], command)
+                elif config["rank"] == "builder":
+                    command = "%s%s" % (RANK_COLOURS["builder"], command)
+                else:
+                    command = "%s%s" % (RANK_COLOURS["guest"], command)
+            commands.append(command)
         if commands:
-            self.client.sendServerList(sorted(commands))
+            data["client"].sendSplitServerMessage("Commands: %s" % " ".join(commands))
         else:
-            self.client.sendServerMessage("None.")
+            data["client"].sendServerMessage("None.")
+        data["client"].sendServerMessage("%s command(s) total." % len(commands))
 
     @config("category", "info")
-    def commandAbout(self, parts, fromloc, overriderank):
-        "/about - Guest\nAliases: info\nAbout the server and software."
-        self.client.sendSplitServerMessage("About The Server, powered by Arc %s | Credits: /credits" % VERSION)
-        self.client.sendSplitServerMessage(
-            "Name: %s; Owners: %s" % (self.client.factory.server_name, ", ".join(self.client.factory.owners)))
-        self.client.sendSplitServerMessage(self.client.factory.server_message)
-        self.client.sendServerMessage("URL: %s" % self.client.factory.info_url)
-        if self.client.factory.use_irc:
-            self.client.sendServerMessage(
-                "IRC: %s %s" % (self.client.factory.irc_config.get("irc", "server"), self.client.factory.irc_channel))
+    @config("aliases", ["info"])
+    def commandAbout(self, data):
+        "Displays information about the server and software."
+        data["client"].sendSplitServerMessage("About The Server, powered by Arc %s | Credits: /credits" % VERSION)
+        data["client"].sendSplitServerMessage("Name: %s; Owners: %s" % 
+                                            (self.factory.server_name, ", ".join(self.factory.owners)))
+        data["client"].sendSplitServerMessage(self.factory.server_message)
+        data["client"].sendServerMessage("URL: %s" % self.factory.info_url)
+        if self.factory.use_irc:
+            data["client"].sendServerMessage("IRC: %s %s" %
+                                            (self.factory.irc_config.get("irc", "server"), self.factory.irc_channel))
 
     @config("category", "info")
-    def commandCredits(self, parts, fromloc, overriderank):
+    def commandCredits(self, data):
         "/credits - Guest\nCredits for the creators, devs and testers."
-        self.client.sendServerMessage("Arc Credits")
-        list = Credits()
-        for each in list:
-            self.client.sendSplitServerMessage(each)
+        data["client"].sendServerMessage("Arc Credits")
+        for each in CREDITS_TEXT:
+            data["client"].sendSplitServerMessage(each)
 
     @config("category", "info")
-    def commandMOTD(self, parts, fromloc, overriderank):
-        "/motd - Guest\nAliases: greeting\nShows the greeting."
-        self.client.sendServerMessage("MOTD for %s:" % self.client.factory.server_name)
+    @config("aliases", ["greeting"])
+    def commandMOTD(self, data):
+        "Shows the MOTD."
+        data["client"].sendServerMessage("MOTD for %s:" % self.factory.server_name)
         try:
             r = open('config/greeting.txt', 'r')
         except:
             r = open('config/greeting.example.txt', 'r')
         for line in r:
-            self.client.sendNormalMessage(line)
+            data["client"].sendNormalMessage(line)
 
     @config("category", "info")
-    def commandRules(self, parts, fromloc, overriderank):
-        "/rules - Guest\nShows the server rules."
-        self.client.sendServerMessage("Rules for " + self.client.factory.server_name + ":")
+    def commandRules(self, data):
+        "Shows the server rules."
+        data["client"].sendServerMessage("Rules for %s:" % self.factory.server_name)
         try:
             r = open('config/rules.txt', 'r')
         except:
             r = open('config/rules.example.txt', 'r')
         for line in r:
-            self.client.sendSplitServerMessage(line, plain=True)
+            data["client"].sendSplitServerMessage(line, plain=True)
 
     @config("category", "info")
-    def commandStaff(self, parts, fromloc, overriderank):
-        "/staff [all] - Guest\nLists all online server staff.\nSpecify all to retrieve the full server staff list."
-        if len(parts) > 1:
-            if parts[1] == "all":
-                self.client.sendServerMessage("The Server Staff")
-                list = Staff(self)
-                for each in list:
-                    self.client.sendServerList(each)
+    @config("usage", "[all]")
+    def commandStaff(self, data):
+        "Lists all online server staff.\nSpecify all to retrieve the full server staff list."
+        if len(data["parts"]) > 1:
+            if data["parts"][1] == "all":
+                data["client"].sendServerMessage("The Server Staff")
+                theList = []
+                if len(self.factory.owners): # This doesn't make much sense but okay
+                    data["client"].sendServerList(["Owners:"] + list(self.factory.owners))
+                if len(self.factory.directors):
+                    data["client"].sendServerList(["Directors:"] + list(self.factory.directors))
+                if len(self.factory.admins):
+                    data["client"].sendServerList(["Admins:"] + list(self.factory.admins))
+                if len(self.factory.mods):
+                    data["client"].sendServerList(["Mods:"] + list(self.factory.mods))
+                if len(self.factory.helpers):
+                    data["client"].sendServerList(["Helpers:"] + list(self.factory.helpers))
             else:
-                self.client.sendServerMessage("Usage: /staff [all]")
+                data["client"].sendServerMessage("Usage: /staff [all]")
         else:
-            self.client.sendServerMessage("Online server staff (Do /staff all for full list):")
+            data["client"].sendServerMessage("Online server staff (Do /staff all for full list):")
             owners = []
             directors = []
             admins = []
             mods = []
             helpers = []
-            for user in self.client.factory.usernames:
-                if self.client.factory.usernames[user].isOwner():
-                    owners.append(self.client.factory.usernames[user].username)
-                elif self.client.factory.usernames[user].isDirector():
-                    directors.append(self.client.factory.usernames[user].username)
-                elif self.client.factory.usernames[user].isAdmin():
-                    admins.append(self.client.factory.usernames[user].username)
-                elif self.client.factory.usernames[user].isMod():
-                    mods.append(self.client.factory.usernames[user].username)
-                elif self.client.factory.usernames[user].isHelper():
-                    helpers.append(self.client.factory.usernames[user].username)
+            for user in self.factory.usernames:
+                if self.factory.usernames[user].isOwner():
+                    owners.append(self.factory.usernames[user].username)
+                elif self.factory.usernames[user].isDirector():
+                    directors.append(self.factory.usernames[user].username)
+                elif self.factory.usernames[user].isAdmin():
+                    admins.append(self.factory.usernames[user].username)
+                elif self.factory.usernames[user].isMod():
+                    mods.append(self.factory.usernames[user].username)
+                elif self.factory.usernames[user].isHelper():
+                    helpers.append(self.factory.usernames[user].username)
             if owners != []:
-                self.client.sendServerList(["Owners:"] + owners)
+                data["client"].sendServerList(["Owners:"] + owners)
             if directors != []:
-                self.client.sendServerList(["Directors:"] + directors)
+                data["client"].sendServerList(["Directors:"] + directors)
             if admins != []:
-                self.client.sendServerList(["Admins:"] + admins)
+                data["client"].sendServerList(["Admins:"] + admins)
             if mods != []:
-                self.client.sendServerList(["Mods:"] + mods)
+                data["client"].sendServerList(["Mods:"] + mods)
             if helpers != []:
-                self.client.sendServerList(["Helpers:"] + helpers)
+                data["client"].sendServerList(["Helpers:"] + helpers)
 
     @config("category", "info")
-    def commandHelpers(self, parts, fromloc, overriderank):
-        "/helpers - Guest\nLists all Helpers."
-        if len(self.client.factory.helpers):
-            self.client.sendServerList(["Helpers:"] + list(self.client.factory.helpers))
+    def commandHelpers(self, data):
+        "Lists all Helpers."
+        if len(self.factory.helpers):
+            data["client"].sendServerList(["Helpers:"] + list(self.factory.helpers))
         else:
-            self.client.sendServerList(["Helpers:"] + list("N/A"))
+            data["client"].sendServerMessage("Helpers: N/A")
 
     @config("category", "info")
-    def commandDirectors(self, parts, fromloc, overriderank):
-        "/directors - Guest\nLists all Directors."
-        if len(self.client.factory.directors):
-            self.client.sendServerList(["Directors:"] + list(self.client.factory.directors))
+    def commandDirectors(self, data):
+        "Lists all Directors."
+        if len(self.factory.directors):
+            data["client"].sendServerList(["Directors:"] + list(self.factory.directors))
         else:
-            self.client.sendServerList(["Directors:"] + list("N/A"))
+            data["client"].sendServerMessage("Directors: N/A")
 
     @config("category", "info")
-    def commandAdmins(self, parts, fromloc, overriderank):
-        "/admins - Guest\nLists all Admins."
-        if len(self.client.factory.admins):
-            self.client.sendServerList(["Admins:"] + list(self.client.factory.admins))
+    def commandAdmins(self, data):
+        "Lists all Admins."
+        if len(self.factory.admins):
+            data["client"].sendServerList(["Admins:"] + list(self.factory.admins))
         else:
-            self.client.sendServerList(["Admins:"] + list("N/A"))
+            data["client"].sendServerMessage("Admins: N/A")
 
     @config("category", "info")
-    def commandMods(self, parts, fromloc, overriderank):
-        "/mods - Guest\nLists all Mods."
-        if len(self.client.factory.mods):
-            self.client.sendServerList(["Mods:"] + list(self.client.factory.mods))
+    def commandMods(self, data):
+        "Lists all Mods."
+        if len(self.factory.mods):
+            data["client"].sendServerList(["Mods:"] + list(self.factory.mods))
         else:
-            self.client.sendServerList(["Mods:"] + list("N/A"))
+            data["client"].sendServerMessage("Mods: N/A")
 
     @config("category", "info")
-    def commandDCURL(self, parts, fromloc, overriderank):
-        "/dcurl - Guest\nAliases: womurl\nGives your Direct Connect URL for WoM Client 1.6.3+"
-        # TODO: I think there is a twisted alt for this -tyteen
+    @config("aliases", ["womurl"])
+    @config("disabled-on", ["irc", "irc_query", "cmdblock", "console"])
+    def commandDCURL(self, data):
+        "Gives your Direct Connect URL for WoM Client 1.6.3+"
+        # TODO: fix this broken code -tyteen
         ip = socket.gethostbyname(socket.gethostname())
         if ip == "127.0.0.1": # TODO: Also check LAN IP
             output = commands.getoutput("/sbin/ifconfig")
             ip = parseaddress(output)
-        mppass = hashlib.md5(self.client.factory.salt + self.client.username).hexdigest()[-32:].strip("0")
-        self.client.sendServerMessage("Direct Connect URL:")
-        self.client.sendServerMessage(
-            "mc://%s:%s/%s/" % (ip, self.client.factory.config.getint("network", "port"), self.client.username))
-        self.client.sendServerMessage("%s" % (mppass))
+        mppass = hashlib.md5(self.factory.salt + data["client"].username).hexdigest()[-32:].strip("0")
+        data["client"].sendServerMessage("Direct Connect URL for %s:" % data["client"].username)
+        data["client"].sendServerMessage("mc://%s:%s/%s/" % (ip, self.factory.server_port, data["client"].username))
+        data["client"].sendServerMessage("%s" % (mppass))
+        data["client"].sendServerMessage("Security advice: Never share this URL with anybody.")
+
+serverPlugin = HelpPlugin

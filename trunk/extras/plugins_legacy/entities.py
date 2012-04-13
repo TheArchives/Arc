@@ -1,4 +1,4 @@
-# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is copyright 2009-2012 the Arc team and other contributors.
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
@@ -93,9 +93,9 @@ class EntityPlugin(ProtocolPlugin):
         if fromloc != "user":
             # People shouldn't be blbing mobs
             return
-        world = self.client.world
+        world = data["client"].world
         try:
-            px, py, pz, ph, pp = self.client.x >> 5, self.client.y >> 5, self.client.z >> 5, self.client.h, self.client.p
+            px, py, pz, ph, pp = data["client"].x >> 5, data["client"].y >> 5, data["client"].z >> 5, data["client"].h, data["client"].p
         except:
             pass
         world.entities_worldblockchangesdict[self.client] = (
@@ -111,22 +111,22 @@ class EntityPlugin(ProtocolPlugin):
         dellist.reverse()
         for index in dellist:
             del entitylist[index]
-            self.client.sendServerMessage("The entity is now deleted.")
+            data["client"].sendServerMessage("The entity is now deleted.")
         if block != 0:
             if self.var_entityselected != "None":
                 if len(entitylist) >= maxentitiesperworld:
-                    self.client.sendServerMessage("Max entities per world exceeded.")
+                    data["client"].sendServerMessage("Max entities per world exceeded.")
                     return
                 if self.var_entityselected in entitycreatedict:
                     exec entitycreatedict[self.var_entityselected]
                     entitycreatedict[self.var_entityselected].seek(0)
                 else:
                     entitylist.append([self.var_entityselected, (x, y, z), 8, 8])
-                    self.client.sendServerMessage("The entity was created.")
+                    data["client"].sendServerMessage("The entity was created.")
 
     def posChanged(self, x, y, z, h, p):
-        username = self.client.username
-        world = self.client.world
+        username = data["client"].username
+        world = data["client"].world
         try:
             keyuser = world.var_entities_keyuser
         except:
@@ -148,7 +148,7 @@ class EntityPlugin(ProtocolPlugin):
             var_abstime = time()
             userpositionlist = []
             for user in clients:
-                userpositionlist.append((user, (self.client.x >> 5, self.client.y >> 5, self.client.z >> 5)))
+                userpositionlist.append((user, (data["client"].x >> 5, data["client"].y >> 5, data["client"].z >> 5)))
             var_num = len(entitylist)
             if var_num > maxentitiystepsatonetime:
                 var_num = maxentitiystepsatonetime
@@ -197,13 +197,13 @@ class EntityPlugin(ProtocolPlugin):
                                 exec entitycodedict[var_type]
                                 entitycodedict[var_type].seek(0)
                             else:
-                                self.client.sendWorldMessage("UNKOWN ENTITY IN WORLD - FIX THIS!")
+                                data["client"].sendWorldMessage("UNKOWN ENTITY IN WORLD - FIX THIS!")
                     except:
-                        self.client.sendPlainWorldMessage(
+                        data["client"].sendPlainWorldMessage(
                             traceback.format_exc().replace("Traceback (most recent call last):", ""))
-                        self.client.sendPlainWorldMessage(
+                        data["client"].sendPlainWorldMessage(
                             "Internal Server Error - Traceback (Please report this to the Server Staff or the Arc Team, see /about for contact info)")
-                        self.client.logger.error(traceback.format_exc())
+                        data["client"].logger.error(traceback.format_exc())
                         world.entitylist = []
                         return
                 entity[1] = var_position
@@ -226,16 +226,16 @@ class EntityPlugin(ProtocolPlugin):
                     entitylist.append(entitylist.pop(0))
 
     @config("rank", "op")
-    def commandEntity(self, parts, fromloc, overriderank):
+    def commandEntity(self, data):
         "/entity entityname - Op\nAliases: item, mob\nCreates the specified entity."
         if len(parts) < 2:
             if self.var_entityselected == "None":
-                self.client.sendServerMessage("Please enter an entity name (type /entities for a list)")
+                data["client"].sendServerMessage("Please enter an entity name (type /entities for a list)")
             else:
                 self.var_entityselected = "None"
-                self.client.sendServerMessage("The entity has been deselected.")
+                data["client"].sendServerMessage("The entity has been deselected.")
         else:
-            world = self.client.world
+            world = data["client"].world
             entity = parts[1]
             var_continue = True
             if entity in validentities:
@@ -245,24 +245,24 @@ class EntityPlugin(ProtocolPlugin):
                 else:
                     self.var_entityselected = entity
             else:
-                self.client.sendServerMessage("%s is not a valid entity." % entity)
+                data["client"].sendServerMessage("%s is not a valid entity." % entity)
                 return
             if var_continue:
-                self.client.sendServerMessage("The entity %s has been selected." % entity)
-                self.client.sendServerMessage("To deselect just type /entity")
+                data["client"].sendServerMessage("The entity %s has been selected." % entity)
+                data["client"].sendServerMessage("To deselect just type /entity")
 
     @config("rank", "op")
-    def commandNumentities(self, parts, fromloc, overriderank):
+    def commandNumentities(self, data):
         "/numentities - Op\nAliases: numitems, nummobs\nTells you the number of entities in the world."
-        world = self.client.world
+        world = data["client"].world
         entitylist = world.entitylist
-        self.client.sendServerMessage(str(len(entitylist)))
+        data["client"].sendServerMessage(str(len(entitylist)))
 
     @config("rank", "op")
-    def commandEntityclear(self, parts, fromloc, overriderank):
+    def commandEntityclear(self, data):
         "/entityclear - Op\nAliases: itemclear, mobclear\nClears the entities from the world."
-        world = self.client.world
-        for entity in self.client.world.entitylist:
+        world = data["client"].world
+        for entity in data["client"].world.entitylist:
             var_id = entity[0]
             x, y, z = entity[1]
             if var_id in entityblocklist:
@@ -271,8 +271,8 @@ class EntityPlugin(ProtocolPlugin):
                     rx, ry, rz = x + ox, y + oy, z + oz
                     block = '\x00'
                     world[rx, ry, rz] = block
-                    self.client.queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
-                    self.client.sendBlock(rx, ry, rz, block)
+                    data["client"].queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
+                    data["client"].sendBlock(rx, ry, rz, block)
             elif var_id == "cannon":
                 var_orientation = entity[5]
                 if var_orientation == 0:
@@ -289,26 +289,26 @@ class EntityPlugin(ProtocolPlugin):
                     var_loadblockoffset = (-1, 0, 0)
                 block = '\x00'
                 world[x, y, z] = block
-                self.client.queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
-                self.client.sendBlock(x, y, z, block)
+                data["client"].queueTask(TASK_BLOCKSET, (x, y, z, block), world=world)
+                data["client"].sendBlock(x, y, z, block)
                 i, j, k = var_loadblockoffset
                 rx, ry, rz = x + i, y + j, z + k
                 world[rx, ry, rz] = block
-                self.client.queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
-                self.client.sendBlock(rx, ry, rz, block)
+                data["client"].queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
+                data["client"].sendBlock(rx, ry, rz, block)
                 for i, j, k in var_sensorblocksoffsets:
                     rx, ry, rz = x + i, y + j, z + k
                     world[rx, ry, rz] = block
-                    self.client.queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
-                    self.client.sendBlock(rx, ry, rz, block)
+                    data["client"].queueTask(TASK_BLOCKSET, (rx, ry, rz, block), world=world)
+                    data["client"].sendBlock(rx, ry, rz, block)
             else:
-                self.client.sendServerMessage("Entity not registered in the entityblocklist.")
-        self.client.world.entitylist = []
-        self.client.sendWorldMessage("The entities have been cleared.")
+                data["client"].sendServerMessage("Entity not registered in the entityblocklist.")
+        data["client"].world.entitylist = []
+        data["client"].sendWorldMessage("The entities have been cleared.")
 
     @config("rank", "op")
-    def commandEntities(self, parts, fromloc, overriderank):
+    def commandEntities(self, data):
         "/entities - Op\nAliases: items, mobs\nDisplays available entities."
         varsorted_validentities = validentities[:]
         varsorted_validentities.sort()
-        self.client.sendServerList(["Available entities:"] + varsorted_validentities)
+        data["client"].sendServerList(["Available entities:"] + varsorted_validentities)

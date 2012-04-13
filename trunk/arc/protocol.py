@@ -8,7 +8,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
 from arc.constants import *
-from arc.decorators import *
+from arc.globals import *
 from arc.irc_client import ChatBotFactory
 from arc.playerdata import *
 
@@ -35,7 +35,7 @@ class ArcServerProtocol(Protocol):
                 self.sendError("The server is full.")
                 return
             # Check for IP bans
-        self.ip = self.ip
+        self.ip = self.transport.getPeer().host
         if self.factory.isIpBanned(self.ip):
             self.sendError("You are banned: %s" % self.factory.ipBanReason(ip))
             return
@@ -146,7 +146,7 @@ class ArcServerProtocol(Protocol):
             if len(self.buffer) - 1 < len(format):
                 # Nope, wait a bit
                 break
-                # OK, decode the data
+            # OK, decode the data
             parts = list(format.decode(self.buffer[1:]))
             self.buffer = self.buffer[len(format) + 1:]
             if type == TYPE_INITIAL:
@@ -154,12 +154,12 @@ class ArcServerProtocol(Protocol):
                 protocol, self.username, mppass, utype = parts
                 if self.identified == True:
                     self.factory.logger.info("Kicked '%s'; already logged in to server" % (self.username))
-                    self.sendError("You already logged in! Foolish bot owners.")
-                    # Right protocol?
+                    self.sendError("You already logged in!")
+                # Right protocol?
                 if protocol != 7:
                     self.sendError("Wrong protocol.")
                     break
-                    # Check their password
+                # Check their password
                 correct_pass = hashlib.md5(self.factory.salt + self.username).hexdigest()[-32:].strip("0")
                 mppass = mppass.strip("0")
                 if not self.transport.getHost().host.split(".")[0:2] == self.ip.split(".")[0:2]:
@@ -169,14 +169,14 @@ class ArcServerProtocol(Protocol):
                         self.sendError("Incorrect authentication, please try again.")
                         return
                 value = self.factory.runHook("prePlayerConnect", {"client": self})
-                if not value: return
+                if not value and value != None: return
                 self.factory.logger.info("Connected, as '%s'" % self.username)
                 self.identified = True
                 # Are they banned?
                 if self.factory.isBanned(self.username):
                     self.sendError("You are banned: %s" % self.factory.banReason(self.username))
                     return
-                    # OK, see if there's anyone else with that username
+                # OK, see if there's anyone else with that username
                 if not self.factory.duplicate_logins and self.username.lower() in self.factory.usernames:
                     self.factory.usernames[self.username.lower()].sendError("You logged in on another computer.")
                 self.factory.usernames[self.username.lower()] = self
@@ -231,10 +231,10 @@ class ArcServerProtocol(Protocol):
                     if allowbuild is False:
                         self.sendBlock(x, y, z)
                         return
-                    elif not self.AllowedToBuild(x, y, z):
+                    elif not self.allowedToBuild(x, y, z):
                         self.sendBlock(x, y, z)
                         return
-                        # This tries to prevent out-of-range errors on the blockstore
+                    # This tries to prevent out-of-range errors on the blockstore
                     # Track if we need to send back the block change
                     overridden = False
                     selected_block = block
@@ -251,18 +251,19 @@ class ArcServerProtocol(Protocol):
                     self.factory.runHook("blockDetect", {"x": x, "y": y, "z": z, "block": block, "client": self})
                     # Call hooks
                     new_block = self.factory.runHook("blockChange", {"x": x, "y": y, "z": z, "block": block, "selected_block": selected_block, "client": self})
-                    # After the runHook iteration, insert a linebreak
                     if new_block is False:
                         # They weren't allowed to build here!
                         self.sendBlock(x, y, z)
                         continue
-                    elif new_block is True:
+                    elif new_block == -1:
+                        print "somebody else"
                         # Someone else handled building, just continue
                         continue
                     elif new_block is not None:
-                        block = new_block
-                        overridden = True
-                        # OK, save the block
+                        if new_block != True:
+                            block = new_block
+                            overridden = True
+                    # OK, save the block
                     self.world[x, y, z] = chr(block)
                     # Now, send the custom block back if we need to
                     if overridden:
@@ -274,8 +275,7 @@ class ArcServerProtocol(Protocol):
                 else:
                     self.factory.queue.put((self, TASK_BLOCKSET, (x, y, z, block)))
                     if len(self.last_block_changes) >= 2:
-                        self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1]\
-                                                  + self.last_block_changes[1:2]
+                        self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1] + self.last_block_changes[1:2]
                     else:
                         self.last_block_changes = [(x, y, z)] + self.last_block_changes[:1]
             elif type == TYPE_PLAYERPOS:
@@ -286,12 +286,10 @@ class ArcServerProtocol(Protocol):
                 pos_change = not (x == self.x and y == self.y and z == self.z)
                 dir_change = not (h == self.h and p == self.p)
                 if self.frozen:
-                    newx = self.x >> 5
-                    newy = self.y >> 5
-                    newz = self.z >> 5
+                    newx, newy, newz = self.x >> 5, self.y >> 5, self.z >> 5
                     self.teleportTo(newx, newy, newz, h, p)
                     return
-                override = self.factory.runHook("posChange", {"x": x, "y": y, "z": z, "h": h, "p": p})
+                override = self.factory.runHook("posChange", {"x": x, "y": y, "z": z, "h": h, "p": p, "client": self})
                 # Only send changes if the hook didn't say no
                 if override != False:
                     if pos_change:
@@ -304,11 +302,8 @@ class ArcServerProtocol(Protocol):
             elif type == TYPE_MESSAGE:
                 # We got a message.
                 byte, message = parts
-                usernameoverride = self.factory.runHook("chatUsername", {"client": self})
-                if usernameoverride["data"] != True:
-                    user = usernameoverride["data"][0]
-                else:
-                    user = self.username
+                override = self.factory.runHook("chatUsername", {"client": self})
+                user = override if override else self.username
                 override = self.factory.runHook("messageSent", {"client": self, "message": message})
                 if self.identified == False:
                     self.factory.logger.info("Kicked '%s'; did not send a login before chatting; Message: '%s'" % (
@@ -321,52 +316,7 @@ class ArcServerProtocol(Protocol):
                         self.ip, message))
                         self.sendError("Invalid characters are not allowed!")
                         return
-                message = message.replace("%0", "&0")
-                message = message.replace("%1", "&1")
-                message = message.replace("%2", "&2")
-                message = message.replace("%3", "&3")
-                message = message.replace("%4", "&4")
-                message = message.replace("%5", "&5")
-                message = message.replace("%6", "&6")
-                message = message.replace("%7", "&7")
-                message = message.replace("%8", "&8")
-                message = message.replace("%9", "&9")
-                message = message.replace("%a", "&a")
-                message = message.replace("%b", "&b")
-                message = message.replace("%c", "&c")
-                message = message.replace("%d", "&d")
-                message = message.replace("%e", "&e")
-                message = message.replace("%f", "&f")
-                message = message.replace("0", "&f")
-                message = message.replace("00", "&f")
-                message = message.replace("1", "&0")
-                message = message.replace("01", "&0")
-                message = message.replace("2", "&1")
-                message = message.replace("02", "&1")
-                message = message.replace("3", "&2")
-                message = message.replace("03", "&2")
-                message = message.replace("4", "&c")
-                message = message.replace("04", "&c")
-                message = message.replace("5", "&4")
-                message = message.replace("05", "&4")
-                message = message.replace("6", "&5")
-                message = message.replace("06", "&5")
-                message = message.replace("7", "&6")
-                message = message.replace("07", "&6")
-                message = message.replace("8", "&e")
-                message = message.replace("08", "&e")
-                message = message.replace("9", "&a")
-                message = message.replace("09", "&a")
-                message = message.replace("10", "&3")
-                message = message.replace("11", "&b")
-                message = message.replace("12", "&9")
-                message = message.replace("13", "&d")
-                message = message.replace("14", "&8")
-                message = message.replace("15", "&7")
-                message = message.replace("./", " /")
-                message = message.replace(".!", " !")
-                message = message.replace(".@", " @")
-                message = message.replace(".#", " #")
+                message = sanitizeMessage(message, [MSGREPLACE["text_colour_to_game"], MSGREPLACE["irc_colour_to_game"], MSGREPLACE["escape_commands"]])
                 message = message.replace("%$rnd", "&$rnd")
                 if message[len(message) - 2] == "&":
                     self.sendServerMessage("You cannot use a color at the end of a message")
@@ -380,104 +330,10 @@ class ArcServerProtocol(Protocol):
                     # It's a command
                     parts = [x.strip() for x in message.split() if x.strip()]
                     command = parts[0].strip("/")
-                    # Look at the ServerPlugins dict first.
                     if command.lower() in (self.factory.commands.keys() + self.factory.aliases.keys()):
-                        self.factory.runCommand(command.lower(), parts, "user", False, self)
-                        return # Let them handle the rest of it
-                    # See if we can handle it internally
-                    try:
-                        func = getattr(self, "command%s" % command.title())
-                    except AttributeError:
-                        # Can we find it from a plugin?
-                        try:
-                            func = self.commands[command.lower()]
-                        except KeyError:
-                            self.sendServerMessage("Unknown command '%s'" % command)
-                            return
-                    if hasattr(func, "config"):
-                        if func.config["disabled"]:
-                            self.sendServerMessage("Command %s has been disabled by the server owner." % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but it has been disabled." % (self.username, " ".join(parts)))
-                            return
-                        if self.isSpectator() and func.config["rank"]:
-                            self.sendServerMessage("'%s' is not available to spectators." % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is a spectator." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "owner" and not self.isOwner():
-                            self.sendServerMessage("'%s' is an Owner-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not an owner." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "director" and not self.isDirector():
-                            self.sendServerMessage("'%s' is a Director-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not a director." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "admin" and not self.isAdmin():
-                            self.sendServerMessage("'%s' is an Admin-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not an admin." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "mod" and not self.isMod():
-                            self.sendServerMessage("'%s' is a Mod-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not a mod." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "helper" and not self.isHelper():
-                            self.sendServerMessage("'%s' is a Helper-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not a helper." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "worldowner" and not self.isWorldOwner():
-                            self.sendServerMessage("'%s' is an WorldOwner-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not a world owner." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "op" and not self.isOp():
-                            self.sendServerMessage("'%s' is an Op-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not an op." % (self.username, " ".join(parts)))
-                            return
-                        if func.config["rank"] == "builder" and not self.isBuilder():
-                            self.sendServerMessage("'%s' is a Builder-only command!" % command)
-                            self.factory.logger.info(
-                                "%s just tried '%s' but is not a builder." % (self.username, " ".join(parts)))
-                            return
-                        # Using custom message?
-                    if hasattr(func, "config"):
-                        if func.config["custom_cmdlog_msg"]:
-                            self.factory.logger.info("%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
+                        self.factory.runCommand(command.strip("/").lower(), parts, "user", False, client=self)
                     else:
-                        self.factory.logger.info("%s just used '%s'" % (self.username, " ".join(parts)))
-                        # Log it in IRC, if enabled.
-                    if self.factory.irc_relay:
-                        if self.factory.irc_cmdlogs:
-                            if hasattr(func, "config"):
-                                if func.config["custom_cmdlog_msg"]:
-                                    self.factory.irc_relay.sendServerMessage(
-                                        "%s %s" % (self.username, func.config["custom_cmdlog_msg"]))
-                                else:
-                                    self.factory.irc_relay.sendServerMessage(
-                                        "%s just used: %s" % (self.username, " ".join(parts)))
-                            else:
-                                self.factory.irc_relay.sendServerMessage(
-                                    "%s just used: %s" % (self.username, " ".join(parts)))
-                        # Log it as a command
-                    self.factory.logger.command("(%s) %s" % (self.username, " ".join(parts)))
-                    try:
-                        func(parts, "user", False) # fromloc is user, overriderank is false
-                    except Exception as e:
-                        self.sendServerMessage("Unable to run that command!")
-                        self.sendSplitServerMessage("Error: %s" % e)
-                        self.sendServerMessage("Please report this to the staff!")
-                        self.factory.logger.error("Error in command '%s': %s" % (command.title(), e))
-                        error = traceback.format_exc()
-                        errorsplit = error.split("\n")
-                        for element in errorsplit:
-                            if not element.strip(" ") == "":
-                                self.factory.logger.error(element)
+                        self.sendServerMessage("Command %s does not exist." % command)
                 elif message.startswith("@"):
                     # It's a whisper
                     try:
@@ -501,26 +357,26 @@ class ArcServerProtocol(Protocol):
                         self.sendServerMessage("Please include a message to send.")
                     else:
                         text = message[1:]
-                        self.factory.sendMessageToAll(text, "world", self)
+                        self.factory.sendMessageToAll(text, "world", self, fromloc="user")
                 elif message.startswith("#"):
                     # It's a staff-only message.
                     if len(message) == 1:
                         if self.isMod():
                             self.sendServerMessage("Please include a message to send.")
                         else:
-                            self.factory.sendMessageToAll(text, "chat", self, username)
+                            self.factory.sendMessageToAll(text, "chat", self, fromloc="user")
                     else:
                         text = message[1:]
-                        self.factory.sendMessageToAll(text, "staff", self)
+                        self.factory.sendMessageToAll(text, "staff", self, fromloc="user")
                         self.factory.chatlogs["staff"].write({"time": time, "username": self.username, "text": text})
                         self.factory.chatlogs["main"].write({"time": time, "username": self.username, "text": text},
                             formatter=MSGLOGFORMAT["staff"])
                 else:
                     if self.isSilenced():
                         self.sendServerMessage("You are silenced and cannot speak.")
-                    else:
-                        if not override:
-                            self.factory.sendMessageToAll(message, "chat", client=self, user=user)
+                        return
+                    if not override:
+                        self.factory.sendMessageToAll(message, "chat", client=self, user=user, fromloc="user")
             else:
                 if type == 2:
                     self.factory.logger.warn("Beta client attempted to connect.")
@@ -684,11 +540,11 @@ class ArcServerProtocol(Protocol):
 
     def sendWorldMessage(self, message):
         "Sends a message to everyone in the current world."
-        self.factory.sendMessageToAll(COLOUR_YELLOW + message, "world", self)
+        self.factory.sendMessageToAll(COLOUR_YELLOW + message, "world", self, fromloc="user")
 
     def sendPlainWorldMessage(self, message):
         "Sends a message to everyone in the current world, without any added color."
-        self.factory.sendMessageToAll(message, "world", self)
+        self.factory.sendMessageToAll(message, "world", self, fromloc="user")
 
     def sendServerList(self, items, wrap_at=63, plain=False):
         "Sends the items as server messages, wrapping them correctly."
@@ -796,14 +652,10 @@ class ArcServerProtocol(Protocol):
                 sx, sy, sz = self.initial_position
                 sh = 0
             self.initial_position = None
-        self.x = (sx << 5) + 16
-        self.y = (sy << 5) + 16
-        self.z = (sz << 5) + 16
-        self.h = int(sh * 255 / 360.0)
+        self.x, self.y, self.z, self.h = (sx << 5) + 16, (sy << 5) + 16, (sz << 5) + 16, int(sh * 255 / 360.0)
         self.sendPacked(TYPE_SPAWNPOINT, chr(255), "", self.x, self.y, self.z, self.h, 0)
         self.sendAllNew()
-        self.factory.queue.put(
-            (self, TASK_NEWPLAYER, (self.id, self.colouredUsername(), self.x, self.y, self.z, self.h, 0)))
+        self.factory.queue.put((self, TASK_NEWPLAYER, (self.id, self.colouredUsername(), self.x, self.y, self.z, self.h, 0)))
         self.sendWelcome()
 
     def sendAllNew(self):
@@ -818,12 +670,10 @@ class ArcServerProtocol(Protocol):
             for line in self.factory.greeting:
                 self.sendPacked(TYPE_MESSAGE, 127, line)
             self.sent_first_welcome = True
-            self.MessageAlert()
         else:
             self.sendPacked(TYPE_MESSAGE, 255, "You are now in world '%s'" % self.world.id)
 
-    def AllowedToBuild(self, x, y, z):
-        # This code needs to be rewritten to shorten stuff
+    def allowedToBuild(self, x, y, z):
         build = False
         assigned = []
         try:
@@ -849,8 +699,7 @@ class ArcServerProtocol(Protocol):
         if build:
             return True
         elif assigned:
-            self.sendSplitServerMessage(
-                "You are not allowed to build in this zone. Only: %s may." % ", ".join(assigned))
+            self.sendSplitServerMessage("You are not allowed to build in this zone. Only: %s may." % ", ".join(assigned))
             return False
         for id, zone in self.world.rankzones.items():
             if zone[7] == "all":
@@ -860,86 +709,19 @@ class ArcServerProtocol(Protocol):
                         if z1 < z < z2:
                             return True
             if self.world.status["zoned"]:
-                if zone[7] == "builder":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isBuilder():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be a builder to build here.")
-                                    return False
-                if zone[7] == "op":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isOp():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be an op to build here.")
-                                    return False
-                if zone[7] == "worldowner":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isWorldOwner():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be the world owner to build here.")
-                                    return False
-                if zone[7] == "helper":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isHelper():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be a helper to build here.")
-                                    return False
-                if zone[7] == "mod":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isMod():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be a mod to build here.")
-                                    return False
-                if zone[7] == "admin":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isAdmin():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be an admin to build here.")
-                                    return False
-                if zone[7] == "director":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isDirector():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be a director to build here.")
-                                    return False
-                if zone[7] == "owner":
-                    x1, y1, z1, x2, y2, z2 = zone[1:7]
-                    if x1 < x < x2:
-                        if y1 < y < y2:
-                            if z1 < z < z2:
-                                if self.isOwner():
-                                    return True
-                                else:
-                                    self.sendServerMessage("You must be an owner to build here.")
-                                    return False
+                for rank in ["Builder", "Op", "WorldOwner", "Mod", "Admin", "Director", "Owner"]:
+                    # TODO: Implement a rank checking system that doesn't suck.
+                    rankFunc = getattr(self, "is%s" % rank)()
+                    if zone[7] == rank.lower():
+                        x1, y1, z1, x2, y2, z2 = zone[1:7]
+                        if x1 < x < x2:
+                            if y1 < y < y2:
+                                if z1 < z < z2:
+                                    if rankFunc():
+                                        return True
+                                    else:
+                                        self.sendServerMessage("You must be %s %s to build here." % (("an" if rank[0] in "aeiou" else "a"), rank.lower()))
+                                        return False
         if self.world.id == self.factory.default_name and not self.isMod() and not self.world.status["all_build"]:
             self.sendBlock(x, y, z)
             self.sendServerMessage("Only Builder/Op and Mod+ may edit '%s'." % self.factory.default_name)
@@ -951,7 +733,7 @@ class ArcServerProtocol(Protocol):
         self.sendServerMessage("This world is locked. You must be Builder/Op or Mod+ to build here.")
         return False
 
-    def GetBlockValue(self, value):
+    def getBlockValue(self, value):
         # Try getting the block as a direct integer type.
         try:
             block = chr(int(value))
@@ -962,7 +744,7 @@ class ArcServerProtocol(Protocol):
             except KeyError:
                 self.sendServerMessage("'%s' is not a valid block type." % value)
                 return None
-            # Check the block is valid
+        # Check the block is valid
         if ord(block) > 49:
             self.sendServerMessage("'%s' is not a valid block type." % value)
             return None
@@ -974,34 +756,20 @@ class ArcServerProtocol(Protocol):
 
     def canBreakAdminBlocks(self):
         "Shortcut for checking permissions."
-        if hasattr(self, "world"):
-            return self.isOp()
-        else:
+        if not hasattr(self, "world"):
             return False
+        return self.isOp()
 
     def getBlbLimit(self, factor=1):
         """Fetches BLB Limit, and returns limit multiplied by a factor. 0 is returned if blb is disabled for that usergroup, and -1 for no limit."""
         if self.factory.useblblimit:
             if self.isSpectator():
                 limit = 0
-            elif self.isOwner():
-                limit = self.factory.blblimit["owner"]
-            elif self.isDirector():
-                limit = self.factory.blblimit["director"]
-            elif self.isAdmin():
-                limit = self.factory.blblimit["admin"]
-            elif self.isMod():
-                limit = self.factory.blblimit["mod"]
-            elif self.isHelper():
-                limit = self.factory.blblimit["mod"]
-            elif self.isWorldOwner():
-                limit = self.factory.blblimit["worldowner"]
-            elif self.isOp():
-                limit = self.factory.blblimit["op"]
-            elif self.isBuilder():
-                limit = self.factory.blblimit["builder"]
-            else:
-                limit = self.factory.blblimit["player"]
+            for rank in ["Owner", "Director", "Admin", "Mod", "Helper", "WorldOwner", "Op", "Builder"]:
+                # TODO: Implement a rank checking system that doesn't suck.
+                if getattr(data["client"], "is%s" % rank)():
+                    limit = self.factory.blblimit[rank.lower()]
+                    break
         else:
             if self.isSpectator():
                 limit = 0

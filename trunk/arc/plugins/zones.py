@@ -1,4 +1,4 @@
-# Arc is copyright 2009-2011 the Arc team and other contributors.
+# Arc is copyright 2009-2012 the Arc team and other contributors.
 # Arc is licensed under the BSD 2-Clause modified License.
 # To view more details, please see the "LICENSING" file in the "docs" folder of the Arc Package.
 
@@ -6,242 +6,236 @@ from twisted.internet import reactor
 
 from arc.constants import *
 from arc.decorators import *
-from arc.plugins import ProtocolPlugin
 
-class ZonesPlugin(ProtocolPlugin):
+class ZonesPlugin(object):
     commands = {
         "znew": "commandNewZone",
-        "rbox": "commandNewZone",
         "zone": "commandZone",
         "zones": "commandZones",
         "zlist": "commandListZones",
         "zshow": "commandZshow",
-        "zremove": "commandDeZone",
+        "zremove": "commandZoneRemove",
         "zclear": "commandClearZone",
-        "zdelall": "commandZdelall",
+        "zdelall": "commandZDelAll",
         "zwho": "commandZoneWho",
-        "zrename": "commandRename",
+        "zrename": "commandZRename",
         }
 
-    @config("rank", "op")
-    @on_off_command
-    def commandZones(self, onoff, fromloc, overriderank):
-        "/zones on|off - Op\nEnables or disables building zones in this world."
-        if onoff == "on":
-            self.client.world.status["zoned"] = True
-            self.client.sendWorldMessage("This world now has building zones enabled.")
-        else:
-            self.client.world.status["zoned"] = False
-            self.client.sendWorldMessage("This world now has building zones disabled.")
-        self.client.world.status["modified"] = True
+    hooks = {
+        "onPlayerConnect": "gotClient",
+        "consoleLoaded": "gotConsole"
+    }
+
+    def gotClient(self, data):
+        # Register this check
+        def inZone(self, zone):
+            x, y, z = self.last_block_changes[0]
+            x1, y1, z1, x2, y2, z2 = zone[1:]
+            if x1 < x < x2:
+                if y1 < y < y2:
+                    if z1 < z < z2:
+                        return True
+            return False
+        data["client"].inZone = inZone
+
+    def gotConsole(self):
+        def inZone(self, zone):
+            return False
+        self.factory.console.inZone = inZone
 
     @config("rank", "op")
-    def commandNewZone(self, parts, fromloc, overriderank):
-        "/znew zonename user|rank [creator/rankname] - Op\nAliases: rbox\nCreates a new zone with the name you gave.\nUsers are added with /zone name user1 user2 ...\nRank Example: '/znew GuestArea rank all'\nUser Example: '/znew hotel user'. then '/zone hotel add user1 [user2]'"
-        if len(parts) < 3:
-            self.client.sendServerMessage("Info missing. Usage - /znew name user|rank [rank]")
+    @config("usage", "on|off")
+    @on_off_command
+    @config("disabled-on", ["irc", "irc_query", "console"])
+    def commandZones(self, data):
+        "Enables or disables building zones in this world."
+        if data["onoff"] == "on":
+            data["client"].world.status["zoned"] = True
+            data["client"].sendWorldMessage("This world now has building zones enabled.")
+        else:
+            data["client"].world.status["zoned"] = False
+            data["client"].sendWorldMessage("This world now has building zones disabled.")
+        data["client"].world.status["modified"] = True
+
+    @config("rank", "op")
+    @config("usage", "zonename user|rank [owner/rankname]")
+    @config("aliases", ["rbox"])
+    @config("disabled-on", ["irc", "irc_query", "console"])
+    def commandNewZone(self, data):
+        "Creates a new zone with the name.\nUsers are added with /zone name user1 user2 ...\nRank Example: '/znew GuestArea rank all'\nUser Example: '/znew hotel user'. then '/zone hotel add user1 [user2]'"
+        if len(data["parts"]) < 3:
+            data["client"].sendServerMessage("Info missing. Usage - /znew name user|rank [rank]")
             return
         try:
-            if not self.client.world.status["zoned"] and not parts[3].lower() == "all":
-                self.client.sendServerMessage("Zones must be turned on to use except for an 'all' ranked zone.")
+            if not data["client"].world.status["zoned"] and not data["parts"][3].lower() == "all":
+                data["client"].sendServerMessage("Zones must be turned on to use except for an 'all' ranked zone.")
                 return
         except IndexError:
-            if not self.client.world.status["zoned"]:
-                self.client.sendServerMessage("Zones must be turned on to use except for an 'all' ranked zone.")
+            if not data["client"].world.status["zoned"]:
+                data["client"].sendServerMessage("Zones must be turned on to use except for an 'all' ranked zone.")
                 return
-        for id, zone in self.client.world.userzones.items():
-            if zone[0] == parts[1]:
-                self.client.sendServerMessage("Zone %s already exists. Pick a new name." % parts[1])
+        for id, zone in data["client"].world.userzones.items():
+            if zone[0] == data["parts"][1]:
+                data["client"].sendServerMessage("Zone %s already exists. Pick a new name." % data["parts"][1])
                 return
-        for id, zone in self.client.world.rankzones.items():
-            if zone[0] == parts[1]:
-                self.client.sendServerMessage("Zone %s already exists. Pick a new name." % parts[1])
+        for id, zone in data["client"].world.rankzones.items():
+            if zone[0] == data["parts"][1]:
+                data["client"].sendServerMessage("Zone %s already exists. Pick a new name." % data["parts"][1])
                 return
         try:
-            x, y, z = self.client.last_block_changes[0]
-            x2, y2, z2 = self.client.last_block_changes[1]
-            world = self.client.world
-            world[x, y, z] = chr(0)
-            world[x2, y2, z2] = chr(0)
-            self.client.queueTask(TASK_BLOCKSET, (x, y, z, chr(0)), world=world)
-            self.client.queueTask(TASK_BLOCKSET, (x2, y2, z2, chr(0)), world=world)
+            x, y, z = data["client"].last_block_changes[0]
+            x2, y2, z2 = data["client"].last_block_changes[1]
         except IndexError:
-            self.client.sendServerMessage("You have not clicked two corners yet.")
+            data["client"].sendServerMessage("You have not clicked two corners yet.")
             return
-        if x > x2:
-            x, x2 = x2, x
-        if y > y2:
-            y, y2 = y2, y
-        if z > z2:
-            z, z2 = z2, z
+        world = data["client"].world
+        if x > x2: x, x2 = x2, x
+        if y > y2: y, y2 = y2, y
+        if z > z2: z, z2 = z2, z
         x -= 1
         y -= 1
         z -= 1
         x2 += 1
         y2 += 1
         z2 += 1
-        if parts[2].lower() == "rank":
-            if len(parts) < 4:
-                self.client.sendServerMessage("Info missing. Usage - /znew name rank [rank]")
+        if data["parts"][2].lower() == "rank":
+            if len(data["parts"]) < 4:
+                data["client"].sendServerMessage("Info missing. Usage - /znew name rank [rank]")
                 return
-            if parts[3].lower() in ["all", "builder", "op", "worldowner", "helper", "mod", "admin", "director",
-                                    "owner"]:
+            if data["parts"][3].lower() in ["all", "builder", "op", "worldowner", "helper", "mod", "admin", "director", "owner"]:
                 i = 1
                 while True:
-                    if not i in self.client.world.rankzones:
-                        self.client.world.rankzones[i] = parts[1].lower(), x, y, z, x2, y2, z2, parts[3].lower()
+                    if not i in data["client"].world.rankzones:
+                        data["client"].world.rankzones[i] = data["parts"][1].lower(), x, y, z, x2, y2, z2, data["parts"][3].lower()
                         break
                     else:
                         i += 1
-                self.client.sendServerMessage(
-                    "Zone %s for rank %s has been created." % (parts[1].lower(), parts[3].lower()))
+                data["client"].sendServerMessage("Zone %s for rank %s has been created." % (data["parts"][1].lower(), data["parts"][3].lower()))
             else:
-                self.client.sendServerMessage("You must provide a proper rank.")
-                self.client.sendSplitServerMessage(
-                    "all | builder | op | worldowner | helper |mod | admin | director | owner")
+                data["client"].sendServerMessage("You must provide a proper rank.")
+                data["client"].sendSplitServerMessage("all | builder | op | worldowner | helper |mod | admin | director | owner")
                 return
-        elif parts[2].lower() == "user":
+        elif data["parts"][2].lower() == "user":
             i = 1
             while True:
-                if len(parts) == 4:
-                    owner = parts[3]
+                if len(data["parts"]) == 4:
+                    owner = data["parts"][3]
                 else:
-                    owner = self.client.username
-                if not i in self.client.world.userzones:
-                    self.client.world.userzones[i] = [parts[1].lower(), x, y, z, x2, y2, z2, owner]
+                    owner = data["client"].username
+                if not i in data["client"].world.userzones:
+                    data["client"].world.userzones[i] = [data["parts"][1].lower(), x, y, z, x2, y2, z2, owner]
                     break
                 else:
                     i += 1
-            self.client.sendServerMessage("User zone %s has been created." % parts[1].lower())
-            self.client.sendServerMessage("Now use /zone name add|remove [user1 user2 ...]")
+            data["client"].sendServerMessage("User zone %s has been created." % data["parts"][1].lower())
+            data["client"].sendServerMessage("Now use /zone name add|remove [user1 user2 ...]")
         else:
-            self.client.sendServerMessage("You need to provide a zone type. (i.e: user or rank)")
+            data["client"].sendServerMessage("You need to provide a zone type. (i.e: user or rank)")
 
     @config("rank", "op")
-    def commandZone(self, parts, fromloc, overriderank):
-        "/zone name - Op\nShows users assigned to this zone\n'/zone name add|remove [user1 user2 ...]' to edit users."
-        if len(parts) == 2:
-            for id, zone in self.client.world.userzones.items():
-                if zone[0] == parts[1]:
+    @config("usage", "name [add|remove] [user1 user2]")
+    def commandZone(self, data):
+        "Shows users assigned to this zone\n'/zone name add|remove [user1 user2 ...]' to edit users."
+        if len(data["parts"]) == 2:
+            for id, zone in data["client"].world.userzones.items():
+                if zone[0] == data["parts"][1]:
                     try:
-                        self.client.sendSplitServerMessage(
+                        data["client"].sendSplitServerMessage(
                             "Zone %s users: %s" % (zone[0], ", ".join(map(str, zone[7:]))))
                     except:
-                        self.client.sendServerMessage("There are no users assigned to zone %s." % (zone[0]))
+                        data["client"].sendServerMessage("There are no users assigned to zone %s." % (zone[0]))
                     return
-            self.client.sendServerMessage("There is no zone with that name.")
-        elif len(parts) > 3:
-            if parts[2] == "add":
-                for id, zone in self.client.world.userzones.items():
-                    if zone[0] == parts[1]:
-                        if self.client.username in zone[6:] or self.client.isWorldOwner():
-                            for user in parts[3:]:
+            data["client"].sendServerMessage("There is no zone with that name.")
+        elif len(data["parts"]) > 3:
+            if data["parts"][2] == "add":
+                for id, zone in data["client"].world.userzones.items():
+                    if zone[0] == data["parts"][1]:
+                        if data["client"].username in zone[6:] or data["client"].isWorldOwner():
+                            for user in data["parts"][3:]:
                                 if not user.lower() in zone[6:]:
-                                    self.client.world.userzones[id] += [user.lower()]
+                                    data["client"].world.userzones[id] += [user.lower()]
                                 else:
-                                    self.client.sendServerMessage(
-                                        "%s is already assigned to zone %s." % (user.lower(), zone[0]))
+                                    data["client"].sendServerMessage("%s is already assigned to zone %s." % (user.lower(), zone[0]))
                                     return
-                            self.client.sendServerMessage(
-                                "User %s added to zone %s." % (", ".join(map(str, parts[3:])), zone[0]))
+                            data["client"].sendServerMessage("User %s added to zone %s." % (", ".join(map(str, data["parts"][3:])), zone[0]))
                             return
                         else:
-                            self.client.sendSplitServerMessage(
-                                "You are not a member of %s. You must be one of its users to add users." % zone[0])
+                            data["client"].sendSplitServerMessage("You are not a member of %s. You must be one of its users to add users." % zone[0])
                             return
-            if parts[2] == "remove":
-                for id, zone in self.client.world.userzones.items():
-                    if zone[0] == parts[1]:
-                        if self.client.username in zone[6:] or self.client.isAdmin() or self.client.isWorldOwner():
-                            for user in parts[3:]:
+            elif data["parts"][2] == "remove":
+                for id, zone in data["client"].world.userzones.items():
+                    if zone[0] == data["parts"][1]:
+                        if data["client"].username in zone[6:] or data["client"].isWorldOwner():
+                            for user in data["parts"][3:]:
                                 try:
-                                    self.client.world.userzones[id].remove(user.lower())
+                                    data["client"].world.userzones[id].remove(user.lower())
                                 except:
-                                    self.client.sendServerMessage(
-                                        "User %s is not assigned to zone %s." % (user.lower(), zone[0]))
+                                    data["client"].sendServerMessage("User %s is not assigned to zone %s." % (user.lower(), zone[0]))
                                     return
-                            self.client.sendServerMessage(
-                                "Removed %s from zone %s." % (", ".join(map(str, parts[3:])), zone[0]))
+                            data["client"].sendServerMessage("Removed %s from zone %s." % (", ".join(map(str, data["parts"][3:])), zone[0]))
                             return
                         else:
-                            self.client.sendSplitServerMessage(
-                                "You are not a member of %s. You must be one of its users to remove users." % zone[0])
+                            data["client"].sendSplitServerMessage("You are not a member of %s. You must be one of its users to remove users." % zone[0])
                             return
             else:
-                self.client.sendServerMessage("Invalid action %s." % parts[2])
+                data["client"].sendServerMessage("Invalid action %s." % data["parts"][2])
         else:
-            self.client.sendServerMessage("You must at least provide a zone name.")
+            data["client"].sendServerMessage("You must provide a zone name.")
 
     @config("rank", "op")
-    def commandDeZone(self, parts, fromloc, overriderank):
-        "/zremove name - Op\nRemoves a zone"
-        if len(parts) == 2:
-            match = False
-            for id, zone in self.client.world.userzones.items():
-                if zone[0] == parts[1]:
-                    if self.client.username in zone[6:] or self.client.isWorldOwner():
-                        match = True
-                        del self.client.world.userzones[id]
-                        self.client.sendServerMessage("Zone %s has been removed." % zone[0])
-                        return
-                    else:
-                        self.client.sendSplitServerMessage(
-                            "You are not a member of %s. You must be one of its users to remove it." % zone[0])
-                        return
-            for id, zone in self.client.world.rankzones.items():
-                if zone[0] == parts[1]:
-                    if zone[7] == "worldowner" and not self.client.isWorldOwner():
-                        self.client.sendSplitServerMessage(
-                            "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "mod" and not self.client.isMod():
-                        self.client.sendSplitServerMessage(
-                            "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "admin" and not self.client.isAdmin():
-                        self.client.sendSplitServerMessage(
-                            "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "director" and not self.client.isDirector():
-                        self.client.sendSplitServerMessage(
-                            "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "owner" and not self.client.isOwner():
-                        self.client.sendSplitServerMessage(
-                            "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                        return
+    @config("usage", "name")
+    def commandZoneRemove(self, data):
+        "Removes a zone."
+        if len(data["parts"]) < 2:
+            data["client"].sendServerMessage("You must provide a zone name.")
+            return
+        match = False
+        for id, zone in data["client"].world.userzones.items():
+            if zone[0] == data["parts"][1]:
+                if data["client"].username in zone[6:] or data["client"].isWorldOwner():
                     match = True
-                    del self.client.world.rankzones[id]
-                    self.client.sendServerMessage("%s has been removed." % zone[0])
+                    del data["client"].world.userzones[id]
+                    data["client"].sendServerMessage("Zone %s has been removed." % zone[0])
                     return
-            if not match:
-                self.client.sendServerMessage("There is not a zone with that name.")
+                else:
+                    data["client"].sendSplitServerMessage("You are not a member of %s. You must be one of its users to remove it." % zone[0])
+                    return
+        for id, zone in data["client"].world.rankzones.items():
+            if zone[0] == data["parts"][1]:
+                for rank in ["WorldOwner", "Mod", "Admin", "Director", "Owner"]:
+                    # TODO: Implement a rank checking system that doesn't suck.
+                    if zone[7] == rank.lower() and not getattr(data["client"], "is%s" % rank)():
+                        data["client"].sendSplitServerMessage("You cannot remove a rank zone in which the rank is higher than your current rank.")
+                    return
+                match = True
+                del data["client"].world.rankzones[id]
+                data["client"].sendServerMessage("%s has been removed." % zone[0])
+                return
+        if not match:
+            data["client"].sendServerMessage("There is no zone with that name.")
 
-        else:
-            self.client.sendServerMessage("You must provide a zone name.")
+    def commandListZones(self, data):
+        "Lists all the zones on this world."
+        data["client"].sendServerList(["User Zones:"] + [zone[0] for id, zone in data["client"].world.userzones.items()])
+        data["client"].sendServerList(["Rank Zones:"] + [zone[0] for id, zone in data["client"].world.rankzones.items()])
 
-    def commandListZones(self, parts, fromloc, overriderank):
-        "/zlist - Guest\nLists all the zones on this world."
-        self.client.sendServerList(["User Zones:"] + [zone[0] for id, zone in self.client.world.userzones.items()])
-        self.client.sendServerList(["Rank Zones:"] + [zone[0] for id, zone in self.client.world.rankzones.items()])
-
-    def commandZshow(self, parts, fromloc, overriderank):
-        "/zshow [all|name] - Guest\nOutlnes the zone in water temporary."
-        if not len(parts) == 2:
-            self.client.sendServerMessage("Please provide a zone to show.")
-            self.client.sendServerMessage("[or 'all' to show all zones]")
-        elif parts[1].lower() == "all":
-            match = False
-            user = parts[1].lower()
-            block = chr(globals()['BLOCK_STILLWATER'])
-            for id, zone in self.client.world.userzones.items():
+    @config("usage", "all|name")
+    def commandZshow(self, data):
+        "Outlnes the zone in water temporary."
+        if len(data["parts"]) < 2:
+            data["client"].sendServerMessage("Please provide a zone to show.")
+            data["client"].sendServerMessage("[or 'all' to show all zones]")
+            return
+        # Build the changeset
+        changeset = {}
+        block = chr(globals()['BLOCK_STILLWATER'])
+        match = False
+        if data["parts"][1].lower() == "all":
+            for id, zone in (data["client"].world.userzones.items() + data["client"].world.rankzones.items()):
                 x, y, z, x2, y2, z2 = zone[1:7]
-                if x > x2:
-                    x, x2 = x2, x
-                if y > y2:
-                    y, y2 = y2, y
-                if z > z2:
-                    z, z2 = z2, z
+                if x > x2: x, x2 = x2, x
+                if y > y2: y, y2 = y2, y
+                if z > z2: z, z2 = z2, z
                 x += 1
                 y += 1
                 z += 1
@@ -249,64 +243,30 @@ class ZonesPlugin(ProtocolPlugin):
                 y2 -= 1
                 z2 -= 1
                 for i in range(x, x2 + 1):
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y2, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y, z2, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y2, z2, block)
-                for j in range(y, y2 + 1):
-                    self.client.sendPacked(TYPE_BLOCKSET, x, j, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, j, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x, j, z2, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, j, z2, block)
-                for k in range(z, z2 + 1):
-                    self.client.sendPacked(TYPE_BLOCKSET, x, y, k, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, y, k, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x, y2, k, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, y2, k, block)
-            for id, zone in self.client.world.rankzones.items():
-                x, y, z, x2, y2, z2 = zone[1:7]
-                if x > x2:
-                    x, x2 = x2, x
-                if y > y2:
-                    y, y2 = y2, y
-                if z > z2:
-                    z, z2 = z2, z
-                x += 1
-                y += 1
-                z += 1
-                x2 -= 1
-                y2 -= 1
-                z2 -= 1
-                for i in range(x, x2 + 1):
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y2, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y, z2, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, i, y2, z2, block)
-                for j in range(y, y2 + 1):
-                    self.client.sendPacked(TYPE_BLOCKSET, x, j, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, j, z, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x, j, z2, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, j, z2, block)
-                for k in range(z, z2 + 1):
-                    self.client.sendPacked(TYPE_BLOCKSET, x, y, k, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, y, k, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x, y2, k, block)
-                    self.client.sendPacked(TYPE_BLOCKSET, x2, y2, k, block)
-            self.client.sendServerMessage("All zones in this world are shown temporarily by a water border.")
+                    for j in range(y, y2 + 1):
+                        for k in range(z, z2 + 1):
+                            if (i == x and j == y) or (i == x2 and j == y2) or (j == y2 and k == z2) or \
+                            (i == x2 and k == z2) or (j == y and k == z) or (i == x and k == z) or \
+                            (i == x and k == z2) or (j == y and k == z2) or (i == x2 and k == z) or \
+                            (j == y2 and k == z) or (i == x and j == y2) or (i == x2 and j == y):
+                                changeset[i, j, k] = block
+            # Now, apply it.
+            def zshowCallback(result):
+                if isinstance(result, AssertionError):
+                    data["client"].sendServerMessage("Out of bounds, please report to a server staff.")
+                    return
+                else:
+                    data["client"].sendServerMessage("All zones in this world are shown temporarily by a water border.")
+            self.factory.applyBlockChanges(changeset, w, save=False).addBoth(zshowCallback)
         else:
-            match = False
-            user = parts[1].lower()
-            block = chr(globals()['BLOCK_STILLWATER'])
-            for id, zone in self.client.world.userzones.items():
+            user = data["parts"][1].lower()
+            for id, zone in (data["client"].world.userzones.items() + data["client"].world.rankzones.items()):
                 if user == zone[0]:
                     match = True
                     x, y, z, x2, y2, z2 = zone[1:7]
-                    if x > x2:
-                        x, x2 = x2, x
-                    if y > y2:
-                        y, y2 = y2, y
-                    if z > z2:
-                        z, z2 = z2, z
+                    if x > x2: x, x2 = x2, x
+                    if y > y2: y, y2 = y2, y
+                    if z > z2: z, z2 = z2, z
                     x += 1
                     y += 1
                     z += 1
@@ -314,288 +274,166 @@ class ZonesPlugin(ProtocolPlugin):
                     y2 -= 1
                     z2 -= 1
             if not match:
-                for id, zone in self.client.world.rankzones.items():
-                    if user == zone[0]:
-                        match = True
-                        x, y, z, x2, y2, z2 = zone[1:7]
-                        if x > x2:
-                            x, x2 = x2, x
-                        if y > y2:
-                            y, y2 = y2, y
-                        if z > z2:
-                            z, z2 = z2, z
-                        x += 1
-                        y += 1
-                        z += 1
-                        x2 -= 1
-                        y2 -= 1
-                        z2 -= 1
-            if match:
-                def generate_changes():
-                    for i in range(x, x2 + 1):
-                        self.client.sendPacked(TYPE_BLOCKSET, i, y, z, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, i, y2, z, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, i, y, z2, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, i, y2, z2, block)
-
-                    for j in range(y, y2 + 1):
-                        self.client.sendPacked(TYPE_BLOCKSET, x, j, z, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, x2, j, z, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, x, j, z2, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, x2, j, z2, block)
-                    for k in range(z, z2 + 1):
-                        self.client.sendPacked(TYPE_BLOCKSET, x, y, k, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, x2, y, k, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, x, y2, k, block)
-                        self.client.sendPacked(TYPE_BLOCKSET, x2, y2, k, block)
-                    yield
-
-                    # Now, set up a loop delayed by the reactor
-                block_iter = iter(generate_changes())
-
-                def do_step():
-                    # Do 10 blocks
-                    try:
-                        for x in range(10): # 10 blocks at a time, 10 blocks per tenths of a second, 100 blocks a second
-                            block_iter.next()
-                        reactor.callLater(0.01,
-                            do_step) # This is how long (in seconds) it waits to run another 10 blocks
-                    except StopIteration:
-                        pass
-
-                do_step()
-                self.client.sendServerMessage("Zone %s is showing temporarily by a water border." % user)
-            else:
-                self.client.sendServerMessage("That zone does not exist.")
-
-    @config("rank", "op")
-    def commandClearZone(self, parts, fromloc, overriderank):
-        "/zclear name - Op\nClears everything within the zone."
-        if not len(parts) == 2:
-            self.client.sendServerMessage("Please provide a zone to remove.")
-        else:
-            match = False
-            user = parts[1].lower()
-            block = chr(globals()['BLOCK_AIR'])
-            for id, zone in self.client.world.userzones.items():
-                if user == zone[0]:
-                    if self.client.username in zone[6:] or self.client.isWorldOwner():
-                        match = True
-                        x, y, z, x2, y2, z2 = zone[1:7]
-                        if x > x2:
-                            x, x2 = x2, x
-                        if y > y2:
-                            y, y2 = y2, y
-                        if z > z2:
-                            z, z2 = z2, z
-                        x += 1
-                        y += 1
-                        z += 1
-                        x2 -= 1
-                        y2 -= 1
-                        z2 -= 1
-                    else:
-                        self.client.sendSplitServerMessage(
-                            "You are not a member of %s. You must be one of its users to clear it." % zone[0])
-                        return
-            if not match:
-                for id, zone in self.client.world.rankzones.items():
-                    if user == zone[0]:
-                        if zone[7] == "member" and not self.client.isMember():
-                            self.client.sendSplitServerMessage(
-                                "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                            return
-                        if zone[7] == "mod" and not self.client.isMod():
-                            self.client.sendSplitServerMessage(
-                                "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                            return
-                        if zone[7] == "admin" and not self.client.isAdmin():
-                            self.client.sendSplitServerMessage(
-                                "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                            return
-                        if zone[7] == "director" and not self.client.isDirector():
-                            self.client.sendSplitServerMessage(
-                                "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                            return
-                        if zone[7] == "owner" and not self.client.isOwner():
-                            self.client.sendSplitServerMessage(
-                                "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                            return
-                        match = True
-                        x, y, z, x2, y2, z2 = zone[1:7]
-                        if x > x2:
-                            x, x2 = x2, x
-                        if y > y2:
-                            y, y2 = y2, y
-                        if z > z2:
-                            z, z2 = z2, z
-                        x += 1
-                        y += 1
-                        z += 1
-                        x2 -= 1
-                        y2 -= 1
-                        z2 -= 1
-            if match:
-                world = self.client.world
-
-                def generate_changes():
-                    for i in range(x, x2 + 1):
-                        for j in range(y, y2 + 1):
-                            for k in range(z, z2 + 1):
-                                try:
-                                    world[i, j, k] = block
-                                except AssertionError:
-                                    self.client.sendServerMessage(
-                                        "Out of bounds zshow error, please report this to the server staff.")
-                                    return
-                                self.client.queueTask(TASK_BLOCKSET, (i, j, k, block), world=world)
-                                self.client.sendBlock(i, j, k, block)
-                                yield
-
-                    # Now, set up a loop delayed by the reactor
-                block_iter = iter(generate_changes())
-
-                def do_step():
-                    # Do 10 blocks
-                    try:
-                        for x in range(10): # 10 blocks at a time, 10 blocks per tenths of a second, 100 blocks a second
-                            block_iter.next()
-                        reactor.callLater(0.01,
-                            do_step) # This is how long (in seconds) it waits to run another 10 blocks
-                    except StopIteration:
-                        if fromloc == "user":
-                            self.client.sendServerMessage("Your zone clear just completed.")
-                        pass
-
-                do_step()
-            else:
-                self.client.sendServerMessage("That zone does not exist.")
-
-    def InZone(self, zone):
-        x, y, z = self.client.last_block_changes[0]
-        x1, y1, z1, x2, y2, z2 = zone[1:]
-        if x1 < x < x2:
-            if y1 < y < y2:
-                if z1 < z < z2:
-                    return True
-        return False
-
-    @config("rank", "op")
-    def commandZdelall(self, parts, fromloc, overriderank):
-        "/zdelall - Op\nRemoves all zones in a world (if you can delete them)"
-        match = False
-        for id, zone in self.client.world.userzones.items():
-            if self.client.username in zone[6:] or self.client.isWorldOwner():
-                del self.client.world.userzones[id]
-            else:
-                self.client.sendSplitServerMessage(
-                    "You are not a member of %s. You must be one of its users to delete this zone." % zone[0])
+                data["client"].sendServerMessage("That zone does not exist.")
                 return
-        for id, zone in self.client.world.rankzones.items():
-            try:
-                if zone[7] == "worldowner" and not self.client.isWorldOwner():
-                    self.client.sendSplitServerMessage(
-                        "You cannot remove a rank zone in which the rank is higher than your current rank.")
+            for i in range(x, x2 + 1):
+                for j in range(y, y2 + 1):
+                    for k in range(z, z2 + 1):
+                        if (i == x and j == y) or (i == x2 and j == y2) or (j == y2 and k == z2) or \
+                        (i == x2 and k == z2) or (j == y and k == z) or (i == x and k == z) or \
+                        (i == x and k == z2) or (j == y and k == z2) or (i == x2 and k == z) or \
+                        (j == y2 and k == z) or (i == x and j == y2) or (i == x2 and j == y):
+                            changeset[i, j, k] = block
+            # Now, apply it.
+            def zshowCallback(result):
+                if isinstance(result, AssertionError):
+                    data["client"].sendServerMessage("Out of bounds, please report to a server staff.")
                     return
-                if zone[7] == "mod" and not self.client.isMod():
-                    self.client.sendSplitServerMessage(
-                        "You cannot remove a rank zone in which the rank is higher than your current rank.")
+                else:
+                    data["client"].sendServerMessage("All zones in this world are shown temporarily by a water border.")
+
+    @config("rank", "op")
+    @config("usage", "name")
+    def commandClearZone(self, data):
+        "Clears everything within the zone."
+        if not len(data["parts"]) == 2:
+            data["client"].sendServerMessage("Please provide a zone to clear.")
+            return
+        match = False
+        user = data["parts"][1].lower()
+        block = chr(globals()['BLOCK_AIR'])
+        for id, zone in data["client"].world.userzones.items():
+            if user == zone[0]:
+                if not (data["client"].username in zone[6:] or data["client"].isWorldOwner()):
+                    data["client"].sendSplitServerMessage("You are not a member of %s. You must be one of its users to clear it." % zone[0])
                     return
-                if zone[7] == "admin" and not self.client.isAdmin():
-                    self.client.sendSplitServerMessage(
-                        "You cannot remove a rank zone in which the rank is higher than your current rank.")
+                match = True
+                x, y, z, x2, y2, z2 = zone[1:7]
+                if x > x2: x, x2 = x2, x
+                if y > y2: y, y2 = y2, y
+                if z > z2: z, z2 = z2, z
+                x += 1
+                y += 1
+                z += 1
+                x2 -= 1
+                y2 -= 1
+                z2 -= 1
+        for id, zone in data["client"].world.rankzones.items():
+            if user == zone[0]:
+                for rank in ["WorldOwner", "Mod", "Admin", "Director", "Owner"]:
+                    # TODO: Implement a rank checking system that doesn't suck.
+                    if zone[7] == rank.lower() and not getattr(data["client"], "is%s" % rank)():
+                        data["client"].sendSplitServerMessage("You cannot remove a rank zone in which the rank is higher than your current rank.")
+                        return
+                match = True
+                x, y, z, x2, y2, z2 = zone[1:7]
+                if x > x2: x, x2 = x2, x
+                if y > y2: y, y2 = y2, y
+                if z > z2: z, z2 = z2, z
+                x += 1
+                y += 1
+                z += 1
+                x2 -= 1
+                y2 -= 1
+                z2 -= 1
+        if not match:
+            data["client"].sendServerMessage("That zone does not exist.")
+            return
+        # Build the changeset
+        changeset = {}
+        for i in range(x, x2 + 1):
+            for j in range(y, y2 + 1):
+                for k in range(z, z2 + 1):
+                    changeset[i, j, k] = block
+        # Now, apply it.
+        def zclearCallback(result):
+            if isinstance(result, AssertionError):
+                data["client"].sendServerMessage("Out of bounds.")
+                return
+            else:
+                data["client"].sendServerMessage("Zone clear finished, with %s blocks changed." % (x2 - x) * (y2 - y) * (z2 - z))
+        self.factory.applyBlockChanges(changeset, w).addBoth(zclearCallback)
+
+    @config("rank", "op")
+    def commandZDelAll(self, data):
+        "Removes all zones in a world (if you can delete them)"
+        match = False
+        for id, zone in data["client"].world.userzones.items():
+            if data["client"].username in zone[6:] or data["client"].isWorldOwner():
+                del data["client"].world.userzones[id]
+            else:
+                data["client"].sendSplitServerMessage("You are not a member of %s. You must be one of its users to delete this zone." % zone[0])
+                return
+        for id, zone in data["client"].world.rankzones.items():
+            for rank in ["WorldOwner", "Mod", "Admin", "Director", "Owner"]:
+                # TODO: Implement a rank checking system that doesn't suck.
+                if zone[7] == rank.lower() and not getattr(data["client"], "is%s" % rank)():
+                    data["client"].sendSplitServerMessage("You cannot remove a rank zone in which the rank is higher than your current rank.")
                     return
-                if zone[7] == "director" and not self.client.isDirector():
-                    self.client.sendSplitServerMessage(
-                        "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                    return
-                if zone[7] == "owner" and not self.client.isOwner():
-                    self.client.sendSplitServerMessage(
-                        "You cannot remove a rank zone in which the rank is higher than your current rank.")
-                    return
-            except:
-                pass
-            del self.client.world.rankzones[id]
-        self.client.sendServerMessage("All Rank Zones have been deleted.")
+            del data["client"].world.rankzones[id]
+        data["client"].sendServerMessage("All Rank Zones have been deleted.")
 
     @config("category", "info")
     @config("rank", "op")
-    def commandZoneWho(self, parts, fromloc, overriderank):
-        "/zwho - Op\nTells you whose zone you're currently in, if any."
-        x = self.client.x >> 5
-        y = self.client.y >> 5
-        z = self.client.z >> 5
+    def commandZoneWho(self, data):
+        "Tells you whose zone you're currently in, if any."
+        x, y, z = data["client"].x >> 5, data["client"].y >> 5, data["client"].z >> 5
         found = False
-        for id, zone in self.client.world.userzones.items():
+        for id, zone in data["client"].world.userzones.items():
             x1, y1, z1, x2, y2, z2 = zone[1:7]
             if x1 < x < x2:
                 if y1 < y < y2:
                     if z1 < z < z2:
-                        self.client.sendServerMessage("User Zone: %s [%d]" % (zone[0], id))
+                        data["client"].sendServerMessage("User Zone: %s [%d]" % (zone[0], id))
                         found = True
-        for id, zone in self.client.world.rankzones.items():
+        for id, zone in data["client"].world.rankzones.items():
             x1, y1, z1, x2, y2, z2 = zone[1:7]
             if x1 < x < x2:
                 if y1 < y < y2:
                     if z1 < z < z2:
-                        self.client.sendServerMessage("Rank Zone: %s [%d]" % (zone[0], id))
+                        data["client"].sendServerMessage("Rank Zone: %s [%d]" % (zone[0], id))
                         found = True
         if not found:
-            self.client.sendServerMessage("Zone is unclaimed!")
-
+            data["client"].sendServerMessage("Zone is unclaimed!")
 
     @config("rank", "op")
-    def commandRename(self, parts, fromloc, overriderank):
-        "/zrename oldname newname - Op\nRenames a zone."
-        if not len(parts) == 3:
-            self.client.sendServerMessage("Please provide an old and a new zone name.")
-        else:
-            oldname = parts[1].lower()
-            newname = parts[2].lower()
-            if oldname == newname:
-                self.client.sendServerMessage("Old and new names are the same.")
-            for id, zone in self.client.world.userzones.items():
-                if zone[0] == newname:
-                    self.client.sendServerMessage("Zone %s already exists. Pick a new name." % newname)
-                    return
-            for id, zone in self.client.world.rankzones.items():
-                if zone[0] == newname:
-                    self.client.sendServerMessage("Zone %s already exists. Pick a new name." % newname)
-                    return
-
-            for id, zone in self.client.world.userzones.items():
-                if oldname == zone[0]:
-                    if self.client.username in zone[6:] or self.client.isWorldOwner():
-                        zone[0] = newname
-                        self.client.sendServerMessage("Zone %s has been renamed to %s." % (oldname, newname))
-                        return
-                    else:
-                        self.client.sendSplitServerMessage(
-                            "You are not a member of %s. You must be one of its users to rename it." % zone[0])
-                        return
-            for id, zone in self.client.world.rankzones.items():
-                if oldname == zone[0]:
-                    if zone[7] == "helper" and not self.client.isHelper():
-                        self.client.sendSplitServerMessage(
-                            "You can not rename a ranked zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "mod" and not self.client.isMod():
-                        self.client.sendSplitServerMessage(
-                            "You can not rename a ranked zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "admin" and not self.client.isAdmin():
-                        self.client.sendSplitServerMessage(
-                            "You can not rename a ranked zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "director" and not self.client.isDirector():
-                        self.client.sendSplitServerMessage(
-                            "You can not rename a ranked zone in which the rank is higher than your current rank.")
-                        return
-                    if zone[7] == "owner" and not self.client.isOwner():
-                        self.client.sendSplitServerMessage(
-                            "You can not rename a ranked zone in which the rank is higher than your current rank.")
-                        return
+    @config("usage", "oldname newname")
+    def commandZRename(self, data):
+        "Renames a zone."
+        if not len(data["parts"]) == 3:
+            data["client"].sendServerMessage("Please provide an old and a new zone name.")
+            return
+        oldname = data["parts"][1].lower()
+        newname = data["parts"][2].lower()
+        if oldname == newname:
+            data["client"].sendServerMessage("Old and new names are the same.")
+        for id, zone in data["client"].world.userzones.items():
+            if zone[0] == newname:
+                data["client"].sendServerMessage("Zone %s already exists. Pick a new name." % newname)
+                return
+        for id, zone in data["client"].world.rankzones.items():
+            if zone[0] == newname:
+                data["client"].sendServerMessage("Zone %s already exists. Pick a new name." % newname)
+                return
+        for id, zone in data["client"].world.userzones.items():
+            if oldname == zone[0]:
+                if data["client"].username in zone[6:] or data["client"].isWorldOwner():
                     zone[0] = newname
-                    self.client.sendServerMessage("Zone %s has been renamed to %s" % (oldname, newname))
+                    data["client"].sendServerMessage("Zone %s has been renamed to %s." % (oldname, newname))
                     return
-            self.client.sendServerMessage("Zone %s doesn't exist." % oldname)
+                else:
+                    data["client"].sendSplitServerMessage("You are not a member of %s. You must be one of its users to rename it." % zone[0])
+                    return
+        for id, zone in data["client"].world.rankzones.items():
+            if oldname == zone[0]:
+                for rank in ["WorldOwner", "Helper", "Mod", "Admin", "Director", "Owner"]:
+                    # TODO: Implement a rank checking system that doesn't suck.
+                    if zone[7] == rank.lower() and not getattr(data["client"], "is%s" % rank)(): 
+                        data["client"].sendSplitServerMessage("You can not rename a ranked zone in which the rank is higher than your current rank.")
+                        return
+                zone[0] = newname
+                data["client"].sendServerMessage("Zone %s has been renamed to %s" % (oldname, newname))
+                return
+        data["client"].sendServerMessage("Zone %s doesn't exist." % oldname)
+
+serverPlugin = ZonesPlugin

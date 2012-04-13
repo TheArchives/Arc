@@ -23,7 +23,8 @@ class ServerUtilPlugin():
     commands = {
         "sinfo": "commandServerInfo",
         "worldsoper": "commandWorldsOper",
-        "restartloop": "commandRestartLoop"
+        "restartloop": "commandRestartLoop",
+        "sendhb": "commandSendHeartBeat"
     }
 
     def gotServer(self):
@@ -48,9 +49,8 @@ class ServerUtilPlugin():
             usageList = self.calculateSystemUsage()
             cpucores = psutil.cpu_percent(interval=0, percpu=True)
             cores = len(psutil.cpu_percent(interval=0, percpu=True))
-            self.logger.info(
-                "CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (
-                usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
+            self.logger.info("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % 
+                (usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
             if cores == 1:
                 self.logger.debug("CPU: %s%% (in one core)" % usageList[0])
             elif cores > 1:
@@ -136,25 +136,29 @@ class ServerUtilPlugin():
         "Displays server information."
         if nopsutils:
             data["client"].sendServerMessage("System information plugin disabled, unable to display system information.")
-        else:
-            usageList = self.calculateSystemUsage()
-            data["client"].sendSplitServerMessage(
-                "CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % (
-                usageList[0], usageList[1], usageList[2], usageList[3], usageList[4], usageList[5]))
+            return
+        usageList = self.calculateSystemUsage()
+        data["client"].sendSplitServerMessage("CPU USAGE: %s%% (%s cores), DISK USAGE: %s%%, RAM USAGE: %s%% physical, %s%% virtual, PROCESSES: %s" % usageList)
 
     @config("rank", "owner")
     @config("disabled-on", ["cmdblock"])
     def commandRestartLoop(self, data):
         "Restarts a factory loop.\nUSE AT YOUR OWN RISK!"
-        if len(parts) < 2:
+        if len(data["parts"]) < 2:
             data["client"].sendServerMessage("You need to specify the loop and the time.")
+            return
+        if data["parts"][1] not in self.factory.loops:
+            data["client"].sendServerMessage("That loop does not exist in the server loops directory.")
         else:
-            if parts[1] not in data["client"].factory.loops:
-                data["client"].sendServerMessage("That loop does not exist in the server loops directory.")
-            else:
-                self.factory.loop[parts[1]].stop()
-                self.factory.loop[parts[1]].start(parts[2])
-                data["client"].sendServerMessage("Loop %s restarted." % parts[1])
+            self.factory.loop[data["parts"][1]].stop()
+            self.factory.loop[data["parts"][1]].start(data["parts"][2])
+            data["client"].sendServerMessage("Loop %s restarted." % data["parts"][1])
 
+    @config("rank", "admin")
+    @config("disabled-on", ["cmdblock"])
+    def commandSendHeartBeat(self, data):
+        "Sends a single heartbeat."
+        self.factory.heartbeat.sendHeartbeat()
+        data["client"].sendServerMessage("Heartbeat sent.")
 
 serverPlugin = ServerUtilPlugin
