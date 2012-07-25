@@ -220,39 +220,6 @@ class ChatBot(irc.IRCClient):
             for name in args:
                 if name in self.ops:
                     self.ops.remove(name)
-        elif set and modes.startswith("v"):
-            if len(arguments) < 2:
-                msg = "%s%s was voiced on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
-            else:
-                msg = "%sUsers voiced on %s by %s: %s (%s)" % (
-                COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
-            self.factory.sendMessageToAll(msg, "irc", user="", fromloc="irc")
-            for name in args:
-                if not name in self.ops:
-                    self.ops.append(name)
-        elif not set and modes.startswith("v"):
-            done = []
-            for name in args:
-                done.append(name.split("!")[0])
-            if len(arguments) < 2:
-                msg = "%s%s was devoiced on %s by %s" % (COLOUR_YELLOW, arguments[0], channel, setUser)
-            else:
-                msg = "%sUsers devoiced on %s by %s: %s (%s)" % (
-                COLOUR_YELLOW, channel, setUser, ", ".join(arguments), len(arguments))
-            self.factory.sendMessageToAll(msg, "irc", user="", fromloc="irc")
-            for name in args:
-                if name in self.ops:
-                    self.ops.remove(name)
-        elif set and modes.startswith("b"):
-            msg = "%sBan set in %s by %s" % (COLOUR_YELLOW, channel, setUser)
-            self.factory.sendMessageToAll(msg, "irc", user="", fromloc="irc")
-            msg = "%s(%s)" % (COLOUR_YELLOW, " ".join(args))
-            self.factory.sendMessageToAll(msg, "irc", user="", fromloc="irc")
-        elif not set and modes.startswith("b"):
-            msg = "%sBan lifted in %s by %s" % (COLOUR_YELLOW, channel, setUser)
-            self.factory.sendMessageToAll(msg, "irc", user="", fromloc="irc")
-            msg = "%s(%s)" % (COLOUR_YELLOW, " ".join(args))
-            self.factory.sendMessageToAll(msg, "irc", user="", fromloc="irc")
 
     def irc_QUIT(self, user, params):
         userhost = user

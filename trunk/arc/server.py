@@ -819,6 +819,12 @@ class ArcFactory(Factory):
                 self.clients[i] = client
                 self.runHook("idClaimed", {"id": i, "client": client})
                 return i
+        # Server is full, claim ID only for staff
+        if client.isHelper():
+            i = len(self.clients.keys()) + 1
+            self.clients[i] = client
+            self.runHook("idClaimed", {"id": i, "client": client})
+            return i
         raise ServerFull
 
     def releaseId(self, id):
